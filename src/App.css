@@ -1,38 +1,669 @@
-.App {
-  text-align: center;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+}
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap");
+
+body {
+  font-family: "Lato", "sans-serif";
+  color: rgba(0, 0, 0, 8);
+  overflow-x: hidden;
+}
+:root {
+  --color-secondary: #00aaff; /* Màu xanh giống ảnh */
+}
+.cursor {
+  cursor: pointer;
+}
+.row2 div img {
+  border-radius: 10px;
+  height: 300px;
+}
+.homeProducts {
+  padding: 25px 0px;
+  width: 100%;
+}
+.homeProducts .banner {
+  width: 100%;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.row1 .text-light1 {
+  color: #bbb9b9 !important;
+  font-size: 14px;
+}
+.homeProducts .info {
+  font-size: 12px;
+}
+.productsRow .hd {
+  font-size: 25px;
+  font-weight: 600;
+}
+.viewAllBtn {
+  padding: 5px 15px !important;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 30px !important;
+  color: #414141 !important;
+  font-weight: 600;
+  text-transform: capitalize !important;
+}
+.arrow svg {
+  width: 20px;
+  height: 20px;
+  fill: #414141;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.productItem {
+  width: 100%;
+  height: auto;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  position: relative;
 }
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.productItem .badge {
+  display: inline-block;
+  padding: 7px 10px;
+  position: absolute;
+  top: 10px;
+  left: 15px;
+  z-index: 100;
 }
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.productItem h4 {
+  font-size: 15px;
+  font-weight: 600;
+}
+.productItem .info {
+  padding: 15px;
+}
+.productItem .info .oldPrice {
+  font-size: 16px;
+  font-weight: bold;
+  color: rgba(0, 0, 0, 0.4);
+  text-decoration: line-through;
+}
+.productItem .info .netPrice {
+  font-size: 16px;
+  font-weight: bold;
+}
+.products_row .item {
+  border-right: 1px solid transparent !important;
+}
+.products_row .swiper-slide:last-child .productItem {
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+.swiper {
+  padding-right: 1px !important;
+}
+.badge-primary {
+  background: #2bbef9 !important;
+}
+.productItem .actions {
+  position: absolute;
+  top: 15px;
+  right: -100%;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
+  gap: 10px;
+  transition: all 0.3s ease-in-out;
+}
+.productItem .actions button {
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  min-width: 40px !important;
+  height: 40px !important;
+  width: 40px !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%), 0 1px 2px rgb(0, 0, 0 /24%) !important;
+  transition: all 0s !important;
+}
+.productItem .actions button svg {
+  color: #000 !important;
+  opacity: 0.7;
+  font-size: 20px !important;
+  pointer-events: none;
+}
+.productItem .actions button:hover {
+  background: #233a95 !important;
+}
+.productItem .actions button:hover svg {
+  color: white !important;
+}
+.productItem .imgWrapper {
+  overflow: hidden;
+}
+.productItem .imgWrapper img {
+  transition: all 0.3s ease-in-out;
+}
+.productItem .imgWrapper:hover .actions {
+  opacity: 1;
+  right: 10px;
+}
+.productItem .imgWrapper:hover img {
+  transform: scale(1.1);
+}
+.homeCat .swiper .item {
+  padding: 15px;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+.homeCat .swiper .item img {
+  width: 80%;
+}
+.hd {
+  font-size: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.homeCat {
+  position: relative; /* Đảm bảo phần tử cha chứa Swiper có thể hiển thị mũi tên */
 }
 
-.App-link {
-  color: #61dafb;
+.homeCat .swiper {
+  overflow: hidden; /* Giúp mũi tên hiển thị bình thường */
+}
+.product_row {
+  position: relative;
+}
+.product_row .swiper {
+  overflow: hidden;
+}
+.productRow2 {
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.productRow2 .productItem {
+  width: 24%;
+  overflow: hidden;
+  border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 767px) {
+  .productRow2 {
+    justify-content: space-between;
   }
-  to {
-    transform: rotate(360deg);
+
+  .productRow2 .productItem {
+    width: 48%; /* Two products per row on mobile */
+    margin-bottom: 10px;
   }
+}
+
+/* Tablet Styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .productRow2 .productItem {
+    width: 30%; /* Adjust for tablet view if needed */
+  }
+}
+.bannerSec {
+  gap: 15px;
+}
+.sticky {
+  position: sticky;
+  top: 10px;
+  z-index: 100;
+}
+.newsLetterSection {
+  width: 100%;
+  height: auto;
+  background: #233a95;
+  padding: 100px 0px;
+  position: relative;
+  overflow: hidden;
+  padding: 70px 0px;
+}
+.newsLetterSection .col-md-6 {
+  position: static !important;
+}
+.newsLetterSection p {
+  font-size: 18px;
+  margin: 10px 0px !important;
+}
+.newsLetterSection h3 {
+  font-size: 30px;
+  font-weight: bold;
+}
+.newsLetterSection p .text-light1 {
+  color: #fff !important;
+  opacity: 0.5;
+  font-size: 15px;
+}
+.newsLetterSection img {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+}
+.newsLetterSection form {
+  width: 100%;
+  background: #fff;
+  padding: 10px;
+  position: relative;
+  margin-top: 20px; /* Added to create space above the form */
+  border-radius: 7px;
+}
+
+.newsLetterSection form svg {
+  position: absolute;
+  top: 20px;
+  left: 15px;
+  font-size: 25px;
+  opacity: 0.3;
+}
+
+.newsLetterSection form input {
+  width: 100%;
+  background: #fff !important;
+  outline: none !important;
+  border: none !important;
+  padding-left: 50px;
+  padding-right: 200px;
+  height: 45px;
+}
+
+.newsLetterSection form button {
+  position: absolute;
+  top: 7px;
+  right: 10px;
+  background: #233a95 !important;
+  font-size: 14px !important;
+  padding: 13px 25px !important;
+  color: #fff !important;
+  text-transform: capitalize !important;
+  font-weight: 600 !important;
+}
+@media (max-width: 768px) {
+  .newsLetterSection {
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .newsLetterSection .row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .newsLetterSection .col-md-6 {
+    width: 100%;
+    text-align: center;
+    position: relative;
+  }
+
+  .newsLetterSection img {
+    position: static;
+    width: 80%;
+    margin-top: 20px;
+  }
+
+  .newsLetterSection h3 {
+    font-size: 24px;
+  }
+
+  .newsLetterSection p {
+    font-size: 16px;
+  }
+
+  .newsLetterSection form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+  }
+
+  .newsLetterSection form input {
+    width: 90%;
+    padding: 10px;
+    margin-bottom: 10px;
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-left: 30px;
+  }
+
+  .newsLetterSection form button {
+    position: static;
+    width: 100%;
+    padding: 10px;
+  }
+
+  .newsLetterSection form svg {
+    position: absolute;
+    top: 24px;
+    left: 20px;
+    font-size: 20px;
+  }
+}
+
+footer {
+  width: 100%;
+  height: auto;
+  margin: auto;
+  background: #f8f9fa;
+  padding: 10px 0px;
+  margin-top: 0;
+}
+footer .container {
+  background: #f8f9fa;
+}
+.topInfo {
+  background-color: #f8f9fa;
+  padding: 30px 0;
+  text-align: center;
+  border-bottom: #dedddd 1px solid;
+}
+
+.topInfo > div {
+  display: flex;
+  align-items: center;
+  color: #6c757d;
+  border-right: #dedddd 1px solid;
+  padding: 7px 40px;
+}
+.topInfo > div > span {
+  color: #000;
+  font-weight: 400;
+  font-size: 14px;
+}
+.topInfo > div:last-child {
+  border-right: none;
+}
+.topInfo svg {
+  margin-right: 8px;
+  font-size: 20px;
+}
+footer .container .row1 {
+  margin: 100px 0px;
+}
+.product-categories {
+  width: 100%;
+}
+
+.category {
+  flex: 1;
+  padding: 0 15px;
+}
+
+.category-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  font-size: 14px;
+}
+
+.category ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category ul li {
+  color: #71778e;
+  font-size: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.category ul li:hover {
+  color: #007bff;
+}
+.coppyright {
+  border-top: 1px solid #e0e0e0;
+  padding: 15px 0;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+}
+
+.contact-info {
+  margin-right: 20px;
+}
+.app-download {
+  display: flex;
+  align-items: center;
+}
+.app-download .mr-2 {
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+  text-align: right;
+}
+.app-download .mr-2 span {
+  font-weight: 400;
+}
+.app-badges {
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
+}
+
+.app-badges a {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.app-badges img {
+  height: 40px;
+}
+
+.social-media {
+  display: flex;
+  align-items: center;
+}
+
+.social-media a {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  color: #333;
+}
+
+.social-media svg {
+  font-size: 35px;
+  margin: 0px 1px;
+  color: #007bff;
+  border: 1px solid #ddd;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.3s ease-in-out;
+}
+
+.social-media a:hover svg {
+  background-color: #007bff;
+  color: #fff;
+  border-color: #007bff;
+}
+
+.payment-methods img {
+  height: 30px;
+  margin-left: 10px;
+}
+
+.copyright,
+.working-hours,
+.discount-text {
+  color: #888;
+  font-size: 0.9rem;
+}
+.phone svg {
+  font-size: 40px;
+  padding: 5px;
+  margin-right: 5px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+}
+.phone span {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  padding: 0;
+  height: auto;
+}
+.phone span span {
+  font-size: 13px;
+  font-weight: 400;
+  color: #888;
+  margin: 0;
+  padding: 0;
+}
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  /* Top Info Section */
+  .topInfo {
+    flex-direction: column;
+    padding: 15px 0;
+  }
+
+  .topInfo > div {
+    width: 100%;
+    justify-content: center;
+    border-right: none;
+    border-bottom: #dedddd 1px solid;
+    padding: 10px 0;
+  }
+
+  .topInfo > div:last-child {
+    border-bottom: none;
+  }
+
+  /* Product Categories */
+  .product-categories {
+    flex-direction: column;
+  }
+
+  .category {
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 0;
+    text-align: center;
+  }
+
+  /* Footer */
+  .coppyright {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .footer-left,
+  .footer-right {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .contact-info {
+    margin-right: 0;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+
+  .phone {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .phone svg {
+    margin-bottom: 10px;
+  }
+
+  .app-download {
+    flex-direction: column;
+    align-items: center;
+    margin-right: 0;
+    margin-bottom: 15px;
+  }
+
+  .app-download .mr-2 {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .app-badges {
+    margin-left: 0;
+    margin-bottom: 15px;
+  }
+
+  .social-media {
+    margin-left: 0;
+    margin-bottom: 15px;
+  }
+
+  .social-media a {
+    margin: 0 10px;
+  }
+
+  .payment-methods {
+    margin-top: 15px;
+  }
+
+  /* Ensure full width and center alignment */
+  .container {
+    padding: 0 15px;
+  }
+}
+
+/* Additional Mobile-Friendly Adjustments */
+@media (max-width: 480px) {
+  .app-badges {
+    flex-direction: column;
+  }
+
+  .app-badges a {
+    margin-bottom: 10px;
+  }
+
+  .social-media {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .social-media a {
+    margin: 5px;
+  }
+}
+.modal-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: 1000;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
 }
