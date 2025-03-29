@@ -6,25 +6,20 @@ const NavLinks = () => {
   const [activeSubMenu, setActiveSubMenu] = useState(null);
   const timeoutRef = useRef(null);
 
-  // Hàm này sẽ được gọi khi chuột rời khỏi menu
   const handleMenuLeave = () => {
-    // Đặt thời gian trễ trước khi đóng menu
     timeoutRef.current = setTimeout(() => {
       setActiveMenu(null);
       setActiveSubMenu(null);
-    }, 300); // 300ms trễ trước khi đóng menu
+    }, 300);
   };
 
-  // Hàm này sẽ được gọi khi chuột vào lại menu
   const handleMenuEnter = (index) => {
-    // Xóa timeout nếu đang tồn tại
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     setActiveMenu(index);
   };
 
-  // Dọn dẹp timeout khi component unmount
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -85,7 +80,16 @@ const NavLinks = () => {
         >
           <a
             href={item.link}
-            className="text-gray-700 flex items-center font-medium transition-all duration-300 hover:text-blue-600 px-3 py-2 rounded-md hover:bg-[rgba(59,130,246,0.1)] hover:scale-105 hover:no-underline"
+            className={`text-gray-700 flex items-center font-medium transition-all duration-300 hover:text-blue-600 px-3 py-2 rounded-md hover:bg-gray-100 hover:scale-105 hover:no-underline ${
+              item.name === "HOME" || item.name === "SHOP"
+                ? ""
+                : "hover:bg-gray-100"
+            } ${
+              activeMenu === index &&
+              (item.name === "HOME" || item.name === "SHOP")
+                ? "bg-gray-100"
+                : ""
+            }`}
           >
             {item.name}
             {item.subItems && (
@@ -103,7 +107,6 @@ const NavLinks = () => {
           {item.subItems && activeMenu === index && (
             <div
               className="absolute left-0 top-full mt-1 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-fadeIn"
-              // Thêm padding và margin âm để tạo vùng hover lớn hơn
               style={{
                 padding: "8px",
                 margin: "-8px",
@@ -134,7 +137,6 @@ const NavLinks = () => {
                   {subItem.subItems && activeSubMenu === subIndex && (
                     <div
                       className="absolute left-full top-0 ml-1 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 block animate-fadeIn"
-                      // Thêm padding và margin âm để tạo vùng hover lớn hơn
                       style={{
                         padding: "8px",
                         margin: "-8px",
@@ -167,13 +169,3 @@ const NavLinks = () => {
 };
 
 export default NavLinks;
-
-// Add these styles to your CSS or tailwind.config.js:
-// @keyframes fadeIn {
-//   from { opacity: 0; transform: translateY(10px); }
-//   to { opacity: 1; transform: translateY(0); }
-// }
-//
-// .animate-fadeIn {
-//   animation: fadeIn 0.2s ease-out forwards;
-// }

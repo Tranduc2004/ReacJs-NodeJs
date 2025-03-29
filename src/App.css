@@ -102,6 +102,7 @@ body {
 .badge-primary {
   background: #2bbef9 !important;
 }
+
 .productItem .actions {
   position: absolute;
   top: 15px;
@@ -110,8 +111,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  opacity: 0; /* Ẩn đi */
+  visibility: hidden; /* Không cho click */
   transition: all 0.3s ease-in-out;
 }
+
 .productItem .actions button {
   display: flex;
   align-items: center;
@@ -143,10 +147,13 @@ body {
 .productItem .imgWrapper img {
   transition: all 0.3s ease-in-out;
 }
+
 .productItem .imgWrapper:hover .actions {
-  opacity: 1;
+  opacity: 1; /* Hiện lên */
+  visibility: visible; /* Cho phép click */
   right: 10px;
 }
+
 .productItem .imgWrapper:hover img {
   transform: scale(1.1);
 }
@@ -187,25 +194,34 @@ body {
   overflow: hidden;
   border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
-
-/* Mobile Responsive Styles */
+/* Mobile Styles (0px - 767px): 2 sản phẩm mỗi hàng */
 @media (max-width: 767px) {
-  .productRow2 {
-    justify-content: space-between;
-  }
-
   .productRow2 .productItem {
-    width: 48%; /* Two products per row on mobile */
-    margin-bottom: 10px;
+    width: calc(50% - 7.5px); /* 2 sản phẩm, trừ đi khoảng cách giữa các item */
+    margin-bottom: 15px;
   }
 }
 
-/* Tablet Styles */
+/* Tablet Styles (768px - 1023px): 3 sản phẩm mỗi hàng */
 @media (min-width: 768px) and (max-width: 1023px) {
   .productRow2 .productItem {
-    width: 30%; /* Adjust for tablet view if needed */
+    width: calc(
+      33.333% - 10px
+    ); /* 3 sản phẩm, trừ đi khoảng cách giữa các item */
+    margin-bottom: 15px;
   }
 }
+
+/* Desktop Styles (1024px trở lên): 4 sản phẩm mỗi hàng */
+@media (min-width: 1024px) {
+  .productRow2 .productItem {
+    width: calc(
+      25% - 11.25px
+    ); /* 4 sản phẩm, trừ đi khoảng cách giữa các item */
+    margin-bottom: 20px;
+  }
+}
+
 .bannerSec {
   gap: 15px;
 }
@@ -640,30 +656,65 @@ footer .container .row1 {
     margin: 5px;
   }
 }
-.modal-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  z-index: 1000;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.productModal h4 {
+  font-size: 20px !important;
+  color: rgba(0, 0, 0, 0.8) !important;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
+.productZoom {
+  width: 100%;
+  height: auto;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 0px;
+  overflow: hidden;
+  border-radius: 15px;
+}
+
+.zoomSliderBig {
+  width: 100% !important;
+}
+
+.zoomSlider {
+  padding-top: 30px;
+}
+
+.zoomSlider .slick-slide {
+  padding-right: 20px !important;
+}
+
+.zoomSlider * {
+  outline: none !important;
+}
+
+.zoomSlider .item {
+  border: 2px solid transparent !important;
+  overflow: hidden;
+  border-radius: 15px;
+  cursor: pointer;
+}
+
+.zoomSlider .slick-current .item {
+  border: 2px solid #3bb77e !important;
+}
+
+.zoomSlider .slick-arrow {
+  top: 55% !important;
+  zoom: 80% !important;
+}
+
+.zoomSlider .slick-arrow.slick-next {
+  right: -2% !important;
+}
+
+.zoomSlider .slick-arrow.slick-prev {
+  left: -5% !important;
+}
+.oldPrice.lg {
+  font-size: 20px;
+  text-decoration: line-through;
+  color: rgba(0, 0, 0, 0.4);
+}
+.netPrice.lg {
+  font-size: 20px;
+  font-weight: bold;
 }

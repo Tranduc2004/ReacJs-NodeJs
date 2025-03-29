@@ -58,15 +58,20 @@ const BestSellers = () => {
                   modules={[Navigation]}
                   className="mySwiper"
                   breakpoints={{
-                    // when window width is >= 320px
-                    320: {
+                    // Mobile (default): 2 sản phẩm
+                    0: {
                       slidesPerView: 2,
                       spaceBetween: 10,
                     },
-                    // when window width is >= 768px
+                    // Tablet: 3 sản phẩm
                     768: {
+                      slidesPerView: 3,
+                      spaceBetween: 15,
+                    },
+                    // Desktop: 4 sản phẩm
+                    1024: {
                       slidesPerView: 4,
-                      spaceBetween: 0,
+                      spaceBetween: 8,
                     },
                   }}
                 >
