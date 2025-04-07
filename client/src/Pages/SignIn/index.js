@@ -1,6 +1,7 @@
-import { useEffect, useContext } from "react";
+import { useEffect, useContext, useState } from "react";
 import { MyContext } from "../../App";
 import { Link, useNavigate } from "react-router-dom";
+import { login } from "../../services/api";
 import {
   TextField,
   Button,
@@ -12,6 +13,8 @@ import {
   Divider,
   ThemeProvider,
   createTheme,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 
 // Create a custom theme with #00aaff as the primary color
@@ -52,17 +55,62 @@ const GoogleIcon = () => (
 const SignIn = () => {
   const context = useContext(MyContext);
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
+  // Ẩn header và footer khi vào trang đăng nhập
   useEffect(() => {
     context.setIsHeaderFooterShow(false);
-  }, []); // Thêm dependency array rỗng
+    // Hiện lại header và footer khi unmount component
+    return () => {
+      context.setIsHeaderFooterShow(true);
+    };
+  }, []); // Chỉ chạy 1 lần khi mount
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await login(formData);
+      context.setIsLogin(true);
+      // Lưu thông tin user vào context
+      context.setUser({
+        name: response.name,
+        email: response.email,
+        phone: response.phone,
+        role: response.role,
+      });
+      setShowSuccess(true);
+
+      // Chuyển hướng sau khi hiển thị thông báo thành công
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCancel = () => {
-    context.setIsHeaderFooterShow(true);
-    // Đợi một chút để state được cập nhật
-    requestAnimationFrame(() => {
-      navigate("/");
-    });
+    navigate("/");
   };
 
   return (
@@ -143,7 +191,12 @@ const SignIn = () => {
               Sign In
             </Typography>
 
-            <Box component="form" sx={{ mb: 3 }}>
+            <Box component="form" onSubmit={handleSubmit} sx={{ mb: 3 }}>
+              {error && (
+                <Typography color="error" align="center" sx={{ mb: 2 }}>
+                  {error}
+                </Typography>
+              )}
               <TextField
                 margin="normal"
                 required
@@ -151,6 +204,8 @@ const SignIn = () => {
                 id="email"
                 label="Email"
                 name="email"
+                value={formData.email}
+                onChange={handleChange}
                 autoComplete="email"
                 variant="outlined"
                 sx={{ mb: 2 }}
@@ -163,6 +218,8 @@ const SignIn = () => {
                 label="Password"
                 type="password"
                 id="password"
+                value={formData.password}
+                onChange={handleChange}
                 autoComplete="current-password"
                 variant="outlined"
                 sx={{ mb: 1 }}
@@ -170,19 +227,21 @@ const SignIn = () => {
 
               <Box sx={{ textAlign: "left", mb: 2 }}>
                 <Button color="primary" size="small" sx={{ pl: 0 }}>
-                  Forgot Password?
+                  Quên mật khẩu?
                 </Button>
               </Box>
 
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <Button
+                    type="submit"
                     fullWidth
                     variant="contained"
                     color="primary"
+                    disabled={loading}
                     sx={{ py: 1.5, color: "white" }}
                   >
-                    Sign In
+                    {loading ? "Đang xử lý..." : "Đăng nhập"}
                   </Button>
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -247,6 +306,16 @@ const SignIn = () => {
             zIndex: 0,
           }}
         />
+
+        <Snackbar
+          open={showSuccess}
+          autoHideDuration={1500}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert severity="success" sx={{ width: "100%" }}>
+            Đăng nhập thành công!
+          </Alert>
+        </Snackbar>
       </Box>
     </ThemeProvider>
   );

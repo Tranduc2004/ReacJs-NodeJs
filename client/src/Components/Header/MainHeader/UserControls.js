@@ -1,17 +1,43 @@
-import React from "react";
-import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import React, { useState, useContext } from "react";
 import Button from "@mui/material/Button";
 import { IoBagOutline } from "react-icons/io5";
+import { CiUser } from "react-icons/ci";
 import { CircleButton, CircleCartButton } from "../common/CircleButtons";
 import CartBadge from "../common/CartBadge";
-import { useContext } from "react";
-import { useMediaQuery } from "@mui/material";
+import {
+  useMediaQuery,
+  Menu,
+  MenuItem,
+  Typography,
+  Divider,
+} from "@mui/material";
 import { MyContext } from "../../../App";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { logout } from "../../../services/api";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 
 const UserControls = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const context = useContext(MyContext);
+  const navigate = useNavigate();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    logout();
+    context.setIsLogin(false);
+    context.setUser(null);
+    handleClose();
+    navigate("/");
+  };
 
   return (
     <>
@@ -26,22 +52,69 @@ const UserControls = () => {
               Đăng nhập
             </Button>
           ) : (
-            <CircleButton>
-              <PersonOutlineIcon style={{ width: "24px", height: "24px" }} />
-            </CircleButton>
+            <>
+              <CircleButton onClick={handleClick}>
+                <CiUser style={{ width: "24px", height: "24px" }} />
+              </CircleButton>
+              <Menu
+                className="custom-menu"
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                anchorOrigin={{
+                  vertical: "bottom",
+                  horizontal: "right",
+                }}
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "right",
+                }}
+              >
+                <MenuItem sx={{ pointerEvents: "none" }}>
+                  <Typography variant="body1" sx={{ py: 1 }}>
+                    Xin chào, {context.user?.name || "Khách"}
+                  </Typography>
+                </MenuItem>
+                <Divider />
+                <MenuItem
+                  component={Link}
+                  to="/profile"
+                  onClick={handleClose}
+                  className="menu-item"
+                >
+                  Tài khoản của tôi
+                </MenuItem>
+                <MenuItem
+                  component={Link}
+                  to="/cart"
+                  onClick={handleClose}
+                  className="menu-item"
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  <ShoppingCartIcon fontSize="small" />
+                  Giỏ hàng của tôi
+                </MenuItem>
+                <MenuItem onClick={handleLogout} className="menu-item">
+                  Đăng xuất
+                </MenuItem>
+              </Menu>
+            </>
           )}
 
-          <span className="text-gray-700">$3.29</span>
-          <CircleCartButton>
-            <IoBagOutline
-              style={{ width: "24px", height: "24px", color: "#ea2b0f" }}
-            />
-            <CartBadge count={1} />
-          </CircleCartButton>
+          {context.isLogin && (
+            <Link to="/cart" style={{ textDecoration: "none" }}>
+              <CircleCartButton>
+                <IoBagOutline
+                  style={{ width: "24px", height: "24px", color: "#ea2b0f" }}
+                />
+                <CartBadge />
+              </CircleCartButton>
+            </Link>
+          )}
         </div>
       ) : (
-        <Button size="small" variant="contained">
-          Đăng nhập
+        <Button component={Link} to="/signin" size="small" variant="contained">
+          {context.isLogin ? <CiUser /> : "Đăng nhập"}
         </Button>
       )}
     </>

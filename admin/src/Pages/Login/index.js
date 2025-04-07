@@ -1,15 +1,28 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { FaLock, FaEye, FaEyeSlash, FaUser } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import logo from "../../assets/images/logo.webp";
+import { loginAdmin, setAuthToken } from "../../utils/api";
+import { toast } from "react-toastify";
 
 const Login = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Kiểm tra nếu đã đăng nhập thì chuyển hướng về dashboard
+  useEffect(() => {
+    const token = localStorage.getItem("admin_token");
+    if (token) {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -19,14 +32,36 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
+    setLoading(true);
+
+    try {
+      const response = await loginAdmin(formData);
+      console.log("Login successful:", response);
+
+      // Lưu thông tin admin vào localStorage
+      setAuthToken(response.token);
+
+      // Lưu thông tin admin đầy đủ
+      localStorage.setItem("admin_info", JSON.stringify(response.admin));
+
+      toast.success("Đăng nhập thành công!");
+
+      // Chuyển hướng về trang trước đó hoặc dashboard
+      const from = location.state?.from?.pathname || "/dashboard";
+      navigate(from, { replace: true });
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error(error.response?.data?.message || "Đăng nhập thất bại");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleLogin = () => {
     // Xử lý đăng nhập bằng Google
-    console.log("Google login");
+    toast.info("Tính năng đang được phát triển");
   };
 
   return (
@@ -34,21 +69,21 @@ const Login = () => {
       <div className="login-box">
         <div className="text-center mb-4">
           <img src={logo} alt="logo" className="login-logo mb-2" />
-          <h4>Login to Hotash</h4>
+          <h4>Đăng nhập vào Hotash</h4>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group mb-3">
             <div className="input-group">
               <span className="input-icon">
-                <FaEnvelope />
+                <FaUser />
               </span>
               <input
-                type="email"
+                type="text"
                 className="form-control"
-                placeholder="enter your email"
-                name="email"
-                value={formData.email}
+                placeholder="Nhập tên đăng nhập"
+                name="username"
+                value={formData.username}
                 onChange={handleChange}
                 required
               />
@@ -63,7 +98,7 @@ const Login = () => {
               <input
                 type={showPassword ? "text" : "password"}
                 className="form-control"
-                placeholder="enter your password"
+                placeholder="Nhập mật khẩu"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
@@ -79,35 +114,31 @@ const Login = () => {
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary w-100 mb-3">
-            Sign In
+          <button
+            type="submit"
+            className="btn btn-primary w-100 mb-3"
+            disabled={loading}
+          >
+            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
 
           <div className="text-center mb-3">
             <Link to="/forgot-password" className="forgot-link">
-              FORGOT PASSWORD
+              Quên mật khẩu?
             </Link>
           </div>
 
           <div className="divider">
-            <span>or</span>
+            <span>hoặc</span>
           </div>
-
           <button
             type="button"
             className="btn btn-google w-100"
             onClick={handleGoogleLogin}
           >
             <FcGoogle className="google-icon" />
-            Sign In With Google
+            Đăng nhập với Google
           </button>
-
-          <div className="text-center mt-4">
-            <span className="text-muted">Don't have an account? </span>
-            <Link to="/register" className="register-link">
-              Register
-            </Link>
-          </div>
         </form>
       </div>
     </div>

@@ -32,35 +32,10 @@ const NavLinks = () => {
     {
       name: "HOME",
       link: "/",
-      subItems: [
-        { name: "Homepage 1", link: "/home-1" },
-        { name: "Homepage 2", link: "/home-2" },
-        { name: "Homepage 3", link: "/home-3" },
-      ],
     },
     {
       name: "SHOP",
-      subItems: [
-        {
-          name: "Product Categories",
-          link: "/categories",
-          subItems: [
-            { name: "Organic Food", link: "/organic" },
-            { name: "Fresh Produce", link: "/fresh-produce" },
-            { name: "Imported Goods", link: "/imported" },
-          ],
-        },
-        {
-          name: "Shopping Layouts",
-          link: "/layouts",
-          subItems: [
-            { name: "Grid View", link: "/grid" },
-            { name: "List View", link: "/list" },
-            { name: "Gallery View", link: "/gallery" },
-          ],
-        },
-        { name: "Special Offers", link: "/offers" },
-      ],
+      link: "/cat/1",
     },
     { name: "MEATS & SEAFOOD", link: "/meats-seafood" },
     { name: "BAKERY", link: "/bakery" },

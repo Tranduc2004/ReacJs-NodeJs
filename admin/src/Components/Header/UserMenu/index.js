@@ -1,103 +1,98 @@
 import React, { useState } from "react";
-import Button from "@mui/material/Button";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import Divider from "@mui/material/Divider";
-import { BsShieldFillExclamation } from "react-icons/bs";
-import { FaRegUser } from "react-icons/fa";
-import { IoSettingsOutline } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 import { IoLogOutOutline } from "react-icons/io5";
-import Avatar from "@mui/material/Avatar";
+import { IoSettingsOutline } from "react-icons/io5";
+import { CgProfile } from "react-icons/cg";
+import { logoutAdmin } from "../../../utils/api";
+import { toast } from "react-toastify";
+import {
+  Avatar,
+  Button,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  Divider,
+} from "@mui/material";
 
 const UserMenu = () => {
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const openMyAcc = Boolean(anchorEl);
+  const navigate = useNavigate();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const adminInfo = JSON.parse(localStorage.getItem("admin_info") || "{}");
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleCloseMyAccDrop = () => {
+  const handleClose = () => {
     setAnchorEl(null);
   };
 
-  return (
-    <div className="myAccWrapper">
-      <Button className="myAcc d-flex align-items-center" onClick={handleClick}>
-        <div className="userImg">
-          <span className="rounded-circle">
-            <img
-              src="https://mironcoder-hotash.netlify.app/images/avatar/01.webp"
-              alt="avatar"
-            />
-          </span>
-        </div>
+  const handleLogout = async () => {
+    try {
+      // Xóa token và thông tin admin từ localStorage
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_info");
 
-        <div className="userInfo">
-          <h4>Trần Đức</h4>
-          <p className="mb-0">@tranduc.204</p>
-        </div>
+      // Gọi API logout
+      await logoutAdmin();
+
+      handleClose();
+      toast.success("Đăng xuất thành công");
+
+      // Chuyển hướng về trang login
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Ngay cả khi có lỗi, vẫn xóa thông tin và chuyển về login
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_info");
+      toast.warning("Đã đăng xuất nhưng có lỗi xảy ra");
+      navigate("/login");
+    }
+  };
+
+  return (
+    <>
+      <Button
+        onClick={handleClick}
+        className="user-menu-button"
+        style={{ textTransform: "none" }}
+      >
+        <Avatar
+          alt={adminInfo?.fullName || "Admin"}
+          src="/static/images/avatar/1.jpg"
+          sx={{ width: 32, height: 32 }}
+        />
       </Button>
       <Menu
         anchorEl={anchorEl}
-        id="account-menu"
-        open={openMyAcc}
-        onClose={handleCloseMyAccDrop}
-        onClick={handleCloseMyAccDrop}
-        slotProps={{
-          paper: {
-            elevation: 0,
-            sx: {
-              overflow: "visible",
-              filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
-              mt: 1.5,
-              "& .MuiAvatar-root": {
-                width: 32,
-                height: 32,
-                ml: -0.5,
-                mr: 1,
-              },
-              "&::before": {
-                content: '""',
-                display: "block",
-                position: "absolute",
-                top: 0,
-                right: 14,
-                width: 10,
-                height: 10,
-                bgcolor: "background.paper",
-                transform: "translateY(-50%) rotate(45deg)",
-                zIndex: 0,
-              },
-            },
-          },
-        }}
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
+        onClick={handleClose}
         transformOrigin={{ horizontal: "right", vertical: "top" }}
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
-        <MenuItem onClick={handleCloseMyAccDrop}>
+        <MenuItem onClick={() => navigate("/profile")}>
           <ListItemIcon>
-            <Avatar fontSize="small" />
+            <CgProfile />
           </ListItemIcon>
-          My Account
+          Hồ sơ của tôi
         </MenuItem>
-
-        <MenuItem onClick={handleCloseMyAccDrop}>
+        <MenuItem onClick={() => navigate("/settings")}>
           <ListItemIcon>
-            <BsShieldFillExclamation />
+            <IoSettingsOutline />
           </ListItemIcon>
-          Reset Password
+          Cài đặt
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleCloseMyAccDrop}>
+        <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <IoLogOutOutline />
           </ListItemIcon>
-          Logout
+          Đăng xuất
         </MenuItem>
       </Menu>
-    </div>
+    </>
   );
 };
 

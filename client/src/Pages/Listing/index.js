@@ -12,13 +12,58 @@ import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import ProductItem from "../../Components/ProductItem";
 import Pagination from "@mui/material/Pagination";
+import { getProducts } from "../../services/api";
 
 const Listing = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [productView, setProductView] = useState("four");
   const [showFilter, setShowFilter] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [filters, setFilters] = useState({
+    priceRange: [0, 60000],
+    categories: [],
+    brands: [],
+  });
   const sidebarRef = useRef(null);
   const openDropdown = Boolean(anchorEl);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await getProducts();
+        setProducts(data);
+        setFilteredProducts(data);
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách sản phẩm:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    const filtered = products.filter((product) => {
+      const priceInRange =
+        product.price >= filters.priceRange[0] &&
+        product.price <= filters.priceRange[1];
+
+      const categoryMatch =
+        filters.categories.length === 0 ||
+        filters.categories.includes(product.category);
+
+      const brandMatch =
+        filters.brands.length === 0 || filters.brands.includes(product.brand);
+
+      return priceInRange && categoryMatch && brandMatch;
+    });
+
+    setFilteredProducts(filtered);
+  }, [filters, products]);
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+  };
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -84,7 +129,7 @@ const Listing = () => {
                 width: window.innerWidth <= 767 ? "100%" : "auto",
               }}
             >
-              <Sidebar />
+              <Sidebar onFilterChange={handleFilterChange} />
             </div>
 
             <div className="content_right">
@@ -150,41 +195,13 @@ const Listing = () => {
                 </div>
               </div>
               <div className="productListing">
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
-                <ProductItem itemView={productView} />
+                {filteredProducts.map((product) => (
+                  <ProductItem
+                    key={product._id}
+                    product={product}
+                    itemView={productView}
+                  />
+                ))}
               </div>
               <div className="pagination-responsive d-flex align-items-center justify-content-center mt-5">
                 <Pagination count={10} color="primary" size="large" />

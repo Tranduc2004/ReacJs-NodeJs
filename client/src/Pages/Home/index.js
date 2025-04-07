@@ -11,6 +11,9 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import * as React from "react";
 import { CiMail } from "react-icons/ci";
+import { useState, useEffect } from "react";
+import { getProducts } from "../../services/api";
+import { Link } from "react-router-dom";
 
 // Import Swiper styles
 import "swiper/css";
@@ -18,6 +21,37 @@ import "swiper/css/pagination";
 import ProductItem from "../../Components/ProductItem";
 
 const BestSellers = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await getProducts();
+        setProducts(data);
+        setLoading(false);
+      } catch (err) {
+        setError("Không thể tải sản phẩm. Vui lòng thử lại sau.");
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  if (loading) {
+    return <div>Đang tải...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
+  // Lấy 8 sản phẩm đầu tiên để hiển thị
+  const bestSellers = products.slice(0, 8);
+  const featuredProducts = products.slice(8, 13);
+
   return (
     <>
       <HomeBanner />
@@ -38,16 +72,20 @@ const BestSellers = () => {
             <div className="col-md-9 productRow">
               <div className="d-flex align-items-center">
                 <div className="info w-75">
-                  <h3 className="mb-0 hd">BEST SELLER</h3>
+                  <h3 className="mb-0 hd">SẢN PHẨM NỔI BẬT</h3>
                   <p className="text-light1 text-sml mb-0">
-                    Do not miss the current offers until the end of March.
+                    Khám phá các sản phẩm bán chạy nhất của chúng tôi.
                   </p>
                 </div>
 
-                <Button className="viewAllBtn ml-auto">
-                  View All <FaArrowRight className="arrow" />
-                </Button>
+                <Link to="/cat/1" className="ml-auto">
+                  <Button className="viewAllBtn ml-auto">
+                    View All&nbsp;
+                    <FaArrowRight className="arrow" />
+                  </Button>
+                </Link>
               </div>
+
               <div className="product_row w-100 mt-2">
                 <Swiper
                   slidesPerView={4}
@@ -75,42 +113,39 @@ const BestSellers = () => {
                     },
                   }}
                 >
-                  <SwiperSlide>
-                    <ProductItem />
-                  </SwiperSlide>
-                  <SwiperSlide>
-                    <ProductItem />
-                  </SwiperSlide>
-                  <SwiperSlide>
-                    <ProductItem />
-                  </SwiperSlide>
-                  <SwiperSlide>
-                    <ProductItem />
-                  </SwiperSlide>
-                  <SwiperSlide>
-                    <ProductItem />
-                  </SwiperSlide>
+                  {bestSellers.length > 0 ? (
+                    bestSellers.map((product) => (
+                      <SwiperSlide key={product._id}>
+                        <ProductItem product={product} />
+                      </SwiperSlide>
+                    ))
+                  ) : (
+                    <div className="text-center">Không có sản phẩm nào</div>
+                  )}
                 </Swiper>
               </div>
-              {/* Repeat the same Swiper configuration for the second section */}
+
               <div className="d-flex align-items-center mt-3">
                 <div className="info w-75">
-                  <h3 className="mb-0 hd">BEST SELLER</h3>
+                  <h3 className="mb-0 hd">SẢN PHẨM MỚI</h3>
                   <p className="text-light1 text-sml mb-0">
-                    Do not miss the current offers until the end of March.
+                    Khám phá các sản phẩm mới nhất của chúng tôi.
                   </p>
                 </div>
 
                 <Button className="viewAllBtn ml-auto">
-                  View All <FaArrowRight className="arrow" />
+                  Xem tất cả <FaArrowRight className="arrow" />
                 </Button>
               </div>
+
               <div className="product_row productRow2 w-100 mt-4 d-flex">
-                <ProductItem />
-                <ProductItem />
-                <ProductItem />
-                <ProductItem />
-                <ProductItem />
+                {featuredProducts.length > 0 ? (
+                  featuredProducts.map((product) => (
+                    <ProductItem key={product._id} product={product} />
+                  ))
+                ) : (
+                  <div className="text-center">Không có sản phẩm nào</div>
+                )}
               </div>
 
               <div className="d-flex mt-4 mb-5 bannerSec">

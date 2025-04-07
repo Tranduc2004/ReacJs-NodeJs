@@ -3,11 +3,13 @@ import Rating from "@mui/material/Rating";
 import QuantityBox from "../../Components/QuantityBox";
 import Button from "@mui/material/Button";
 import { BsFillCartFill } from "react-icons/bs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaRegHeart } from "react-icons/fa6";
 import { MdCompareArrows } from "react-icons/md";
 import Tooltip from "@mui/material/Tooltip";
 import RelatedProducts from "../../Components/ProductDetails/RelatedProducts";
+import { useParams } from "react-router-dom";
+import { getProductById, getBrands } from "../../services/api";
 import {
   Box,
   Typography,
@@ -86,18 +88,62 @@ const SubmitButton = styled(Button)(({ theme }) => ({
   },
 }));
 const ProductDetails = () => {
+  const { id } = useParams();
+  const [product, setProduct] = useState(null);
+  const [brandName, setBrandName] = useState("");
+  const [loading, setLoading] = useState(true);
   const [activeSize, setActiveSize] = useState(null);
-  const isActive = (index) => {
-    setActiveSize(index);
-  };
-
   const [tabValue, setTabValue] = useState(0);
   const [review, setReview] = useState("");
   const [rating, setRating] = useState(1);
 
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const data = await getProductById(id);
+        console.log("Product data:", data);
+        setProduct(data);
+
+        // Fetch brand information if we have a brand ID
+        if (data.brand) {
+          console.log("Fetching brand with ID:", data.brand);
+          const brands = await getBrands();
+          const brand = brands.find((b) => b._id === data.brand);
+          if (brand) {
+            console.log("Brand found:", brand);
+            setBrandName(brand.name);
+          }
+        } else {
+          console.log("No brand ID found in product data");
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy thông tin sản phẩm:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchProduct();
+    }
+  }, [id]);
+
+  if (loading) {
+    return <div>Đang tải...</div>;
+  }
+
+  // Tính giá sau khi giảm giá
+  const discountedPrice =
+    product?.price - (product?.price * (product?.discount || 0)) / 100;
+
+  const isActive = (index) => {
+    setActiveSize(index);
+  };
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
+
   const handleReviewChange = (event) => {
     setReview(event.target.value);
   };
@@ -108,41 +154,9 @@ const ProductDetails = () => {
 
   const handleSubmitReview = () => {
     console.log("Review submitted:", { review, rating });
-    // Here you would typically send the review to your API
-    // After successful submission, you could:
     setReview("");
     setRating(1);
-    // And possibly add the new review to your reviews list
   };
-  const productSpecs = [
-    { name: "Stand Up", value: '35"L x 24"W x 37-45"H(front to back wheel)' },
-    { name: "Folded (w/o wheels)", value: '32.5"L x 18.5"W x 16.5"H' },
-    { name: "Folded (w/ wheels)", value: '32.5"L x 24"W x 18.5"H' },
-    { name: "Door Pass Through", value: '24"' },
-    { name: "Frame", value: "Aluminum" },
-    { name: "Weight (w/o wheels)", value: "20 LBS" },
-    { name: "Weight Capacity", value: "60 LBS" },
-    { name: "Width", value: '24"' },
-    { name: "Handle height (ground to handle)", value: '37-45"' },
-    { name: "Wheels", value: '12" air / wide track slick tread' },
-    { name: "Seat back height", value: '21.5"' },
-    { name: "Head room (inside canopy)", value: '25"' },
-    { name: "Color", value: "Black, Blue, Red, White" },
-    { name: "Size", value: "M, S" },
-  ];
-
-  const reviews = [
-    { user: "Thai", date: "2025-03-19", rating: 5, comment: "<3" },
-    {
-      user: "Thai",
-      date: "2025-03-19",
-      rating: 1,
-      comment:
-        "How to make rating of products (because I see rating of product just is html css) change to list rating :(",
-    },
-    { user: "Thai", date: "2025-03-19", rating: 5, comment: "Hay Thật Chứ" },
-    { user: "Mohd shadav", date: "2025-03-18", rating: 1, comment: "" },
-  ];
 
   return (
     <>
@@ -150,37 +164,48 @@ const ProductDetails = () => {
         <div className="container">
           <div className="row">
             <div className="col-md-4 pl-5">
-              <ProductZoom />
+              <ProductZoom product={product} />
             </div>
             <div className="col-md-7 pl-5">
-              <h2 className="hd text-capitalize">
-                Blue Diamond Almonds Lightly Salted
-              </h2>
+              <h2 className="hd text-capitalize">{product?.name}</h2>
               <ul className="list list-inline">
                 <li className="list-inline-item">
                   <div className="d-flex align-items-center">
                     <span className="text-light1 mr-2">Brands : </span>
-                    <span>Welch's</span>
+                    <span>{brandName || "No Brand"}</span>
                   </div>
                 </li>
                 <li className="list-inline-item d-flex align-items-center">
                   <div className="d-flex align-items-center">
                     <Rating
                       name="read-only"
-                      value={4.5}
+                      value={product?.rating || 0}
                       size="small"
                       readOnly
                       precision={0.5}
                     />
-                    <span className="text-light1 cursor ml-2">1 Review</span>
+                    <span className="text-light1 cursor ml-2">
+                      {product?.reviews?.length || 0} Review
+                    </span>
                   </div>
                 </li>
               </ul>
               <div className="d-flex info mb-3">
-                <span className="oldPrice">$20.00</span>
-                <span className="netPrice text-danger ml-2">$10.00</span>
+                {product?.discount > 0 && (
+                  <span className="oldPrice">${product?.price}</span>
+                )}
+                <span className="netPrice text-danger ml-2">
+                  ${discountedPrice}
+                </span>
               </div>
-              <span className="badge bg-success">IN STOCK</span>
+              <span
+                className={`badge ${
+                  product?.inStock > 0 ? "text-success" : "text-danger"
+                }`}
+              >
+                {product?.inStock > 0 ? "IN STOCK" : "OUT OF STOCK"}
+              </span>
+
               <p className="mt-3">
                 Vivamus adipiscing nisl ut dolor dignissim semper. Nulla luctus
                 malesuada tincidunt. Class aptent taciti sociosqu ad litora
@@ -301,17 +326,13 @@ const ProductDetails = () => {
             >
               <Tab label="Description" />
               <Tab label="Additional Info" />
-              <Tab label={`Reviews (${reviews.length})`} />
+              <Tab label={`Reviews (${product?.reviews?.length || 0})`} />
             </StyledTabs>
 
             <ContentBox>
               {tabValue === 0 && (
                 <Typography fontSize="1.1rem" lineHeight={1.7}>
-                  Lorem Ipsum is simply dummy text of the printing and
-                  typesetting industry. Lorem Ipsum has been the industry's
-                  standard dummy text ever since the 1500s, when an unknown
-                  printer took a galley of type and scrambled it to make a type
-                  specimen book.
+                  {product?.description || "No description available."}
                 </Typography>
               )}
 
@@ -322,7 +343,7 @@ const ProductDetails = () => {
                   }}
                 >
                   <TableBody>
-                    {productSpecs.map((spec) => (
+                    {product?.specifications?.map((spec) => (
                       <TableRow
                         key={spec.name}
                         sx={{
@@ -401,7 +422,7 @@ const ProductDetails = () => {
                     Customer questions & answers
                   </Typography>
 
-                  {reviews.map((review, index) => (
+                  {product?.reviews?.map((review, index) => (
                     <ReviewItem key={index}>
                       <Typography
                         variant="h6"

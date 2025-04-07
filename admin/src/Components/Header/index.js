@@ -5,7 +5,6 @@ import { FaSearch } from "react-icons/fa";
 import SearchBox from "./SearchBox";
 import Logo from "./Logo";
 import { MdMenuOpen } from "react-icons/md";
-import { Link } from "react-router-dom";
 import { Container, Row, Col } from "react-bootstrap";
 import { IoMdMenu } from "react-icons/io";
 import { useSidebar } from "../../context/SidebarContext";
@@ -31,7 +30,7 @@ const Header = () => {
 
   return (
     <>
-      <header>
+      <header className={`header ${isDarkMode ? "dark" : ""}`}>
         <Container fluid>
           <Row className="align-items-center" style={{ height: "80px" }}>
             <Col className="d-flex align-items-center">
