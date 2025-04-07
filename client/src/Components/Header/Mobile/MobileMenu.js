@@ -36,10 +36,12 @@ const MobileMenu = ({ toggleMobileMenu }) => {
         {/* Main Navigation */}
         <ul className="space-y-1">
           <li>
-            <button className="flex items-center justify-between w-full px-3 py-3 hover:bg-gray-50 rounded-lg">
-              <span className="font-medium">HOME</span>
-              <span>▼</span>
-            </button>
+            <a href="/">
+              <button className="flex items-center justify-between w-full px-3 py-3 hover:bg-gray-50 rounded-lg">
+                <span className="font-medium">HOME</span>
+                <span>▼</span>
+              </button>
+            </a>
           </li>
           <li>
             <button className="flex items-center justify-between w-full px-3 py-3 hover:bg-gray-50 rounded-lg">

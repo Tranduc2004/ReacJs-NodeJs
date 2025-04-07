@@ -1,22 +1,36 @@
 const mongoose = require("mongoose");
 
-const categorySchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
+const categorySchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      default: "",
+    },
+    image: {
+      type: String,
+      default: "",
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    parent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      default: null,
+    },
   },
-  image: {
-    type: String,
-    required: true,
-  },
-  color: {
-    type: String,
-    required: true,
-  },
-});
-categorySchema.set("toJSON", {
-  virtuals: true,
-});
+  {
+    timestamps: true,
+  }
+);
 
-exports.Category = mongoose.model("Category", categorySchema);
-exports.categorySchema = categorySchema;
+const Category = mongoose.model("Category", categorySchema);
+
+module.exports = Category;

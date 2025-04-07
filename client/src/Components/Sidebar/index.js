@@ -5,28 +5,89 @@ import "react-range-slider-input/dist/style.css";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaFilter } from "react-icons/fa";
+import { getCategories, getBrands } from "../../services/api";
 
-const Sidebar = () => {
-  const [value, setValue] = useState([0, 100]);
+// Hàm định dạng số thành tiền Việt Nam
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
+const Sidebar = ({ onFilterChange = () => {} }) => {
+  const [priceRange, setPriceRange] = useState([0, 1000000000]);
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedBrands, setSelectedBrands] = useState([]);
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Check window size on load and resize
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [categoriesData, brandsData] = await Promise.all([
+          getCategories(),
+          getBrands(),
+        ]);
+        setCategories(categoriesData);
+        setBrands(brandsData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
-      // Auto-hide sidebar on mobile by default
-      if (window.innerWidth <= 768) {
-        setSidebarVisible(false);
-      } else {
-        setSidebarVisible(true);
-      }
+      setSidebarVisible(window.innerWidth > 768);
     };
 
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  const updateFilters = () => {
+    if (typeof onFilterChange === "function") {
+      onFilterChange({
+        priceRange,
+        categories: selectedCategories,
+        brands: selectedBrands,
+      });
+    }
+  };
+
+  useEffect(() => {
+    updateFilters();
+  }, [priceRange, selectedCategories, selectedBrands]);
+
+  const handleCategoryChange = (categoryId) => {
+    setSelectedCategories((prev) => {
+      if (prev.includes(categoryId)) {
+        return prev.filter((id) => id !== categoryId);
+      }
+      return [...prev, categoryId];
+    });
+  };
+
+  const handleBrandChange = (brandId) => {
+    setSelectedBrands((prev) => {
+      if (prev.includes(brandId)) {
+        return prev.filter((id) => id !== brandId);
+      }
+      return [...prev, brandId];
+    });
+  };
+
+  const handlePriceChange = (value) => {
+    setPriceRange(value);
+  };
 
   const toggleSidebar = () => {
     setSidebarVisible(!sidebarVisible);
@@ -49,134 +110,73 @@ const Sidebar = () => {
           <h6>PRODUCT CATEGORIES</h6>
           <div className="scroll">
             <ul>
-              <li>
-                <FormControlLabel
-                  className="w-100"
-                  control={<Checkbox />}
-                  label="Men"
-                />
-              </li>
-              <li>
-                <FormControlLabel
-                  className="w-100"
-                  control={<Checkbox />}
-                  label="Women"
-                />
-              </li>
-              <li>
-                <FormControlLabel
-                  className="w-100"
-                  control={<Checkbox />}
-                  label="Beauty"
-                />
-              </li>
-              <li>
-                <FormControlLabel
-                  className="w-100"
-                  control={<Checkbox />}
-                  label="Kids"
-                />
-              </li>
-              {/* Additional items can be shortened for mobile */}
-              {!isMobile && (
-                <>
-                  <li>
-                    <FormControlLabel
-                      className="w-100"
-                      control={<Checkbox />}
-                      label="Men"
-                    />
-                  </li>
-                  <li>
-                    <FormControlLabel
-                      className="w-100"
-                      control={<Checkbox />}
-                      label="Women"
-                    />
-                  </li>
-                  <li>
-                    <FormControlLabel
-                      className="w-100"
-                      control={<Checkbox />}
-                      label="Beauty"
-                    />
-                  </li>
-                  <li>
-                    <FormControlLabel
-                      className="w-100"
-                      control={<Checkbox />}
-                      label="Kids"
-                    />
-                  </li>
-                </>
-              )}
+              {categories.map((category) => (
+                <li key={category._id}>
+                  <FormControlLabel
+                    className="w-100"
+                    control={
+                      <Checkbox
+                        checked={selectedCategories.includes(category._id)}
+                        onChange={() => handleCategoryChange(category._id)}
+                      />
+                    }
+                    label={category.name}
+                  />
+                </li>
+              ))}
             </ul>
           </div>
         </div>
+
         <div className="filterBox">
           <h6>FILTER BY PRICE</h6>
           <RangeSlider
-            value={value}
-            onInput={setValue}
-            min={100}
-            max={60000}
-            step={5}
+            value={priceRange}
+            onInput={handlePriceChange}
+            min={0}
+            max={100000000}
+            step={10000}
           />
-
           <div className="d-flex pt-2 pb-2 priceRange">
             <span>
-              From: <strong className="text-dark">Rs: {value[0]}</strong>
+              Từ:{" "}
+              <strong className="text-dark">
+                {formatCurrency(priceRange[0])}
+              </strong>
             </span>
             <span className="ml-auto">
-              To: <strong className="text-dark">Rs: {value[1]}</strong>
+              Đến:{" "}
+              <strong className="text-dark">
+                {formatCurrency(priceRange[1])}
+              </strong>
             </span>
           </div>
         </div>
+
         <div className="filterBox">
           <h6>BRANDS</h6>
           <div className="scroll">
             <ul>
-              <li>
-                <FormControlLabel
-                  className="w-100"
-                  control={<Checkbox />}
-                  label="Frito Lay"
-                />
-              </li>
-              <li>
-                <FormControlLabel
-                  className="w-100"
-                  control={<Checkbox />}
-                  label="Nespresso"
-                />
-              </li>
-              <li>
-                <FormControlLabel
-                  className="w-100"
-                  control={<Checkbox />}
-                  label="Oreo"
-                />
-              </li>
-              <li>
-                <FormControlLabel
-                  className="w-100"
-                  control={<Checkbox />}
-                  label="Quaker"
-                />
-              </li>
-              <li>
-                <FormControlLabel
-                  className="w-100"
-                  control={<Checkbox />}
-                  label="Welch's"
-                />
-              </li>
+              {brands.map((brand) => (
+                <li key={brand._id}>
+                  <FormControlLabel
+                    className="w-100"
+                    control={
+                      <Checkbox
+                        checked={selectedBrands.includes(brand._id)}
+                        onChange={() => handleBrandChange(brand._id)}
+                      />
+                    }
+                    label={brand.name}
+                  />
+                </li>
+              ))}
             </ul>
           </div>
         </div>
+
         <br />
-        {/* Hide banner ad on small mobile screens */}
-        <div className={isMobile && window.innerWidth <= 576 ? "d-none" : ""}>
+        {!isMobile && (
           <Link>
             <img
               alt=""
@@ -184,7 +184,7 @@ const Sidebar = () => {
               className="w-100"
             />
           </Link>
-        </div>
+        )}
       </div>
     </>
   );

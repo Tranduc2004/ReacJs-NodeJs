@@ -1,6 +1,7 @@
-import { useEffect, useContext } from "react";
+import { useEffect, useContext, useState } from "react";
 import { MyContext } from "../../App";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { register } from "../../services/api";
 import {
   TextField,
   Button,
@@ -12,6 +13,8 @@ import {
   Divider,
   ThemeProvider,
   createTheme,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 
 // Tạo một theme tùy chỉnh với #00aaff làm màu chính
@@ -51,10 +54,109 @@ const GoogleIcon = () => (
 
 const SignUp = () => {
   const context = useContext(MyContext);
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    phone: "",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
 
   useEffect(() => {
     context.setIsHeaderFooterShow(false);
-  }); // Chỉ chạy một lần khi component mount
+  }, []);
+
+  const validateForm = () => {
+    const errors = {};
+
+    // Kiểm tra email
+    if (!formData.email) {
+      errors.email = "Email không được để trống";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = "Email không hợp lệ";
+    }
+
+    // Kiểm tra mật khẩu
+    if (!formData.password) {
+      errors.password = "Mật khẩu không được để trống";
+    } else if (formData.password.length < 6) {
+      errors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    }
+
+    // Kiểm tra xác nhận mật khẩu
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = "Vui lòng xác nhận mật khẩu";
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = "Mật khẩu xác nhận không khớp";
+    }
+
+    // Kiểm tra tên
+    if (!formData.name) {
+      errors.name = "Tên không được để trống";
+    }
+
+    // Kiểm tra số điện thoại
+    if (!formData.phone) {
+      errors.phone = "Số điện thoại không được để trống";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+
+    // Xóa lỗi validation khi người dùng bắt đầu nhập lại
+    if (validationErrors[e.target.name]) {
+      setValidationErrors({
+        ...validationErrors,
+        [e.target.name]: "",
+      });
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    // Kiểm tra validation trước khi gửi form
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await register(formData);
+      context.setIsLogin(true);
+      setShowSuccess(true);
+
+      setTimeout(() => {
+        context.setIsHeaderFooterShow(true);
+        navigate("/");
+      }, 1500);
+    } catch (err) {
+      // Xử lý lỗi cụ thể từ server
+      if (err.response?.data?.message?.includes("email")) {
+        setError("Email đã tồn tại. Vui lòng sử dụng email khác.");
+      } else {
+        setError(
+          err.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại."
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -134,7 +236,12 @@ const SignUp = () => {
               Đăng ký
             </Typography>
 
-            <Box component="form" sx={{ mb: 3 }}>
+            <Box component="form" onSubmit={handleSubmit} sx={{ mb: 3 }}>
+              {error && (
+                <Typography color="error" align="center" sx={{ mb: 2 }}>
+                  {error}
+                </Typography>
+              )}
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <TextField
@@ -144,8 +251,12 @@ const SignUp = () => {
                     id="name"
                     label="Tên"
                     name="name"
+                    value={formData.name}
+                    onChange={handleChange}
                     variant="outlined"
                     sx={{ mb: 2 }}
+                    error={!!validationErrors.name}
+                    helperText={validationErrors.name}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -156,8 +267,12 @@ const SignUp = () => {
                     id="phone"
                     label="Số điện thoại"
                     name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
                     variant="outlined"
                     sx={{ mb: 2 }}
+                    error={!!validationErrors.phone}
+                    helperText={validationErrors.phone}
                   />
                 </Grid>
               </Grid>
@@ -169,9 +284,13 @@ const SignUp = () => {
                 id="email"
                 label="Email"
                 name="email"
+                value={formData.email}
+                onChange={handleChange}
                 autoComplete="email"
                 variant="outlined"
                 sx={{ mb: 2 }}
+                error={!!validationErrors.email}
+                helperText={validationErrors.email}
               />
               <TextField
                 margin="normal"
@@ -181,20 +300,43 @@ const SignUp = () => {
                 label="Mật khẩu"
                 type="password"
                 id="password"
+                value={formData.password}
+                onChange={handleChange}
                 autoComplete="new-password"
                 variant="outlined"
                 sx={{ mb: 1 }}
+                error={!!validationErrors.password}
+                helperText={validationErrors.password}
+              />
+
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="confirmPassword"
+                label="Xác nhận mật khẩu"
+                type="password"
+                id="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                autoComplete="new-password"
+                variant="outlined"
+                sx={{ mb: 1 }}
+                error={!!validationErrors.confirmPassword}
+                helperText={validationErrors.confirmPassword}
               />
 
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <Button
+                    type="submit"
                     fullWidth
                     variant="contained"
                     color="primary"
+                    disabled={loading}
                     sx={{ py: 1.5, color: "white" }}
                   >
-                    Đăng ký
+                    {loading ? "Đang xử lý..." : "Đăng ký"}
                   </Button>
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -264,6 +406,16 @@ const SignUp = () => {
             zIndex: 0,
           }}
         />
+
+        <Snackbar
+          open={showSuccess}
+          autoHideDuration={1500}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert severity="success" sx={{ width: "100%" }}>
+            Đăng ký thành công!
+          </Alert>
+        </Snackbar>
       </Box>
     </ThemeProvider>
   );

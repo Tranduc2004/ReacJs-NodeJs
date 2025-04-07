@@ -149,24 +149,31 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: white;
+  color: white; /* Màu biểu tượng */
   transition: opacity 0.3s ease;
+}
+
+.view-btn {
+  background-color: #e6e0f5; /* Màu nền tím nhạt */
+}
+.view-btn svg {
+  color: #9932cc; /* Màu biểu tượng tím đậm */
+}
+.edit-btn {
+  background-color: #d1f2eb; /* Màu nền xanh lá nhạt */
+}
+.edit-btn svg {
+  color: #2e8b57; /* Màu biểu tượng xanh lá đậm */
+}
+.delete-btn {
+  background-color: #fcc9da; /* Màu nền hồng nhạt */
+}
+.delete-btn svg {
+  color: #d32f2f; /* Màu biểu tượng đỏ đậm */
 }
 
 .action-buttons button:hover {
   opacity: 0.9;
-}
-
-.view-btn {
-  background: var(--accent-purple);
-}
-
-.edit-btn {
-  background: var(--accent-blue);
-}
-
-.delete-btn {
-  background: var(--accent-red);
 }
 
 /* Table Footer */

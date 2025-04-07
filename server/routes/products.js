@@ -1,5 +1,6 @@
-const { Category } = require("../models/category.js");
+const Category = require("../models/category.js");
 const { Product } = require("../models/products.js");
+const { Brand } = require("../models/brands.js");
 const express = require("express");
 const router = express.Router();
 const cloudinary = require("cloudinary").v2;
@@ -13,7 +14,34 @@ cloudinary.config({
 // GET tất cả sản phẩm
 router.get(`/`, async (req, res) => {
   try {
-    const productList = await Product.find().populate("category");
+    let filter = {};
+
+    // Xử lý tìm kiếm theo tên sản phẩm
+    if (req.query.search) {
+      filter.name = { $regex: req.query.search, $options: "i" };
+    }
+
+    // Xử lý lọc theo danh mục
+    if (req.query.category) {
+      filter.category = req.query.category;
+    }
+
+    // Xử lý lọc theo thương hiệu
+    if (req.query.brand) {
+      filter.brand = req.query.brand;
+    }
+
+    // Xử lý lọc theo khoảng giá
+    if (req.query.minPrice || req.query.maxPrice) {
+      filter.price = {};
+      if (req.query.minPrice) filter.price.$gte = Number(req.query.minPrice);
+      if (req.query.maxPrice) filter.price.$lte = Number(req.query.maxPrice);
+    }
+
+    const productList = await Product.find(filter)
+      .populate("category")
+      .populate("brand");
+
     if (!productList) {
       return res
         .status(500)
@@ -29,7 +57,10 @@ router.get(`/`, async (req, res) => {
 // GET sản phẩm theo ID
 router.get("/:id", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate("category");
+    console.log("ID nhận được từ client:", req.params.id); // Log ID
+    const product = await Product.findById(req.params.id)
+      .populate("category")
+      .populate("brand"); // Thêm populate cho brand
     if (!product) {
       return res.status(404).json({
         success: false,
@@ -46,118 +77,200 @@ router.get("/:id", async (req, res) => {
 // POST tạo sản phẩm mới
 router.post("/", async (req, res) => {
   try {
-    // Kiểm tra category có tồn tại không
-    const category = await Category.findById(req.body.category);
-    if (!category) {
-      return res.status(400).json({
-        success: false,
-        message: "Danh mục không hợp lệ",
-      });
+    const {
+      name,
+      description,
+      richDescription,
+      price,
+      countInStock,
+      isFeatured,
+      category,
+      brand,
+      images,
+    } = req.body;
+
+    // Kiểm tra danh mục
+    const foundCategory = await Category.findById(category);
+    if (!foundCategory)
+      return res
+        .status(400)
+        .json({ success: false, message: "Danh mục không hợp lệ" });
+
+    // Kiểm tra thương hiệu
+    if (brand) {
+      const foundBrand = await Brand.findById(brand);
+      if (!foundBrand)
+        return res
+          .status(400)
+          .json({ success: false, message: "Thương hiệu không hợp lệ" });
     }
 
-    // Upload nhiều ảnh lên cloudinary
+    // Upload ảnh lên Cloudinary nếu là base64
     let imageUrls = [];
-    if (req.body.images && Array.isArray(req.body.images)) {
-      for (const image of req.body.images) {
-        const result = await cloudinary.uploader.upload(image);
-        if (!result) {
-          return res.status(500).json({
-            success: false,
-            message: "Upload ảnh thất bại",
+    if (images && Array.isArray(images)) {
+      for (const img of images) {
+        if (img.startsWith("data:image")) {
+          const uploaded = await cloudinary.uploader.upload(img, {
+            resource_type: "image",
+            folder: "products",
           });
+          imageUrls.push(uploaded.secure_url);
+        } else {
+          // Nếu là URL sẵn có thì giữ nguyên
+          imageUrls.push(img);
         }
-        imageUrls.push(result.secure_url);
       }
     }
 
-    let product = new Product({
-      name: req.body.name,
-      description: req.body.description,
-      richDescription: req.body.richDescription,
+    const newProduct = new Product({
+      name,
+      description,
+      richDescription: richDescription || "",
+      price,
+      countInStock,
+      isFeatured: isFeatured || false,
+      category,
+      brand: brand || null,
       images: imageUrls,
-      brand: req.body.brand,
-      price: req.body.price,
-      category: req.body.category,
-      countInStock: req.body.countInStock,
-      rating: req.body.rating,
-      numReviews: req.body.numReviews,
-      isFeatured: req.body.isFeatured,
     });
 
-    product = await product.save();
+    const saved = await newProduct.save();
+    const populated = await Product.findById(saved._id)
+      .populate("category")
+      .populate("brand");
 
-    if (!product) {
-      return res.status(500).json({
-        success: false,
-        message: "Tạo sản phẩm thất bại",
-      });
-    }
-
-    res.status(201).json({ success: true, product });
-  } catch (err) {
-    console.error("Create product error:", err);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(201).json({ success: true, product: populated });
+  } catch (error) {
+    console.error("Create product error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi tạo sản phẩm",
+      error: error.message,
+    });
   }
 });
 
 // PUT cập nhật sản phẩm
 router.put("/:id", async (req, res) => {
   try {
-    // Kiểm tra category có tồn tại không
-    if (req.body.category) {
-      const category = await Category.findById(req.body.category);
-      if (!category) {
-        return res.status(400).json({
-          success: false,
-          message: "Danh mục không hợp lệ",
-        });
-      }
+    const productId = req.params.id;
+    const {
+      name,
+      description,
+      richDescription,
+      price,
+      countInStock,
+      isFeatured,
+      category,
+      brand,
+      images,
+    } = req.body;
+
+    console.log("Dữ liệu cập nhật:", {
+      productId,
+      ...req.body,
+    });
+
+    // Kiểm tra sản phẩm tồn tại
+    const existingProduct = await Product.findById(productId);
+    if (!existingProduct) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy sản phẩm",
+      });
     }
 
-    let updateData = {
-      name: req.body.name,
-      description: req.body.description,
-      richDescription: req.body.richDescription,
-      brand: req.body.brand,
-      price: req.body.price,
-      category: req.body.category,
-      countInStock: req.body.countInStock,
-      rating: req.body.rating,
-      numReviews: req.body.numReviews,
-      isFeatured: req.body.isFeatured,
-    };
+    // Tạo object chứa dữ liệu cập nhật
+    const updateData = {};
 
-    // Upload nhiều ảnh mới nếu có
-    if (req.body.images && Array.isArray(req.body.images)) {
+    // Cập nhật các trường cơ bản
+    if (name) updateData.name = name.trim();
+    if (description) updateData.description = description.trim();
+    if (richDescription) updateData.richDescription = richDescription.trim();
+    if (price) updateData.price = Number(price);
+    if (countInStock !== undefined)
+      updateData.countInStock = Number(countInStock);
+    if (isFeatured !== undefined) updateData.isFeatured = Boolean(isFeatured);
+
+    // Xử lý category
+    if (category) {
+      const foundCategory = await Category.findById(category);
+      if (!foundCategory) {
+        return res.status(400).json({
+          success: false,
+          message: "Danh mục không tồn tại",
+        });
+      }
+      updateData.category = category;
+    }
+
+    // Xử lý brand
+    if (brand) {
+      const foundBrand = await Brand.findById(brand);
+      if (!foundBrand) {
+        return res.status(400).json({
+          success: false,
+          message: "Thương hiệu không tồn tại",
+        });
+      }
+      updateData.brand = brand;
+    } else {
+      updateData.brand = null;
+    }
+
+    // Xử lý images
+    if (images && Array.isArray(images)) {
       let imageUrls = [];
-      for (const image of req.body.images) {
-        const result = await cloudinary.uploader.upload(image);
-        if (!result) {
-          return res.status(500).json({
-            success: false,
-            message: "Upload ảnh thất bại",
-          });
+      for (const img of images) {
+        if (img.startsWith("data:image")) {
+          try {
+            const uploaded = await cloudinary.uploader.upload(img, {
+              resource_type: "image",
+              folder: "products",
+            });
+            imageUrls.push(uploaded.secure_url);
+          } catch (uploadError) {
+            console.error("Lỗi upload ảnh:", uploadError);
+            return res.status(500).json({
+              success: false,
+              message: "Lỗi khi upload ảnh",
+              error: uploadError.message,
+            });
+          }
+        } else {
+          imageUrls.push(img);
         }
-        imageUrls.push(result.secure_url);
       }
       updateData.images = imageUrls;
     }
 
-    const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-    });
+    console.log("Dữ liệu sau khi xử lý:", updateData);
 
-    if (!product) {
-      return res.status(404).json({
+    // Cập nhật sản phẩm
+    const updatedProduct = await Product.findByIdAndUpdate(
+      productId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).populate("category brand");
+
+    if (!updatedProduct) {
+      return res.status(500).json({
         success: false,
-        message: "Không tìm thấy sản phẩm với ID này",
+        message: "Không thể cập nhật sản phẩm",
       });
     }
 
-    res.status(200).json({ success: true, product });
-  } catch (err) {
-    console.error("Update product error:", err);
-    res.status(500).json({ success: false, error: err.message });
+    res.json({
+      success: true,
+      product: updatedProduct,
+    });
+  } catch (error) {
+    console.error("Lỗi cập nhật sản phẩm:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi cập nhật sản phẩm",
+      error: error.message,
+    });
   }
 });
 
@@ -193,7 +306,10 @@ router.get("/get/count", async (req, res) => {
 router.get("/get/featured/:count", async (req, res) => {
   try {
     const count = req.params.count ? parseInt(req.params.count) : 0;
-    const products = await Product.find({ isFeatured: true }).limit(count);
+    const products = await Product.find({ isFeatured: true })
+      .limit(count)
+      .populate("category")
+      .populate("brand");
     res.status(200).json(products);
   } catch (err) {
     console.error("Get featured products error:", err);

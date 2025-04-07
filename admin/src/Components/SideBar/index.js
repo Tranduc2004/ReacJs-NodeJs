@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { TbLayoutDashboard, TbFileDescription } from "react-icons/tb";
-import { MdOutlineSecurity } from "react-icons/md";
 import { FaRegUser } from "react-icons/fa";
 import { BiPackage, BiMessageDetail } from "react-icons/bi";
 import { RiBillLine } from "react-icons/ri";
 import { BsCart3, BsChevronDown } from "react-icons/bs";
+import { BiSolidCategory } from "react-icons/bi";
 import {
   IoNotificationsOutline,
   IoSettingsOutline,
@@ -21,6 +21,7 @@ import { VscError } from "react-icons/vsc";
 import { MdChangeCircle } from "react-icons/md";
 import { useSidebar } from "../../context/SidebarContext";
 import { IoBag } from "react-icons/io5";
+import { MdBrandingWatermark } from "react-icons/md";
 
 const MenuItem = ({ icon: Icon, text, badge, children, isDropdown }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,9 +63,9 @@ const MenuItem = ({ icon: Icon, text, badge, children, isDropdown }) => {
   );
 };
 
-const SubMenuItem = ({ text }) => (
+const SubMenuItem = ({ text, prefix }) => (
   <Link
-    to={`/products/${text.toLowerCase().replace(/\s+/g, "-")}`}
+    to={`/${prefix}/${text.toLowerCase().replace(/\s+/g, "-")}`}
     className="submenu-item"
   >
     <span>{text}</span>
@@ -86,10 +87,20 @@ const Sidebar = () => {
       <MenuSection title="MAIN PAGES">
         <MenuItem icon={TbLayoutDashboard} text="Dashboard" />
         <MenuItem icon={IoBag} text="Products" isDropdown>
-          <SubMenuItem text="Product List" />
-          <SubMenuItem text="Product View" />
-          <SubMenuItem text="Product Upload" />
+          <SubMenuItem text="Product List" prefix="products" />
+          <SubMenuItem text="Product Upload" prefix="products" />
         </MenuItem>
+
+        <MenuItem icon={BiSolidCategory} text="Category" isDropdown>
+          <SubMenuItem text="Category List" prefix="category" />
+          <SubMenuItem text="Category Add" prefix="category" />
+        </MenuItem>
+
+        <MenuItem icon={MdBrandingWatermark} text="Brands" isDropdown>
+          <SubMenuItem text="Brand List" prefix="brands" />
+          <SubMenuItem text="Brand Add" prefix="brands" />
+        </MenuItem>
+
         <MenuItem
           icon={FaRegUser}
           text="Users"

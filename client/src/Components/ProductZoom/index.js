@@ -2,28 +2,35 @@ import InnerImageZoom from "react-inner-image-zoom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import React, { useState } from "react";
 
-const ProductZoom = () => {
-  const images = [
-    "https://klbtheme.com/bacola/wp-content/uploads/2021/04/product-image-62.jpg",
-    "https://klbtheme.com/bacola/wp-content/uploads/2021/04/product-image2-47.jpg",
-    "https://klbtheme.com/bacola/wp-content/uploads/2021/04/product-image3-35.jpg",
-  ];
-
+const ProductZoom = ({ product }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
 
+  // Sử dụng mảng ảnh từ product hoặc mảng mặc định nếu không có
+  const images =
+    product?.images?.length > 0
+      ? product.images
+      : [
+          "https://klbtheme.com/bacola/wp-content/uploads/2021/04/product-image-62.jpg",
+          "https://klbtheme.com/bacola/wp-content/uploads/2021/04/product-image2-47.jpg",
+          "https://klbtheme.com/bacola/wp-content/uploads/2021/04/product-image3-35.jpg",
+        ];
+
   const handleImageChange = (index) => {
-    setIsFading(true); // Bắt đầu hiệu ứng fade-out
+    setIsFading(true);
     setTimeout(() => {
-      setActiveIndex(index); // Cập nhật ảnh lớn sau khi fade-out
-      setIsFading(false); // Kích hoạt fade-in
-    }, 300); // Thời gian fade-out
+      setActiveIndex(index);
+      setIsFading(false);
+    }, 300);
   };
+
   return (
     <>
       {/* Large Image with Zoom */}
       <div className="productZoom position-relative">
-        <div className="badge badge-primary">23%</div>
+        {product?.discount > 0 && (
+          <div className="badge badge-primary">-{product.discount}%</div>
+        )}
         <div className={`fade-image ${isFading ? "fade-out" : "fade-in"}`}>
           <InnerImageZoom
             src={images[activeIndex]}
@@ -39,7 +46,7 @@ const ProductZoom = () => {
           <SwiperSlide key={index}>
             <div className={`item ${activeIndex === index ? "active" : ""}`}>
               <img
-                alt=""
+                alt={product?.name || `Product image ${index + 1}`}
                 src={src}
                 className="w-100 thumbnail"
                 onClick={() => handleImageChange(index)}
@@ -51,4 +58,5 @@ const ProductZoom = () => {
     </>
   );
 };
+
 export default ProductZoom;
