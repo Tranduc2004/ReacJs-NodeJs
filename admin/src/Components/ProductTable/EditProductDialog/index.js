@@ -22,6 +22,7 @@ import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { editData, fetchDataFromApi } from "../../../utils/api";
 import { useTheme } from "../../../context/ThemeContext";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const EditProductDialog = ({
   open,
@@ -179,7 +180,10 @@ const EditProductDialog = ({
   // Thay đổi hàm handleFormSubmit trong EditProductDialog
   const handleFormSubmit = async (event) => {
     event.preventDefault();
-    if (!product?._id) return;
+    if (!product?._id) {
+      toast.error("Không tìm thấy ID sản phẩm");
+      return;
+    }
 
     setIsLoading(true);
     setErrorMessage("");
@@ -201,76 +205,63 @@ const EditProductDialog = ({
       }
 
       // Xử lý ảnh
-      let imageUrls = [];
-      if (imageInputMethod === "file" && selectedImageFile) {
+      if (imageInputMethod === "url") {
+        // Lọc bỏ các URL trống
+        updatedProductData.images = productData.images.filter(
+          (url) => url.trim() !== ""
+        );
+      } else if (selectedImageFile) {
+        // Xử lý upload file ảnh
         const formData = new FormData();
-        formData.append("image", selectedImageFile);
+        formData.append("file", selectedImageFile);
+        formData.append("upload_preset", "your_upload_preset"); // Thay thế bằng upload preset của bạn
 
-        try {
-          const uploadResponse = await axios.post(
-            "http://localhost:4000/api/upload-image",
-            formData,
-            {
-              headers: {
-                "Content-Type": "multipart/form-data",
-                Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
-              },
-            }
-          );
-
-          if (uploadResponse.data.success) {
-            imageUrls.push(uploadResponse.data.imageUrl);
-          }
-        } catch (uploadError) {
-          console.error("Lỗi upload ảnh:", uploadError);
-          setErrorMessage("Không thể tải ảnh lên. Vui lòng thử lại.");
-          setIsLoading(false);
-          return;
-        }
-      } else if (imageInputMethod === "url") {
-        imageUrls = productData.images.filter(
-          (url) => url && url.trim() !== ""
+        const uploadResponse = await axios.post(
+          "https://api.cloudinary.com/v1_1/your_cloud_name/image/upload", // Thay thế bằng cloud name của bạn
+          formData
         );
+
+        updatedProductData.images = [uploadResponse.data.secure_url];
       }
 
-      if (imageUrls.length > 0) {
-        updatedProductData.images = imageUrls;
-      }
-
-      // Log dữ liệu trước khi gửi
-      console.log("Dữ liệu cập nhật:", updatedProductData);
-      console.log("Product ID:", product._id);
-
-      // Gọi API cập nhật
-      const response = await axios.put(
-        `http://localhost:4000/api/products/${product._id}`,
-        updatedProductData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
-          },
-        }
+      // Gọi API cập nhật sản phẩm
+      const response = await editData(
+        `/api/products/${product._id}`,
+        updatedProductData
       );
+      console.log("API Response:", response); // Log để debug
 
-      console.log("Server response:", response.data);
-
-      if (response.data.success) {
-        if (onProductUpdated) {
-          onProductUpdated(response.data.product);
+      // Kiểm tra response và xử lý dữ liệu
+      if (response) {
+        // Nếu response có success và data
+        if (response.success && response.data) {
+          toast.success("Cập nhật sản phẩm thành công!");
+          if (onProductUpdated && typeof onProductUpdated === "function") {
+            onProductUpdated(response.data);
+          }
+          handleClose();
         }
-        handleClose();
+        // Nếu response chỉ là data
+        else if (response._id) {
+          toast.success("Cập nhật sản phẩm thành công!");
+          if (onProductUpdated && typeof onProductUpdated === "function") {
+            onProductUpdated(response);
+          }
+          handleClose();
+        }
+        // Nếu response không có dữ liệu hợp lệ
+        else {
+          toast.success("Cập nhật sản phẩm thành công!");
+          handleClose();
+        }
       } else {
-        setErrorMessage(
-          response.data.message || "Không thể cập nhật sản phẩm."
-        );
+        toast.error("Cập nhật sản phẩm thất bại!");
+        console.error("Response không hợp lệ:", response);
       }
     } catch (error) {
-      console.error("Lỗi cập nhật sản phẩm:", error);
-      setErrorMessage(
-        error.response?.data?.message ||
-          "Không thể cập nhật sản phẩm. Vui lòng thử lại."
-      );
+      console.error("Lỗi khi cập nhật sản phẩm:", error);
+      toast.error("Đã xảy ra lỗi khi cập nhật sản phẩm");
+      setErrorMessage(error.message || "Đã xảy ra lỗi khi cập nhật sản phẩm");
     } finally {
       setIsLoading(false);
     }

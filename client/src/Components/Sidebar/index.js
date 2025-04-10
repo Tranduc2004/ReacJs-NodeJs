@@ -2,7 +2,7 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import RangeSlider from "react-range-slider-input";
 import "react-range-slider-input/dist/style.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { FaFilter } from "react-icons/fa";
 import { getCategories, getBrands } from "../../services/api";
@@ -17,15 +17,39 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-const Sidebar = ({ onFilterChange = () => {} }) => {
-  const [priceRange, setPriceRange] = useState([0, 1000000000]);
+// Các mức giá phổ biến để chọn nhanh
+const pricePresets = [
+  { label: "Dưới 1 triệu", range: [0, 1000000] },
+  { label: "1 - 5 triệu", range: [1000000, 5000000] },
+  { label: "5 - 10 triệu", range: [5000000, 10000000] },
+  { label: "10 - 20 triệu", range: [10000000, 20000000] },
+  { label: "Trên 20 triệu", range: [20000000, 100000000] },
+];
+
+const Sidebar = ({ onFilterChange = () => {}, initialFilters = {} }) => {
+  const MAX_PRICE = 100000000;
+  const isFirstRender = useRef(true); // Sử dụng useRef để theo dõi lần render đầu tiên
+
+  // Sử dụng giá trị mặc định từ initialFilters nếu có
+  const [priceRange, setPriceRange] = useState(
+    initialFilters.priceRange || [0, MAX_PRICE]
+  );
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedBrands, setSelectedBrands] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState(
+    initialFilters.categories || []
+  );
+  const [selectedBrands, setSelectedBrands] = useState(
+    initialFilters.brands || []
+  );
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  // Thêm state để theo dõi giá tùy chỉnh
+  const [customMinPrice, setCustomMinPrice] = useState(priceRange[0]);
+  const [customMaxPrice, setCustomMaxPrice] = useState(priceRange[1]);
+  const [appliedFilter, setAppliedFilter] = useState(false);
 
+  // Lấy dữ liệu danh mục và thương hiệu
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -36,12 +60,13 @@ const Sidebar = ({ onFilterChange = () => {} }) => {
         setCategories(categoriesData);
         setBrands(brandsData);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching filter data:", error);
       }
     };
     fetchData();
   }, []);
 
+  // Kiểm tra màn hình di động
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -53,44 +78,127 @@ const Sidebar = ({ onFilterChange = () => {} }) => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const updateFilters = () => {
-    if (typeof onFilterChange === "function") {
-      onFilterChange({
-        priceRange,
-        categories: selectedCategories,
-        brands: selectedBrands,
-      });
+  // Đồng bộ state với initialFilters khi props thay đổi
+  useEffect(() => {
+    if (initialFilters.priceRange) {
+      setPriceRange(initialFilters.priceRange);
+      setCustomMinPrice(initialFilters.priceRange[0]);
+      setCustomMaxPrice(initialFilters.priceRange[1]);
     }
-  };
+    if (initialFilters.categories) {
+      setSelectedCategories(initialFilters.categories);
+    }
+    if (initialFilters.brands) {
+      setSelectedBrands(initialFilters.brands);
+    }
+  }, [initialFilters]);
 
   useEffect(() => {
-    updateFilters();
-  }, [priceRange, selectedCategories, selectedBrands]);
+    if (!isFirstRender.current && appliedFilter) {
+      if (
+        priceRange[0] !== initialFilters.priceRange[0] ||
+        priceRange[1] !== initialFilters.priceRange[1]
+      ) {
+        onFilterChange({
+          priceRange,
+          categories: selectedCategories,
+          brands: selectedBrands,
+        });
+        setAppliedFilter(false);
+      }
+    } else {
+      isFirstRender.current = false;
+    }
+  }, [
+    priceRange,
+    selectedCategories,
+    selectedBrands,
+    appliedFilter,
+    onFilterChange,
+    initialFilters.priceRange,
+  ]);
 
-  const handleCategoryChange = (categoryId) => {
+  // Hàm xử lý thay đổi danh mục
+  const handleCategoryChange = useCallback((categoryId) => {
     setSelectedCategories((prev) => {
       if (prev.includes(categoryId)) {
         return prev.filter((id) => id !== categoryId);
       }
       return [...prev, categoryId];
     });
-  };
+    setAppliedFilter(true);
+  }, []);
 
-  const handleBrandChange = (brandId) => {
+  // Hàm xử lý thay đổi thương hiệu
+  const handleBrandChange = useCallback((brandId) => {
     setSelectedBrands((prev) => {
       if (prev.includes(brandId)) {
         return prev.filter((id) => id !== brandId);
       }
       return [...prev, brandId];
     });
-  };
+    setAppliedFilter(true);
+  }, []);
 
-  const handlePriceChange = (value) => {
+  // Hàm xử lý thay đổi khoảng giá từ slider
+  const handlePriceChange = useCallback((value) => {
     setPriceRange(value);
+    setCustomMinPrice(value[0]);
+    setCustomMaxPrice(value[1]);
+    setAppliedFilter(true);
+  }, []);
+
+  // Hàm xử lý thay đổi giá input tùy chỉnh
+  const handleCustomMinPriceChange = (e) => {
+    const value = Number(e.target.value.replace(/\D/g, ""));
+    setCustomMinPrice(value);
   };
 
+  const handleCustomMaxPriceChange = (e) => {
+    const value = Number(e.target.value.replace(/\D/g, ""));
+    setCustomMaxPrice(value);
+  };
+
+  // Hàm áp dụng giá tùy chỉnh
+  const applyCustomPrice = () => {
+    let min = customMinPrice || 0;
+    let max = customMaxPrice || MAX_PRICE;
+
+    // Đảm bảo min <= max
+    if (min > max) {
+      [min, max] = [max, min];
+    }
+
+    // Đảm bảo không vượt quá giới hạn
+    min = Math.max(0, Math.min(min, MAX_PRICE));
+    max = Math.max(min, Math.min(max, MAX_PRICE));
+
+    setPriceRange([min, max]);
+    setAppliedFilter(true);
+    console.log("Price range applied:", [min, max]); // Thêm dòng này để debug
+  };
+
+  // Hàm chọn mức giá từ preset
+  const selectPricePreset = (range) => {
+    setPriceRange(range);
+    setCustomMinPrice(range[0]);
+    setCustomMaxPrice(range[1]);
+    setAppliedFilter(true);
+  };
+
+  // Hàm chuyển đổi hiển thị sidebar (dành cho mobile)
   const toggleSidebar = () => {
     setSidebarVisible(!sidebarVisible);
+  };
+
+  // Hàm reset tất cả bộ lọc
+  const resetFilters = () => {
+    setPriceRange([0, MAX_PRICE]);
+    setCustomMinPrice(0);
+    setCustomMaxPrice(MAX_PRICE);
+    setSelectedCategories([]);
+    setSelectedBrands([]);
+    setAppliedFilter(true);
   };
 
   return (
@@ -98,7 +206,7 @@ const Sidebar = ({ onFilterChange = () => {} }) => {
       {isMobile && (
         <button className="sidebar-toggle-btn" onClick={toggleSidebar}>
           <FaFilter style={{ marginRight: "8px" }} />
-          {sidebarVisible ? "Hide Filters" : "Show Filters"}
+          {sidebarVisible ? "Ẩn bộ lọc" : "Hiện bộ lọc"}
         </button>
       )}
       <div
@@ -107,7 +215,128 @@ const Sidebar = ({ onFilterChange = () => {} }) => {
         }`}
       >
         <div className="filterBox">
-          <h6>PRODUCT CATEGORIES</h6>
+          <div className="d-flex justify-content-between align-items-center">
+            <h6>BỘ LỌC SẢN PHẨM</h6>
+            <button
+              className="reset-filter-btn"
+              onClick={resetFilters}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#ff5722",
+                fontSize: "0.8rem",
+                cursor: "pointer",
+                textDecoration: "underline",
+              }}
+            >
+              Đặt lại
+            </button>
+          </div>
+        </div>
+
+        <div className="filterBox">
+          <h6>KHOẢNG GIÁ</h6>
+          {/* Các mức giá phổ biến */}
+          <div className="price-presets mb-3">
+            <div className="price-preset-label mb-1">Mức giá phổ biến:</div>
+            <div className="price-preset-buttons">
+              {pricePresets.map((preset, index) => (
+                <button
+                  key={index}
+                  className={`price-preset-btn mb-1 ${
+                    priceRange[0] === preset.range[0] &&
+                    priceRange[1] === preset.range[1]
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() => selectPricePreset(preset.range)}
+                  style={{
+                    padding: "5px 10px",
+                    margin: "0 5px 5px 0",
+                    fontSize: "0.8rem",
+                    border: "1px solid #ddd",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    backgroundColor:
+                      priceRange[0] === preset.range[0] &&
+                      priceRange[1] === preset.range[1]
+                        ? "#f0f0f0"
+                        : "white",
+                  }}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Range slider */}
+          <RangeSlider
+            value={priceRange}
+            onInput={handlePriceChange}
+            min={0}
+            max={MAX_PRICE}
+            step={100000}
+          />
+          <div className="d-flex pt-2 pb-2 priceRange">
+            <span>
+              Từ:{" "}
+              <strong className="text-dark">
+                {formatCurrency(priceRange[0])}
+              </strong>
+            </span>
+            <span className="ml-auto">
+              Đến:{" "}
+              <strong className="text-dark">
+                {formatCurrency(priceRange[1])}
+              </strong>
+            </span>
+          </div>
+
+          {/* Nhập giá tùy chỉnh */}
+          <div className="custom-price-inputs mt-3">
+            <div className="row">
+              <div className="col-5">
+                <input
+                  type="text"
+                  className="form-control form-control-sm"
+                  placeholder="Giá từ"
+                  value={customMinPrice === 0 ? "" : customMinPrice}
+                  onChange={handleCustomMinPriceChange}
+                  style={{ fontSize: "0.85rem" }}
+                />
+              </div>
+              <div className="col-5">
+                <input
+                  type="text"
+                  className="form-control form-control-sm"
+                  placeholder="Giá đến"
+                  value={customMaxPrice === MAX_PRICE ? "" : customMaxPrice}
+                  onChange={handleCustomMaxPriceChange}
+                  style={{ fontSize: "0.85rem" }}
+                />
+              </div>
+            </div>
+            <div className="d-flex justify-content-center mt-2">
+              {" "}
+              {/* Thay đổi tại đây */}
+              <button
+                className=" btn-sm text-white"
+                onClick={applyCustomPrice}
+                style={{
+                  fontSize: "0.85rem",
+                  width: "100px",
+                  backgroundColor: "#51adf6", // Thêm màu nền tại đây
+                }}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="filterBox">
+          <h6>DANH MỤC SẢN PHẨM</h6>
           <div className="scroll">
             <ul>
               {categories.map((category) => (
@@ -129,32 +358,7 @@ const Sidebar = ({ onFilterChange = () => {} }) => {
         </div>
 
         <div className="filterBox">
-          <h6>FILTER BY PRICE</h6>
-          <RangeSlider
-            value={priceRange}
-            onInput={handlePriceChange}
-            min={0}
-            max={100000000}
-            step={10000}
-          />
-          <div className="d-flex pt-2 pb-2 priceRange">
-            <span>
-              Từ:{" "}
-              <strong className="text-dark">
-                {formatCurrency(priceRange[0])}
-              </strong>
-            </span>
-            <span className="ml-auto">
-              Đến:{" "}
-              <strong className="text-dark">
-                {formatCurrency(priceRange[1])}
-              </strong>
-            </span>
-          </div>
-        </div>
-
-        <div className="filterBox">
-          <h6>BRANDS</h6>
+          <h6>THƯƠNG HIỆU</h6>
           <div className="scroll">
             <ul>
               {brands.map((brand) => (

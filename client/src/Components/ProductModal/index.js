@@ -1,12 +1,21 @@
 import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import Typography from "@mui/material/Typography";
 import { MdClose } from "react-icons/md";
 import Button from "@mui/material/Button";
 import Rating from "@mui/material/Rating";
-import { IoIosHeartEmpty } from "react-icons/io";
+import { IoIosHeartEmpty, IoIosHeart } from "react-icons/io";
 import { MdOutlineCompareArrows } from "react-icons/md";
 import "swiper/css";
 import { useState, useEffect, useContext } from "react";
-import { getProductById, getBrands, addToCart } from "../../services/api";
+import {
+  getProductById,
+  getBrands,
+  addToCart,
+  addToWishlist,
+  removeFromWishlist,
+  checkWishlistStatus,
+} from "../../services/api";
 import { MyContext } from "../../App";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
@@ -15,30 +24,39 @@ import "react-inner-image-zoom/lib/InnerImageZoom/styles.css";
 import QuantityBox from "../QuantityBox";
 import ProductZoom from "../ProductZoom";
 
-const ProductModal = ({ closeProductModal, productId }) => {
+const ProductModal = ({ productId, closeProductModal }) => {
   const [product, setProduct] = useState(null);
   const [brandName, setBrandName] = useState("");
   const [loading, setLoading] = useState(true);
   const context = useContext(MyContext);
   const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
-      try {
-        const data = await getProductById(productId);
-        setProduct(data);
+      if (!productId) {
+        setLoading(false);
+        return;
+      }
 
-        // Kiểm tra nếu brand đã được populate
-        if (data.brand && typeof data.brand === "object") {
-          setBrandName(data.brand.name);
-        }
-        // Nếu brand chỉ là ID, thì mới cần fetch brands
-        else if (data.brand) {
-          const brands = await getBrands();
-          const brand = brands.find((b) => b._id === data.brand);
-          if (brand) {
-            setBrandName(brand.name);
+      try {
+        const response = await getProductById(productId);
+        if (response) {
+          setProduct(response);
+
+          // Kiểm tra nếu brand đã được populate
+          if (response.brand && typeof response.brand === "object") {
+            setBrandName(response.brand.name);
+          }
+          // Nếu brand chỉ là ID, thì mới cần fetch brands
+          else if (response.brand) {
+            const brands = await getBrands();
+            const brand = brands.find((b) => b._id === response.brand);
+            if (brand) {
+              setBrandName(brand.name);
+            }
           }
         }
       } catch (error) {
@@ -51,24 +69,45 @@ const ProductModal = ({ closeProductModal, productId }) => {
     fetchProduct();
   }, [productId]);
 
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      if (!product?._id) return;
+
+      try {
+        const response = await checkWishlistStatus(product._id);
+        setIsLiked(response.isLiked);
+      } catch (error) {
+        console.error("Lỗi khi kiểm tra trạng thái yêu thích:", error);
+      }
+    };
+
+    checkLikeStatus();
+  }, [product?._id]);
+
   if (loading) {
-    return null;
+    return (
+      <Dialog open={true} onClose={closeProductModal}>
+        <DialogContent>
+          <Typography>Đang tải...</Typography>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (!product) {
+    return (
+      <Dialog open={true} onClose={closeProductModal}>
+        <DialogContent>
+          <Typography>Không tìm thấy sản phẩm</Typography>
+        </DialogContent>
+      </Dialog>
+    );
   }
 
   // Tính giá sau khi giảm giá
   const discountedPrice =
-    product?.price - (product?.price * (product?.discount || 0)) / 100;
-  const isInStock = product?.countInStock > 0;
-
-  const handleIncreaseQuantity = () => {
-    setQuantity((prev) => prev + 1);
-  };
-
-  const handleDecreaseQuantity = () => {
-    if (quantity > 1) {
-      setQuantity((prev) => prev - 1);
-    }
-  };
+    product.price - (product.price * (product.discount || 0)) / 100;
+  const isInStock = product.countInStock > 0;
 
   const handleAddToCart = async () => {
     try {
@@ -105,6 +144,27 @@ const ProductModal = ({ closeProductModal, productId }) => {
     }
   };
 
+  const handleWishlistClick = async () => {
+    if (isLoading || !product._id) return;
+
+    setIsLoading(true);
+    try {
+      if (isLiked) {
+        await removeFromWishlist(product._id);
+        setIsLiked(false);
+        toast.success("Đã xóa khỏi danh sách yêu thích");
+      } else {
+        await addToWishlist(product._id);
+        setIsLiked(true);
+        toast.success("Đã thêm vào danh sách yêu thích");
+      }
+    } catch (error) {
+      toast.error("Có lỗi xảy ra, vui lòng thử lại");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Dialog
       open={true}
@@ -138,14 +198,14 @@ const ProductModal = ({ closeProductModal, productId }) => {
       </Button>
 
       {/* Product Title & Brand */}
-      <h4 className="mb-1 font-weight-bold">{product?.name}</h4>
+      <h4 className="mb-1 font-weight-bold">{product.name}</h4>
       <div className="d-flex align-items-center">
         <span className="mr-2">
           Brands: <b>{brandName || "No Brand"}</b>
         </span>
         <Rating
           name="read-only"
-          value={product?.rating || 0}
+          value={product.rating || 0}
           size="small"
           precision={0.5}
           readOnly
@@ -161,8 +221,8 @@ const ProductModal = ({ closeProductModal, productId }) => {
         {/* Product Info */}
         <div className="col-md-7">
           <div className="d-flex align-items-center mb-3">
-            {product?.discount > 0 && (
-              <span className="oldPrice lg mr-2">{product?.price}</span>
+            {product.discount > 0 && (
+              <span className="oldPrice lg mr-2">{product.price}</span>
             )}
             <span className="netPrice text-danger lg">
               <span className="netPrice text-danger ml-2">
@@ -180,11 +240,7 @@ const ProductModal = ({ closeProductModal, productId }) => {
 
           {/* Quantity & Add to Cart */}
           <div className="d-flex align-items-center">
-            <QuantityBox
-              quantity={quantity}
-              onIncrease={handleIncreaseQuantity}
-              onDecrease={handleDecreaseQuantity}
-            />
+            <QuantityBox value={quantity} onChange={setQuantity} />
             <Button
               className="btn-lg btn-big btn-round ml-3"
               sx={{
@@ -202,8 +258,19 @@ const ProductModal = ({ closeProductModal, productId }) => {
 
           {/* Wishlist & Compare */}
           <div className="d-flex align-items-center mt-5 actions">
-            <Button className="btn-round btn-sml" variant="outlined">
-              <IoIosHeartEmpty /> &nbsp; ADD TO WISHLIST
+            <Button
+              className="btn-round btn-sml"
+              variant="outlined"
+              onClick={handleWishlistClick}
+              disabled={isLoading}
+            >
+              {isLiked ? (
+                <IoIosHeart style={{ color: "red", fill: "red" }} />
+              ) : (
+                <IoIosHeartEmpty style={{ color: "red", fill: "red" }} />
+              )}{" "}
+              &nbsp;
+              {isLiked ? "ĐÃ THÍCH" : "THÊM VÀO YÊU THÍCH"}
             </Button>
             <Button className="btn-round btn-sml ml-3" variant="outlined">
               <MdOutlineCompareArrows /> &nbsp; COMPARE

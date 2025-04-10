@@ -1,53 +1,35 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  FaAppleAlt,
-  FaDrumstickBite,
-  FaEgg,
-  FaCoffee,
-  FaBreadSlice,
-  FaSnowflake,
-  FaCookieBite,
-  FaLeaf,
-  FaAngleRight,
-} from "react-icons/fa";
-
-const categories = [
-  { name: "Fruits & Vegetables", icon: <FaAppleAlt />, subMenu: null },
-  { name: "Meats & Seafood", icon: <FaDrumstickBite />, subMenu: null },
-  { name: "Breakfast & Dairy", icon: <FaEgg />, subMenu: null },
-  {
-    name: "Beverages",
-    icon: <FaCoffee />,
-    subMenu: [
-      { name: "Tea", link: "/beverages/tea" },
-      { name: "Coffee", link: "/beverages/coffee" },
-      { name: "Soft Drinks", link: "/beverages/soft-drinks" },
-    ],
-  },
-  {
-    name: "Breads & Bakery",
-    icon: <FaBreadSlice />,
-    subMenu: [
-      { name: "Bread", link: "/bakery/bread" },
-      { name: "Cakes", link: "/bakery/cakes" },
-    ],
-  },
-  { name: "Frozen Foods", icon: <FaSnowflake />, subMenu: null },
-  { name: "Biscuits & Snacks", icon: <FaCookieBite />, subMenu: null },
-  { name: "Grocery & Staples", icon: <FaLeaf />, subMenu: null },
-];
+import { FaAngleRight } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import { getCategories } from "../../../services/api";
 
 const CategoryMenu = ({ closeMenu }) => {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [openSubMenu, setOpenSubMenu] = useState(null);
   const menuRef = useRef(null);
 
-  // Close menu when clicking outside, but not when clicking the toggle button itself
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getCategories();
+        if (response && Array.isArray(response)) {
+          setCategories(response);
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy danh mục:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Kiểm tra xem người dùng có click vào nút toggle không
-      // Nếu element có class chứa "ALL CATEGORIES" thì đừng đóng menu
-      const isToggleButton = event.target.closest(".bg-blue-400");
-
+      const isToggleButton = event.target.closest("[data-category-toggle]");
       if (
         menuRef.current &&
         !menuRef.current.contains(event.target) &&
@@ -63,40 +45,59 @@ const CategoryMenu = ({ closeMenu }) => {
     };
   }, [closeMenu]);
 
+  if (loading) {
+    return (
+      <div
+        ref={menuRef}
+        className="absolute top-full left-0 w-72 bg-white shadow-lg rounded-md z-50 border mt-3 p-4"
+      >
+        <div className="text-center">Đang tải danh mục...</div>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={menuRef}
-      className="absolute top-full left-0 w-72 bg-white shadow-lg rounded-md z-50 border mt-3 animate-fadeIn"
+      className="absolute top-full left-0 w-72 bg-white shadow-lg rounded-md z-50 border mt-3 animate-fadeIn max-h-[40vh] overflow-y-auto"
     >
       <ul className="py-2">
-        {categories.map((category, index) => (
+        {categories.map((category) => (
           <li
-            key={index}
-            className="px-4 py-3 flex items-center justify-between hover:bg-gray-100 cursor-pointer relative"
-            onMouseEnter={() => setOpenSubMenu(index)}
+            key={category._id}
+            className="px-4 py-3 flex items-center justify-between hover:bg-gray-100 cursor-pointer relative group"
+            onMouseEnter={() => setOpenSubMenu(category._id)}
             onMouseLeave={() => setOpenSubMenu(null)}
           >
-            <div className="flex items-center space-x-3">
-              <span className="text-gray-600 text-lg">{category.icon}</span>
+            <Link
+              to={`/category/${category._id}`}
+              className="flex items-center space-x-3 w-full"
+              onClick={closeMenu}
+            >
               <span className="text-gray-700 font-medium">{category.name}</span>
-            </div>
+            </Link>
 
-            {category.subMenu && <FaAngleRight className="text-gray-400" />}
+            {category.subCategories && category.subCategories.length > 0 && (
+              <FaAngleRight className="text-gray-400" />
+            )}
 
             {/* Submenu cấp 2 */}
-            {category.subMenu && openSubMenu === index && (
-              <div className="absolute left-full top-0 bg-white shadow-lg rounded-md w-48 border py-2 animate-slideIn">
-                {category.subMenu.map((subItem, subIndex) => (
-                  <a
-                    key={subIndex}
-                    href={subItem.link}
-                    className="block px-4 py-2 text-gray-700 hover:bg-blue-100"
-                  >
-                    {subItem.name}
-                  </a>
-                ))}
-              </div>
-            )}
+            {category.subCategories &&
+              category.subCategories.length > 0 &&
+              openSubMenu === category._id && (
+                <div className="absolute left-full top-0 bg-white shadow-lg rounded-md w-48 border py-2 animate-slideIn max-h-[30vh] overflow-y-auto">
+                  {category.subCategories.map((subCategory) => (
+                    <Link
+                      key={subCategory._id}
+                      to={`/category/${subCategory._id}`}
+                      className="block px-4 py-2 text-gray-700 hover:bg-blue-100"
+                      onClick={closeMenu}
+                    >
+                      {subCategory.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
           </li>
         ))}
       </ul>

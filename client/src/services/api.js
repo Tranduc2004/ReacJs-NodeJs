@@ -213,6 +213,195 @@ export const changePassword = (data) => {
   return api.put("/auth/change-password", data);
 };
 
+export const getSliders = () => {
+  return api.get("/sliders");
+};
+
+// Lấy danh sách đánh giá theo productId
+export const getReviewsByProduct = async (productId) => {
+  try {
+    const response = await api.get(`/reviews/product/${productId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy đánh giá:", error);
+    throw error;
+  }
+};
+
+// Thêm đánh giá mới
+export const addReview = async ({ productId, rating, comment }) => {
+  try {
+    const response = await api.post("/reviews", { productId, rating, comment });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi thêm đánh giá:", error);
+    throw error;
+  }
+};
+
+// Cập nhật đánh giá
+export const updateReview = async (reviewId, { rating, comment }) => {
+  try {
+    const response = await api.put(`/reviews/${reviewId}`, { rating, comment });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi cập nhật đánh giá:", error);
+    throw error;
+  }
+};
+
+// Xóa đánh giá
+export const deleteReview = async (reviewId) => {
+  try {
+    const response = await api.delete(`/reviews/${reviewId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi xóa đánh giá:", error);
+    throw error;
+  }
+};
+
+// API cho sản phẩm yêu thích
+export const getWishlist = async () => {
+  try {
+    if (!isAuthenticated()) {
+      return [];
+    }
+    const response = await api.get("/products/likes");
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách yêu thích:", error);
+    if (error.response?.status === 401) {
+      return [];
+    }
+    throw error;
+  }
+};
+
+export const addToWishlist = async (productId) => {
+  if (!isAuthenticated()) {
+    throw new Error(
+      "Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích"
+    );
+  }
+  try {
+    const response = await api.post(`/products/${productId}/like`);
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi thêm vào danh sách yêu thích:", error);
+    throw error;
+  }
+};
+
+export const removeFromWishlist = async (productId) => {
+  if (!isAuthenticated()) {
+    throw new Error(
+      "Vui lòng đăng nhập để xóa sản phẩm khỏi danh sách yêu thích"
+    );
+  }
+  try {
+    const response = await api.delete(`/products/${productId}/like`);
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi xóa khỏi danh sách yêu thích:", error);
+    throw error;
+  }
+};
+
+export const checkWishlistStatus = async (productId) => {
+  if (!isAuthenticated()) {
+    return { isLiked: false };
+  }
+  try {
+    const response = await api.get(`/products/${productId}/like`);
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra trạng thái yêu thích:", error);
+    return { isLiked: false };
+  }
+};
+
+// Lấy danh sách sản phẩm yêu thích
+export const getFavoriteProducts = async () => {
+  try {
+    const response = await api.get("/products/likes");
+    return response.data.products;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách sản phẩm yêu thích:", error);
+    throw error;
+  }
+};
+
+// Lấy sản phẩm theo danh mục
+export const getProductsByCategory = async (categoryId) => {
+  try {
+    console.log("1. Đang gọi API lấy sản phẩm theo danh mục:", categoryId);
+    const response = await api.get(`/products/category/${categoryId}`);
+    console.log("2. Response từ server:", response);
+    console.log("3. Response data:", response.data);
+
+    // Kiểm tra response.data
+    if (response.data) {
+      // Nếu response.data là mảng, trả về trực tiếp
+      if (Array.isArray(response.data)) {
+        console.log("4. Response.data là mảng, trả về trực tiếp");
+        return response.data;
+      }
+
+      // Nếu response.data có cấu trúc {success, data}
+      if (response.data.success && Array.isArray(response.data.data)) {
+        console.log("5. Response.data có cấu trúc {success, data}");
+        return response.data.data;
+      }
+    }
+
+    console.log("6. Không có dữ liệu hợp lệ, trả về mảng rỗng");
+    return [];
+  } catch (error) {
+    console.error("7. Lỗi khi lấy sản phẩm:", error);
+    if (error.response) {
+      console.error("8. Status code:", error.response.status);
+      console.error("9. Error data:", error.response.data);
+    }
+    return [];
+  }
+};
+
+// API cho sản phẩm gợi ý
+export const getSuggestedProducts = async (productId) => {
+  try {
+    console.log(
+      "[getSuggestedProducts] Đang gọi API với productId:",
+      productId
+    );
+    console.log(
+      "[getSuggestedProducts] URL request:",
+      `/products/${productId}/suggestions`
+    );
+    const response = await api.get(`/products/${productId}/suggestions`);
+    console.log("[getSuggestedProducts] Response từ server:", response);
+
+    // Kiểm tra và xử lý response
+    if (response && response.success && Array.isArray(response.data)) {
+      console.log(
+        "[getSuggestedProducts] Trả về danh sách sản phẩm:",
+        response.data
+      );
+      return response.data;
+    } else {
+      console.log("[getSuggestedProducts] Không có dữ liệu hợp lệ từ server");
+      return [];
+    }
+  } catch (error) {
+    console.error("[getSuggestedProducts] Lỗi khi gọi API:", error);
+    if (error.response) {
+      console.error("[getSuggestedProducts] Status:", error.response.status);
+      console.error("[getSuggestedProducts] Data:", error.response.data);
+    }
+    return [];
+  }
+};
+
 export {
   api,
   getCategories,

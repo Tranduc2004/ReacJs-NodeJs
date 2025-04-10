@@ -15,6 +15,9 @@ import Profile from "./Pages/Profile";
 import ChangePassword from "./Pages/ChangePassword";
 import { Toaster } from "react-hot-toast";
 import Search from "./Pages/Search";
+import { AuthProvider } from "./context/AuthContext";
+import Wishlist from "./Pages/Wishlist";
+import ProductByCategory from "./Components/ProductByCategory";
 
 const MyContext = createContext();
 
@@ -75,28 +78,35 @@ function App() {
   };
 
   return (
-    <BrowserRouter>
-      <MyContext.Provider value={values}>
-        <Toaster position="top-right" />
-        {isHeaderFooterShow && <Header />}
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/cat/:id" exact={true} element={<Listing />} />
-          <Route
-            exact={true}
-            path="/product/:id"
-            element={<ProductDetails />}
-          />
-          <Route exact={true} path="/cart" element={<Cart />} />
-          <Route exact={true} path="/signIn" element={<SignIn />} />
-          <Route exact={true} path="/signUp" element={<SignUp />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/change-password" element={<ChangePassword />} />
-          <Route path="/search" element={<Search />} />
-        </Routes>
-        {isHeaderFooterShow && <Footer />}
-      </MyContext.Provider>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <MyContext.Provider value={values}>
+          <Toaster position="top-right" />
+          {isHeaderFooterShow && <Header />}
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/listing" exact={true} element={<Listing />} />
+            <Route
+              path="/category/:categoryId"
+              element={<ProductByCategory />}
+            />
+            <Route
+              exact={true}
+              path="/product/:id"
+              element={<ProductDetails />}
+            />
+            <Route exact={true} path="/cart" element={<Cart />} />
+            <Route exact={true} path="/signIn" element={<SignIn />} />
+            <Route exact={true} path="/signUp" element={<SignUp />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/change-password" element={<ChangePassword />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+          </Routes>
+          {isHeaderFooterShow && <Footer />}
+        </MyContext.Provider>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

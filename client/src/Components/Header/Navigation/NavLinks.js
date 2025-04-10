@@ -35,7 +35,7 @@ const NavLinks = () => {
     },
     {
       name: "SHOP",
-      link: "/cat/1",
+      link: "/listing",
     },
     { name: "MEATS & SEAFOOD", link: "/meats-seafood" },
     { name: "BAKERY", link: "/bakery" },

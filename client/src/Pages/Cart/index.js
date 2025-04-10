@@ -71,70 +71,78 @@ const Cart = () => {
               <div className="table-responsive">
                 <table className="table">
                   <thead>
-                    <tr>
-                      <th width="35%">Product</th>
-                      <th width="20%">Unit Price</th>
-                      <th width="20%">Quantity</th>
-                      <th width="15%">Subtotal</th>
-                      <th width="10%">Remove</th>
+                    <tr className="bg-slate-100">
+                      <th width="35%">Tên sản phẩm</th>
+                      <th width="20%">Giá thành</th>
+                      <th width="20%">Số lượng</th>
+                      <th width="15%">Thành tiền</th>
+                      <th width="10%">Xóa</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {cartItems.map((item) => (
-                      <tr key={item.product._id}>
-                        <td>
-                          <Link to={`/product/${item.product._id}`}>
-                            <div className="d-flex align-items-center cartItemimgWrapper">
-                              <div className="imgWrapper">
-                                <img
-                                  src={item.product.images[0]}
-                                  alt={item.product.name}
-                                  className="w-100"
-                                  style={{ maxWidth: "80px" }}
-                                />
+                    {cartItems.map((item) => {
+                      if (!item || !item.product) {
+                        return null;
+                      }
+
+                      return (
+                        <tr key={item.product._id}>
+                          <td>
+                            <Link to={`/product/${item.product._id}`}>
+                              <div className="d-flex align-items-center cartItemimgWrapper">
+                                <div className="imgWrapper">
+                                  <img
+                                    src={item.product.images?.[0] || ""}
+                                    alt={item.product.name}
+                                    className="w-100"
+                                    style={{ maxWidth: "80px" }}
+                                  />
+                                </div>
+                                <div className="info px-3">
+                                  <h6 className="product-name">
+                                    {item.product.name}
+                                  </h6>
+                                  <Rating
+                                    name="read-only"
+                                    value={item.product.rating || 0}
+                                    readOnly
+                                    precision={0.5}
+                                    size="small"
+                                  />
+                                </div>
                               </div>
-                              <div className="info px-3">
-                                <h6 className="product-name">
-                                  {item.product.name}
-                                </h6>
-                                <Rating
-                                  name="read-only"
-                                  value={item.product.rating || 0}
-                                  readOnly
-                                  precision={0.5}
-                                  size="small"
-                                />
-                              </div>
-                            </div>
-                          </Link>
-                        </td>
-                        <td>{item.price.toLocaleString("vi-VN")}đ</td>
-                        <td>
-                          <QuantityBox
-                            value={item.quantity}
-                            onChange={(newQuantity) =>
-                              handleUpdateQuantity(
-                                item.product._id,
-                                newQuantity
-                              )
-                            }
-                          />
-                        </td>
-                        <td>
-                          {(item.price * item.quantity).toLocaleString("vi-VN")}
-                          đ
-                        </td>
-                        <td>
-                          <span
-                            className="remove"
-                            onClick={() => handleRemoveItem(item.product._id)}
-                            style={{ cursor: "pointer" }}
-                          >
-                            <IoIosClose />
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                            </Link>
+                          </td>
+                          <td>{item.price.toLocaleString("vi-VN")}đ</td>
+                          <td>
+                            <QuantityBox
+                              value={item.quantity}
+                              onChange={(newQuantity) =>
+                                handleUpdateQuantity(
+                                  item.product._id,
+                                  newQuantity
+                                )
+                              }
+                            />
+                          </td>
+                          <td>
+                            {(item.price * item.quantity).toLocaleString(
+                              "vi-VN"
+                            )}
+                            đ
+                          </td>
+                          <td>
+                            <span
+                              className="remove"
+                              onClick={() => handleRemoveItem(item.product._id)}
+                              style={{ cursor: "pointer" }}
+                            >
+                              <IoIosClose />
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -143,17 +151,17 @@ const Cart = () => {
             {/* Tổng thanh toán */}
             <div className="col-lg-3 col-12">
               <div className="card border p-3 cartDetails">
-                <h4>CART TOTAL</h4>
+                <h4>HÓA ĐƠN</h4>
                 <div className="d-flex justify-content-between mb-3">
-                  <span>Subtotal:</span>
+                  <span>Tổng thu:</span>
                   <b className="text-red">
                     {calculateTotal().toLocaleString("vi-VN")}đ
                   </b>
                 </div>
 
                 <div className="d-flex justify-content-between mb-3">
-                  <span>Shipping:</span>
-                  <b>Free</b>
+                  <span>Phí vận chuyển:</span>
+                  <b>Miễn phí</b>
                 </div>
 
                 <div className="d-flex justify-content-between mb-3">
@@ -176,7 +184,7 @@ const Cart = () => {
                     "&:hover": { backgroundColor: "#0088cc" },
                   }}
                 >
-                  <IoCartSharp /> &nbsp; Checkout
+                  <IoCartSharp /> &nbsp; Tiếp tục
                 </Button>
               </div>
             </div>

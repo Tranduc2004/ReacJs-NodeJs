@@ -94,6 +94,7 @@ router.put("/:id", async (req, res) => {
       description: req.body.description,
       isActive: req.body.isActive,
       parent: req.body.parent,
+      color: req.body.color,
     };
 
     if (req.body.image) {

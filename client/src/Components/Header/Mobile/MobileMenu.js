@@ -39,15 +39,15 @@ const MobileMenu = ({ toggleMobileMenu }) => {
             <a href="/">
               <button className="flex items-center justify-between w-full px-3 py-3 hover:bg-gray-50 rounded-lg">
                 <span className="font-medium">HOME</span>
-                <span>▼</span>
               </button>
             </a>
           </li>
           <li>
-            <button className="flex items-center justify-between w-full px-3 py-3 hover:bg-gray-50 rounded-lg">
-              <span className="font-medium">SHOP</span>
-              <span>▼</span>
-            </button>
+            <a href="/cat/1">
+              <button className="flex items-center justify-between w-full px-3 py-3 hover:bg-gray-50 rounded-lg">
+                <span className="font-medium">SHOP</span>
+              </button>
+            </a>
           </li>
           <li>
             <button className="flex items-center justify-between w-full px-3 py-3 hover:bg-gray-50 rounded-lg">

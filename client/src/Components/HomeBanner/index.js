@@ -1,13 +1,32 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import slider3 from "../../assets/images/slider3.webp";
-import slider2 from "../../assets/images/slider2.webp";
-import slider1 from "../../assets/images/slider1.webp";
+import { getSliders } from "../../services/api";
 
 const HomeBanner = () => {
   const sliderRef = useRef(null);
+  const [sliders, setSliders] = useState([]);
+
+  useEffect(() => {
+    const fetchSliders = async () => {
+      try {
+        const res = await getSliders();
+        console.log("Kết quả trả về từ API slider:", res);
+
+        // Sửa lại cách xử lý data ở đây
+        const data = Array.isArray(res) ? res : [];
+        console.log("Dữ liệu slider sau khi xử lý:", data);
+
+        setSliders(data);
+      } catch (error) {
+        console.error("Lỗi khi tải slider:", error);
+        setSliders([]); // Đảm bảo set mảng rỗng khi có lỗi
+      }
+    };
+
+    fetchSliders();
+  }, []);
 
   const settings = {
     dots: true,
@@ -19,18 +38,8 @@ const HomeBanner = () => {
     autoplaySpeed: 3000,
     dotsClass: "slick-dots custom-dots",
     responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          dots: true,
-        },
-      },
-      {
-        breakpoint: 600,
-        settings: {
-          dots: false,
-        },
-      },
+      { breakpoint: 1024, settings: { dots: true } },
+      { breakpoint: 600, settings: { dots: false } },
     ],
   };
 
@@ -51,62 +60,31 @@ const HomeBanner = () => {
       <div className="relative w-full group overflow-hidden">
         <div className="w-full row2 h-[200px] sm:h-[300px] md:h-[300px] lg:h-[300px] xl:h-[300px] mt-3">
           <Slider ref={sliderRef} {...settings}>
-            <div className="w-full h-full">
-              <img
-                src={slider3}
-                alt=""
-                className="w-full h-full object-cover object-center"
-                loading="lazy"
-                width={1200}
-                height={600}
-              />
-            </div>
-            <div className="w-full h-full">
-              <img
-                src={slider2}
-                alt=""
-                className="w-full h-full object-cover object-center"
-                loading="lazy"
-                width={1200}
-                height={600}
-              />
-            </div>
-            <div className="w-full h-full">
-              <img
-                src={slider1}
-                alt=""
-                className="w-full h-full object-cover object-center"
-                loading="lazy"
-                width={1200}
-                height={600}
-              />
-            </div>
+            {Array.isArray(sliders) && sliders.length > 0 ? (
+              sliders.map((item) => (
+                <div key={item._id || item.id} className="w-full h-full">
+                  <img
+                    src={item.image || "/images/default.jpg"}
+                    alt={`slider-${item._id || item.id}`}
+                    className="w-full h-full object-cover object-center"
+                    loading="lazy"
+                    width={1200}
+                    height={600}
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <p>Không có slider để hiển thị.</p>
+              </div>
+            )}
           </Slider>
         </div>
 
-        {/* Navigation Buttons - Unchanged from previous version */}
+        {/* Nút điều hướng giống cũ */}
         <button
           onClick={goToPrev}
-          className="
-        absolute 
-        left-2 
-        sm:left-4 
-        top-1/2 
-        -translate-y-1/2 
-        bg-white 
-        bg-opacity-50 
-        hover:bg-opacity-75 
-        p-1 
-        sm:p-2 
-        rounded-full 
-        z-10 
-        opacity-0 
-        group-hover:opacity-100 
-        transition-all 
-        duration-300 
-        hidden 
-        md:block
-      "
+          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-50 hover:bg-opacity-75 p-1 sm:p-2 rounded-full z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 hidden md:block"
           aria-label="Previous slide"
         >
           <svg
@@ -124,29 +102,9 @@ const HomeBanner = () => {
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-
         <button
           onClick={goToNext}
-          className="
-        absolute 
-        right-2 
-        sm:right-4 
-        top-1/2 
-        -translate-y-1/2 
-        bg-white 
-        bg-opacity-50 
-        hover:bg-opacity-75 
-        p-1 
-        sm:p-2 
-        rounded-full 
-        z-10 
-        opacity-0 
-        group-hover:opacity-100 
-        transition-all 
-        duration-300 
-        hidden 
-        md:block
-      "
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-50 hover:bg-opacity-75 p-1 sm:p-2 rounded-full z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 hidden md:block"
           aria-label="Next slide"
         >
           <svg

@@ -3,6 +3,7 @@ const app = express();
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
 require("dotenv/config");
 
 // Import routes
@@ -12,6 +13,8 @@ const brandRoutes = require("./routes/brands");
 const adminRoutes = require("./routes/admin");
 const authRoutes = require("./routes/auth");
 const cartRoutes = require("./routes/cart");
+const sliderRoutes = require("./routes/sliders");
+const reviewRoutes = require("./routes/reviews");
 
 // Kết nối MongoDB
 mongoose
@@ -40,6 +43,8 @@ app.use("/api/brands", brandRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/sliders", sliderRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 // Basic route để test
 app.get("/", (req, res) => {

@@ -127,6 +127,89 @@ button {
   border: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
+/* CSS styles - đặt trong file CSS của bạn */
+.add-to-cart-btn {
+  border: 2px solid #00aaff;
+  color: #00aaff;
+  font-weight: 500;
+  text-transform: none;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  font-size: 0.9rem; /* Font size nhỏ hơn trên mobile */
+  width: 100%; /* Chiếm toàn bộ chiều rộng container trên mobile */
+  max-width: 140px; /* Giới hạn chiều rộng tối đa */
+}
+
+.add-to-cart-btn:hover {
+  background-color: #00aaff;
+  color: white;
+  border-color: #00aaff;
+}
+
+/* Mobile optimization styles */
+@media (max-width: 767px) {
+  .productItem {
+    max-width: 160px; /* Giảm chiều rộng tối đa trên mobile */
+    margin: 0 auto 15px;
+  }
+
+  .productItem .imgWrapper {
+    height: 120px; /* Chiều cao cố định cho ảnh */
+  }
+
+  .productItem .imgWrapper img {
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  .productItem .badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+  }
+
+  .productItem .actions {
+    transform: scale(0.8);
+  }
+
+  .productItem .actions .b1 {
+    padding: 4px;
+    min-width: unset;
+  }
+
+  .productItem .productName {
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .productItem .instock {
+    font-size: 0.7rem;
+    margin-bottom: 2px;
+  }
+
+  .productItem .netPrice {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .add-to-cart-btn {
+    font-size: 0.8rem !important;
+    padding: 6px 15px !important;
+    width: 100%;
+    max-width: 140px;
+  }
+}
+
+/* Product grid view mobile styles */
+@media (max-width: 767px) {
+  .grid .productItem {
+    width: calc(50% - 10px);
+    margin: 0 5px 15px;
+  }
+}
+
 .swiper {
   padding-right: 1px !important;
 }
@@ -161,6 +244,70 @@ button {
   opacity: 1;
   visibility: visible;
   right: 15px;
+}
+/* CSS cho Custom User Menu */
+.blue-user-menu {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 170, 255, 0.15);
+  padding: 8px 0;
+  min-width: 220px;
+}
+
+.blue-user-menu .MuiPaper-root {
+  border: 1px solid rgba(0, 170, 255, 0.2);
+}
+
+.blue-menu-item {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background-color 0.2s ease;
+}
+
+.blue-menu-item:hover {
+  background-color: rgba(0, 170, 255, 0.1);
+}
+
+.blue-menu-item svg {
+  color: #00aaff;
+  font-size: 18px;
+}
+
+.blue-menu-item.active {
+  background-color: rgba(0, 170, 255, 0.08);
+}
+
+.blue-menu-greeting {
+  color: #333;
+  font-weight: 500;
+  padding: 10px 16px;
+}
+
+.blue-menu-divider {
+  margin: 4px 0;
+  background-color: rgba(0, 170, 255, 0.2);
+}
+
+.blue-logout-item {
+  color: #ea2b0f;
+}
+
+.blue-logout-item:hover {
+  background-color: rgba(234, 43, 15, 0.08);
+}
+
+/* Styles cho CircleButton */
+.blue-circle-button {
+  background-color: white;
+  border: 1px solid rgba(0, 170, 255, 0.3);
+  color: #00aaff;
+  transition: all 0.3s ease;
+}
+
+.blue-circle-button:hover {
+  background-color: rgba(0, 170, 255, 0.1);
+  border-color: #00aaff;
 }
 
 .productItem .actions button {
@@ -851,7 +998,15 @@ footer .container .row1 {
   background: #e5f8ed !important;
   color: #16b858 !important;
 }
+.bg-success {
+  background: #e5f8ed !important;
+  color: #16b858 !important;
+}
 .badge.bg-danger {
+  background: #f8e5e5 !important;
+  color: #b81616 !important;
+}
+.bg-danger {
   background: #f8e5e5 !important;
   color: #b81616 !important;
 }
@@ -974,6 +1129,14 @@ footer .container .row1 {
   margin-bottom: 0px;
   width: 100%;
 }
+.MuiFormControlLabel-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 170px; /* hoặc 100% nếu cha đã có width cố định */
+}
+
 .css-imrjgg-MuiButtonBase-root-MuiCheckbox-root {
   padding: 2px !important;
 }

@@ -5,6 +5,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import cat9 from "../../assets/images/cat9.png";
 import { getCategories } from "../../services/api";
+import { Link } from "react-router-dom";
 
 const HomeCat = () => {
   const [categories, setCategories] = useState([]);
@@ -86,16 +87,21 @@ const HomeCat = () => {
             {categories.length > 0 ? (
               categories.map((category, index) => (
                 <SwiperSlide key={category._id || index}>
-                  <div
-                    className="item text-center cursor"
-                    style={{ background: itemBg[index % itemBg.length] }}
+                  <Link
+                    to={`/category/${category._id}`}
+                    className="block"
+                    style={{ color: "black" }}
                   >
-                    <div className="img-wrapper">
-                      <img src={category.image || cat9} alt={category.name} />
+                    <div
+                      className="item text-center cursor"
+                      style={{ background: itemBg[index % itemBg.length] }}
+                    >
+                      <div className="img-wrapper">
+                        <img src={category.image || cat9} alt={category.name} />
+                      </div>
+                      <h6 style={{ opacity: "0.8" }}>{category.name}</h6>
                     </div>
-
-                    <h6>{category.name}</h6>
-                  </div>
+                  </Link>
                 </SwiperSlide>
               ))
             ) : (

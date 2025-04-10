@@ -4,49 +4,94 @@ import ProductTable from "../../Components/ProductTable";
 import { IoBag } from "react-icons/io5";
 import { BiCategory } from "react-icons/bi";
 import { MdBrandingWatermark } from "react-icons/md";
-import { fetchDataFromApi } from "../../utils/api";
+import { fetchDataFromApi, deleteData } from "../../utils/api";
 import "./styles.css";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import Button from "@mui/material/Button";
+import { useTheme } from "../../context/ThemeContext";
+import { toast } from "react-toastify";
 
 const ProductList = () => {
+  const { isDarkMode } = useTheme();
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalCategories: 0,
     totalBrands: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    id: null,
+  });
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      // Lấy danh sách sản phẩm
+      const productsData = await fetchDataFromApi("/api/products");
+      const products = Array.isArray(productsData[0])
+        ? productsData[0]
+        : productsData;
+
+      // Lấy danh sách danh mục
+      const categoriesData = await fetchDataFromApi("/api/categories");
+      const categories = Array.isArray(categoriesData) ? categoriesData : [];
+
+      // Lấy danh sách thương hiệu từ API
+      const brandsData = await fetchDataFromApi("/api/brands");
+      const brands = Array.isArray(brandsData) ? brandsData : [];
+
+      setStats({
+        totalProducts: products.length,
+        totalCategories: categories.length,
+        totalBrands: brands.length,
+      });
+      setLoading(false);
+    } catch (error) {
+      console.error("Lỗi khi tải thống kê:", error);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setLoading(true);
-        // Lấy danh sách sản phẩm
-        const productsData = await fetchDataFromApi("/api/products");
-        const products = Array.isArray(productsData[0])
-          ? productsData[0]
-          : productsData;
-
-        // Lấy danh sách danh mục
-        const categoriesData = await fetchDataFromApi("/api/categories");
-        const categories = Array.isArray(categoriesData) ? categoriesData : [];
-
-        // Lấy danh sách thương hiệu từ API
-        const brandsData = await fetchDataFromApi("/api/brands");
-        const brands = Array.isArray(brandsData) ? brandsData : [];
-
-        setStats({
-          totalProducts: products.length,
-          totalCategories: categories.length,
-          totalBrands: brands.length,
-        });
-        setLoading(false);
-      } catch (error) {
-        console.error("Lỗi khi tải thống kê:", error);
-        setLoading(false);
-      }
-    };
-
     fetchStats();
   }, []);
+
+  const handleDelete = (id) => {
+    setDeleteDialog({
+      open: true,
+      id: id,
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    deleteData("/api/products/", deleteDialog.id)
+      .then((res) => {
+        console.log("Kết quả xoá:", res);
+        if (res.success) {
+          toast.success("Xóa sản phẩm thành công!");
+          // Refresh data after deletion
+          fetchStats();
+        } else {
+          toast.error("Xóa thất bại");
+        }
+      })
+      .catch((err) => {
+        console.error("Lỗi khi xoá:", err);
+        toast.error("Đã xảy ra lỗi khi xóa");
+      })
+      .finally(() => {
+        setDeleteDialog({ open: false, id: null });
+      });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialog({ open: false, id: null });
+  };
 
   return (
     <div className="product-list-container">
@@ -109,7 +154,53 @@ const ProductList = () => {
       </div>
 
       {/* Product Table Component */}
-      <ProductTable />
+      <ProductTable onDelete={handleDelete} />
+
+      {/* Dialog xác nhận xóa */}
+      <Dialog
+        open={deleteDialog.open}
+        onClose={handleDeleteCancel}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+        PaperProps={{
+          style: {
+            backgroundColor: isDarkMode ? "#1a2035" : "#fff",
+          },
+        }}
+      >
+        <DialogTitle
+          id="alert-dialog-title"
+          sx={{ color: isDarkMode ? "#fff" : "#000" }}
+        >
+          Xác nhận xóa
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText
+            id="alert-dialog-description"
+            sx={{ color: isDarkMode ? "#fff" : "#000" }}
+          >
+            Bạn có chắc chắn muốn xóa sản phẩm này? Hành động này không thể hoàn
+            tác.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleDeleteCancel}
+            sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined }}
+          >
+            Hủy
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            sx={{
+              color: isDarkMode ? "#f48fb1" : "#d32f2f",
+            }}
+            autoFocus
+          >
+            Xóa
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

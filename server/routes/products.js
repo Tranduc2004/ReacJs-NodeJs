@@ -1,9 +1,16 @@
-const Category = require("../models/category.js");
-const { Product } = require("../models/products.js");
-const { Brand } = require("../models/brands.js");
 const express = require("express");
 const router = express.Router();
+const { Product } = require("../models/products.js");
+const Category = require("../models/category.js");
+const { Brand } = require("../models/brands.js");
+const authenticate = require("../middleware/auth");
+const admin = require("../middleware/admin");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 const cloudinary = require("cloudinary").v2;
+const productLikeRouter = require("./productLikeRoutes");
+const ProductLike = require("../models/ProductLike.js");
 
 cloudinary.config({
   cloud_name: process.env.cloudinary_Config_Cloud_Name,
@@ -54,13 +61,50 @@ router.get(`/`, async (req, res) => {
   }
 });
 
+// Lấy danh sách sản phẩm yêu thích của người dùng
+router.get("/likes", authenticate, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    console.log("User ID:", userId); // Debug log
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Không tìm thấy thông tin người dùng",
+      });
+    }
+
+    const likes = await ProductLike.find({ user: userId }).populate({
+      path: "product",
+      populate: [
+        { path: "category", select: "name" },
+        { path: "brand", select: "name" },
+      ],
+    });
+
+    if (!likes || likes.length === 0) {
+      return res.json({ success: true, products: [] });
+    }
+
+    const products = likes.map((like) => like.product);
+    res.json({ success: true, products });
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách sản phẩm yêu thích:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy danh sách sản phẩm yêu thích",
+      error: error.message,
+    });
+  }
+});
+
 // GET sản phẩm theo ID
 router.get("/:id", async (req, res) => {
   try {
-    console.log("ID nhận được từ client:", req.params.id); // Log ID
+    console.log("ID nhận được từ client:", req.params.id);
     const product = await Product.findById(req.params.id)
       .populate("category")
-      .populate("brand"); // Thêm populate cho brand
+      .populate("brand");
     if (!product) {
       return res.status(404).json({
         success: false,
@@ -73,6 +117,125 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// GET sản phẩm gợi ý
+router.get("/:id/suggestions", async (req, res) => {
+  try {
+    const productId = req.params.id;
+    console.log(
+      "[GET /products/:id/suggestions] Đang xử lý request với productId:",
+      productId
+    );
+
+    // Kiểm tra xem productId có hợp lệ không
+    if (!productId) {
+      console.log("[GET /products/:id/suggestions] ID sản phẩm trống");
+      return res.status(400).json({
+        success: false,
+        message: "ID sản phẩm không hợp lệ",
+      });
+    }
+
+    // Kiểm tra độ dài ID thay vì dùng mongoose.Types.ObjectId.isValid
+    if (productId.length !== 24) {
+      console.log(
+        "[GET /products/:id/suggestions] ID sản phẩm không đúng định dạng:",
+        productId
+      );
+      return res.status(400).json({
+        success: false,
+        message: "ID sản phẩm không hợp lệ",
+      });
+    }
+
+    // Tìm sản phẩm và populate category và brand
+    const product = await Product.findById(productId)
+      .populate("category")
+      .populate("brand");
+    console.log("[GET /products/:id/suggestions] Sản phẩm tìm được:", product);
+
+    if (!product) {
+      console.log(
+        "[GET /products/:id/suggestions] Không tìm thấy sản phẩm với ID:",
+        productId
+      );
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy sản phẩm với ID này",
+      });
+    }
+
+    // Xây dựng query dựa trên dữ liệu có sẵn
+    let query = {
+      _id: { $ne: productId }, // Loại trừ sản phẩm hiện tại
+    };
+
+    const orConditions = [];
+
+    // Thêm điều kiện category nếu có
+    if (product.category) {
+      orConditions.push({ category: product.category._id });
+    }
+
+    // Thêm điều kiện brand nếu có
+    if (product.brand) {
+      orConditions.push({ brand: product.brand._id });
+    }
+
+    // Nếu có ít nhất một điều kiện, thêm vào query
+    if (orConditions.length > 0) {
+      query.$or = orConditions;
+    }
+
+    console.log(
+      "[GET /products/:id/suggestions] Query tìm sản phẩm gợi ý:",
+      JSON.stringify(query, null, 2)
+    );
+
+    // Nếu không có điều kiện lọc, trả về mảng rỗng
+    if (orConditions.length === 0) {
+      console.log(
+        "[GET /products/:id/suggestions] Không có điều kiện lọc, trả về mảng rỗng"
+      );
+      return res.status(200).json({
+        success: true,
+        data: [],
+      });
+    }
+
+    // Lấy sản phẩm gợi ý
+    const suggestedProducts = await Product.find(query)
+      .limit(4)
+      .populate("category")
+      .populate("brand");
+
+    console.log(
+      "[GET /products/:id/suggestions] Số lượng sản phẩm gợi ý tìm được:",
+      suggestedProducts.length
+    );
+    console.log(
+      "[GET /products/:id/suggestions] Danh sách sản phẩm gợi ý:",
+      suggestedProducts
+    );
+    res.status(200).json({
+      success: true,
+      data: suggestedProducts,
+    });
+  } catch (error) {
+    console.error(
+      "[GET /products/:id/suggestions] Lỗi khi lấy sản phẩm gợi ý:",
+      error
+    );
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy sản phẩm gợi ý",
+      error: error.message,
+    });
+  }
+});
+
+// Thêm route cho yêu thích sản phẩm
+router.use("/:productId/like", productLikeRouter);
 
 // POST tạo sản phẩm mới
 router.post("/", async (req, res) => {
@@ -314,6 +477,40 @@ router.get("/get/featured/:count", async (req, res) => {
   } catch (err) {
     console.error("Get featured products error:", err);
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET sản phẩm theo danh mục
+router.get("/category/:categoryId", async (req, res) => {
+  try {
+    const categoryId = req.params.categoryId;
+    console.log("Đang tìm sản phẩm theo danh mục:", categoryId);
+
+    // Kiểm tra xem danh mục có tồn tại không
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy danh mục",
+      });
+    }
+
+    // Lấy danh sách sản phẩm thuộc danh mục
+    const products = await Product.find({ category: categoryId })
+      .populate("category")
+      .populate("brand");
+
+    res.status(200).json({
+      success: true,
+      data: products,
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy sản phẩm theo danh mục:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy sản phẩm theo danh mục",
+      error: error.message,
+    });
   }
 });
 
