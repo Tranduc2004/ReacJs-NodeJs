@@ -1,70 +1,81 @@
 const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
-const productSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: [true, "Tên sản phẩm là bắt buộc"],
-      trim: true,
-    },
-    description: {
-      type: String,
-      default: "",
-    },
-    richDescription: {
-      type: String,
-      default: "",
-    },
-    images: [
-      {
-        type: String,
-      },
-    ],
-    brand: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Brand",
-    },
-    price: {
-      type: Number,
-      required: [true, "Giá sản phẩm là bắt buộc"],
-      min: [0, "Giá sản phẩm không được âm"],
-    },
-    category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Category",
-      required: [true, "Danh mục sản phẩm là bắt buộc"],
-    },
-    countInStock: {
-      type: Number,
-      required: [true, "Số lượng tồn kho là bắt buộc"],
-      min: [0, "Số lượng tồn kho không được âm"],
-      default: 0,
-    },
-    rating: {
-      type: Number,
-      default: 0,
-    },
-    numReviews: {
-      type: Number,
-      default: 0,
-    },
-    isFeatured: {
-      type: Boolean,
-      default: false,
-    },
+const productSchema = new Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
   },
-  {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-  }
-);
-
-// Thêm virtual field để tính giá sau khi giảm giá
-productSchema.virtual("finalPrice").get(function () {
-  return this.price;
+  description: {
+    type: String,
+    required: true,
+  },
+  richDescription: {
+    type: String,
+    default: "",
+  },
+  image: {
+    type: String,
+    default: "",
+  },
+  images: [
+    {
+      type: String,
+    },
+  ],
+  brand: {
+    type: Schema.Types.ObjectId,
+    ref: "Brand",
+  },
+  price: {
+    type: Number,
+    required: true,
+  },
+  category: {
+    type: Schema.Types.ObjectId,
+    ref: "Category",
+    required: true,
+  },
+  countInStock: {
+    type: Number,
+    required: true,
+    min: 0,
+    max: 255,
+  },
+  rating: {
+    type: Number,
+    default: 0,
+  },
+  numReviews: {
+    type: Number,
+    default: 0,
+  },
+  isFeatured: {
+    type: Boolean,
+    default: false,
+  },
+  dateCreated: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
+// Tạo virtual field cho ID
+productSchema.virtual("id").get(function () {
+  return this._id.toHexString();
+});
+
+// Đảm bảo virtual fields được include trong JSON
+productSchema.set("toJSON", {
+  virtuals: true,
+});
+
+// Tạo model
 const Product = mongoose.model("Product", productSchema);
 
-module.exports = { Product };
+// Export cả model và schema
+module.exports = {
+  Product,
+  productSchema,
+};

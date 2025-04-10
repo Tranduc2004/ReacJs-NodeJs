@@ -106,11 +106,10 @@ const Sidebar = () => {
           text="Users"
           badge={{ type: "hot", text: "HOT" }}
         />
-        <MenuItem
-          icon={BiPackage}
-          text="Products"
-          badge={{ type: "new", text: "NEW" }}
-        />
+        <MenuItem icon={BiPackage} text="Sliders" isDropdown>
+          <SubMenuItem text="Slider List" prefix="sliders" />
+          <SubMenuItem text="Slider Add" prefix="sliders" />
+        </MenuItem>
         <MenuItem icon={RiBillLine} text="Invoices" />
         <MenuItem
           icon={BsCart3}

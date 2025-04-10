@@ -1,24 +1,90 @@
-import Rating from "@mui/material/Rating";
-import Button from "@mui/material/Button";
-import { AiOutlineFullscreen } from "react-icons/ai";
-import { CiHeart } from "react-icons/ci";
-import ProductModal from "../ProductModal";
-import { useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useContext, useCallback, memo } from "react";
 import { MyContext } from "../../App";
-import { addToCart } from "../../services/api";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { CiHeart } from "react-icons/ci";
+import { IoIosHeart } from "react-icons/io";
+import {
+  addToWishlist,
+  removeFromWishlist,
+  checkWishlistStatus,
+} from "../../services/api";
+import ProductModal from "../ProductModal";
+import { AiOutlineFullscreen } from "react-icons/ai";
+import { Link } from "react-router-dom";
+import { addToCart } from "../../services/api";
+import Button from "@mui/material/Button";
 
-const ProductItem = ({ product, itemView }) => {
+const ProductItem = memo(({ product, itemView }) => {
   const [isOpenProductModal, setisProductModal] = useState(false);
-  const navigate = useNavigate();
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const context = useContext(MyContext);
+  const navigate = useNavigate();
 
-  const viewProductDetails = () => {
+  console.log("ProductItem render với:", { product, itemView });
+
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      if (!product?._id) return;
+
+      try {
+        const response = await checkWishlistStatus(product._id);
+        setIsLiked(response.isLiked);
+      } catch (error) {
+        console.error("Lỗi khi kiểm tra trạng thái yêu thích:", error);
+      }
+    };
+
+    checkLikeStatus();
+  }, [product?._id]);
+
+  const handleWishlistClick = useCallback(
+    async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (isLoading || !product._id) return;
+
+      if (!context.isLogin) {
+        toast.error("Vui lòng đăng nhập để thêm sản phẩm vào yêu thích");
+        localStorage.setItem("redirectUrl", window.location.pathname);
+        setTimeout(() => {
+          navigate("/signin");
+        }, 2000);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        if (isLiked) {
+          await removeFromWishlist(product._id);
+          setIsLiked(false);
+          toast.success("Đã xóa khỏi danh sách yêu thích");
+        } else {
+          await addToWishlist(product._id);
+          setIsLiked(true);
+          toast.success("Đã thêm vào danh sách yêu thích");
+        }
+      } catch (error) {
+        toast.error("Có lỗi xảy ra, vui lòng thử lại");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isLoading, product._id, context.isLogin, isLiked, navigate]
+  );
+
+  const viewProductDetails = useCallback(() => {
     setisProductModal(true);
-  };
+  }, []);
+
+  const closeProductModal = useCallback(() => {
+    setisProductModal(false);
+  }, []);
 
   if (!product) {
+    console.log("Không có product data");
     return null;
   }
 
@@ -63,9 +129,21 @@ const ProductItem = ({ product, itemView }) => {
 
   return (
     <>
-      <div className={`item productItem ${itemView}`}>
+      <div
+        className={`item productItem ${itemView}`}
+        onClick={viewProductDetails}
+      >
         <div className="imgWrapper">
-          <img alt={product.name} src={thumbnailImage} className="w-100" />
+          <img
+            alt={product.name}
+            src={thumbnailImage}
+            className="w-100"
+            onError={(e) => {
+              console.log("Lỗi load ảnh:", e);
+              e.target.src =
+                "https://klbtheme.com/bacola/wp-content/uploads/2021/04/product-image-62-346x310.jpg";
+            }}
+          />
           {product.discount > 0 && (
             <span className="badge badge-primary">-{product.discount}%</span>
           )}
@@ -80,8 +158,16 @@ const ProductItem = ({ product, itemView }) => {
             >
               <AiOutlineFullscreen />
             </Button>
-            <Button className="b1" onClick={(e) => e.preventDefault()}>
-              <CiHeart />
+            <Button
+              className="b1"
+              onClick={handleWishlistClick}
+              disabled={isLoading}
+            >
+              {isLiked ? (
+                <IoIosHeart style={{ color: "red", fill: "red" }} />
+              ) : (
+                <CiHeart />
+              )}
             </Button>
           </div>
         </div>
@@ -93,21 +179,12 @@ const ProductItem = ({ product, itemView }) => {
           <div className="info">
             <h4 className="productName">{product.name}</h4>
             <span
-              className={`instock d-block ${
-                isInStock ? "text-success" : "text-danger"
+              className={` d-block badge ${
+                isInStock ? "bg-success" : "bg-danger"
               }`}
             >
               {isInStock ? "IN STOCK" : "OUT OF STOCK"}
             </span>
-            <Rating
-              className="mt-2 mb-2"
-              name="read-only"
-              value={product.rating || 0}
-              readOnly
-              size="small"
-              precision={0.5}
-            />
-
             <div className="d-flex">
               <span className="netPrice text-danger ml-2">
                 {discountedPrice.toLocaleString("vi-VN", {
@@ -120,12 +197,18 @@ const ProductItem = ({ product, itemView }) => {
         </Link>
         <div className="d-flex align-items-center justify-content-center mb-3">
           <Button
-            className="btn-lg btn-big btn-round"
+            className="add-to-cart-btn"
             sx={{
-              backgroundColor: "#00aaff",
-              color: "white",
+              backgroundColor: "transparent",
+              border: "2px solid #00aaff", // Blue border
+              color: "#00aaff", // Blue text
+              fontWeight: "500", // Medium weight
+              textTransform: "none", // No uppercase
+              borderRadius: "20px", // Rounded corners
               "&:hover": {
-                backgroundColor: "#0088cc",
+                backgroundColor: "#00aaff", // Hover background color
+                color: "white", // White text on hover
+                borderColor: "#00aaff", // Keep border color blue
               },
             }}
             onClick={handleAddToCart}
@@ -139,11 +222,13 @@ const ProductItem = ({ product, itemView }) => {
       {isOpenProductModal && (
         <ProductModal
           productId={product._id}
-          closeProductModal={() => setisProductModal(false)}
+          closeProductModal={closeProductModal}
         />
       )}
     </>
   );
-};
+});
+
+ProductItem.displayName = "ProductItem";
 
 export default ProductItem;

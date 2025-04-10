@@ -24,10 +24,12 @@ import LinkIcon from "@mui/icons-material/Link";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useTheme } from "../../context/ThemeContext";
 import { postData, fetchDataFromApi } from "../../utils/api"; // Import your actual API functions
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const ProductUpload = () => {
   const { isDarkMode } = useTheme();
+  const navigate = useNavigate();
 
   const [selectedImages, setSelectedImages] = useState([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -40,11 +42,6 @@ const ProductUpload = () => {
   const [loadingBrands, setLoadingBrands] = useState(true);
   const [imageInputTab, setImageInputTab] = useState(0); // 0 for file upload, 1 for URL
   const [urlInput, setUrlInput] = useState("");
-  const [notification, setNotification] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -72,11 +69,7 @@ const ProductUpload = () => {
         setBrands(brandsResponse);
       } catch (error) {
         console.error("Error fetching data:", error);
-        setNotification({
-          open: true,
-          message: "Failed to load data",
-          severity: "error",
-        });
+        toast.error("Không thể tải dữ liệu danh mục và thương hiệu");
       } finally {
         setLoadingCategories(false);
         setLoadingBrands(false);
@@ -119,11 +112,7 @@ const ProductUpload = () => {
     try {
       new URL(urlInput);
     } catch (error) {
-      setNotification({
-        open: true,
-        message: "Please enter a valid URL",
-        severity: "error",
-      });
+      toast.error("Vui lòng nhập URL hợp lệ");
       return;
     }
 
@@ -169,13 +158,11 @@ const ProductUpload = () => {
     const missingFields = requiredFields.filter((field) => !formData[field]);
 
     if (missingFields.length > 0 || selectedImages.length === 0) {
-      setNotification({
-        open: true,
-        message: `Vui lòng điền đầy đủ thông tin${
+      toast.error(
+        `Vui lòng điền đầy đủ thông tin${
           selectedImages.length === 0 ? " và thêm ít nhất một hình ảnh" : ""
-        }`,
-        severity: "error",
-      });
+        }`
+      );
       return;
     }
 
@@ -227,11 +214,7 @@ const ProductUpload = () => {
       const response = await postData("/api/products", productData);
 
       if (response.success) {
-        setNotification({
-          open: true,
-          message: "Thêm sản phẩm thành công!",
-          severity: "success",
-        });
+        toast.success("Thêm sản phẩm thành công!");
 
         // Reset form
         setFormData({
@@ -247,23 +230,18 @@ const ProductUpload = () => {
         setSelectedImages([]);
         setImageFiles([]);
         setImageUrls([]);
+
+        // Chuyển hướng về trang ProductList
+        navigate("/products");
       } else {
         throw new Error(response.message || "Thêm sản phẩm thất bại");
       }
     } catch (error) {
       console.error("Lỗi khi thêm sản phẩm:", error);
-      setNotification({
-        open: true,
-        message: `Lỗi: ${error.message || "Không thể thêm sản phẩm"}`,
-        severity: "error",
-      });
+      toast.error(`Lỗi: ${error.message || "Không thể thêm sản phẩm"}`);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleCloseNotification = () => {
-    setNotification((prev) => ({ ...prev, open: false }));
   };
 
   const handleTabChange = (event, newValue) => {
@@ -274,6 +252,7 @@ const ProductUpload = () => {
     <Box
       sx={{
         bgcolor: isDarkMode ? "#0f1824" : "#f5f5f5",
+        color: isDarkMode ? "#fff" : "#000",
         minHeight: "100vh",
         width: "100%",
         position: "relative",
@@ -887,22 +866,6 @@ const ProductUpload = () => {
           </Box>
         </Stack>
       </Paper>
-
-      {/* Notification Snackbar */}
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={6000}
-        onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleCloseNotification}
-          severity={notification.severity}
-          sx={{ width: "100%" }}
-        >
-          {notification.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

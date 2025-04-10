@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import { fetchDataFromApi, editData } from "../../utils/api";
 import { FaArrowLeft, FaUpload, FaLink } from "react-icons/fa";
 import "./styles.css";
@@ -104,9 +105,9 @@ const BrandEdit = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Kiểm tra dữ liệu
     if (!formData.name || !formData.logo) {
       setError("Vui lòng điền đầy đủ thông tin bắt buộc");
+      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
       return;
     }
 
@@ -114,15 +115,17 @@ const BrandEdit = () => {
       setSaving(true);
       setError(null);
 
-      // Gửi dữ liệu lên server
       const response = await editData(`/api/brands/${id}`, formData);
 
       if (response) {
-        // Chuyển hướng về trang danh sách thương hiệu
+        toast.success("Cập nhật thương hiệu thành công!");
         navigate("/brands");
       }
     } catch (err) {
-      setError("Không thể cập nhật thương hiệu. Vui lòng thử lại sau.");
+      const errorMessage =
+        "Không thể cập nhật thương hiệu. Vui lòng thử lại sau.";
+      setError(errorMessage);
+      toast.error(errorMessage);
       console.error("Lỗi khi cập nhật thương hiệu:", err);
     } finally {
       setSaving(false);

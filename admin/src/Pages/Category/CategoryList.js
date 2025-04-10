@@ -18,14 +18,21 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
 import { Link } from "react-router-dom";
+import { useTheme } from "../../context/ThemeContext";
+import { toast } from "react-toastify";
 
 const CategoryList = () => {
+  const { isDarkMode } = useTheme();
   const [open, setOpen] = useState(false);
   const [catData, setCatData] = useState([]);
   const [editId, setEditId] = useState(null);
   const [imageInputType, setImageInputType] = useState("url");
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    id: null,
+  });
 
   // Phân trang
   const [page, setPage] = useState(1);
@@ -75,6 +82,7 @@ const CategoryList = () => {
 
   const handleClose = () => {
     setOpen(false);
+    setEditId(null);
     setFormData({
       name: "",
       image: "",
@@ -91,41 +99,80 @@ const CategoryList = () => {
     fetchDataFromApi(`/api/categories/${id}`)
       .then((res) => {
         if (res) {
+          console.log("Category data loaded:", res);
+          // Cập nhật form data
           setFormData({
             name: res.name || "",
             image: res.image || "",
             color: res.color || "",
           });
+
+          // Cập nhật preview ảnh
           setImagePreview(res.image || "");
-          console.log("Category to edit:", res);
+
+          // Xác định loại input ảnh dựa vào URL
+          if (
+            res.image &&
+            (res.image.startsWith("http://") ||
+              res.image.startsWith("https://"))
+          ) {
+            setImageInputType("url");
+          } else {
+            setImageInputType("file");
+          }
+
+          // Reset file input
+          setImageFile(null);
         }
       })
       .catch((err) => {
         console.error("Error fetching category:", err);
+        alert("Không thể tải thông tin danh mục");
       });
+  };
+
+  const handleImageTypeChange = (e) => {
+    const newType = e.target.value;
+    setImageInputType(newType);
+
+    // Khi chuyển đổi giữa các chế độ, giữ lại dữ liệu phù hợp
+    if (newType === "url") {
+      // Nếu chuyển sang URL, giữ lại URL cũ nếu có
+      setFormData((prev) => ({
+        ...prev,
+        image: imagePreview || prev.image,
+      }));
+    } else {
+      // Nếu chuyển sang file, xóa URL
+      setImageFile(null);
+      setFormData((prev) => ({
+        ...prev,
+        image: "",
+      }));
+    }
+  };
+
+  const handleUrlChange = (e) => {
+    const url = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      image: url,
+    }));
+    setImagePreview(url);
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setImageFile(file);
-      // Create preview URL
+      // Tạo URL xem trước
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
+      setFormData((prev) => ({
+        ...prev,
+        image: previewUrl,
+      }));
     }
-  };
-
-  const handleImageTypeChange = (e) => {
-    setImageInputType(e.target.value);
-  };
-
-  const handleUrlChange = (e) => {
-    const url = e.target.value;
-    setFormData({
-      ...formData,
-      image: url,
-    });
-    setImagePreview(url);
   };
 
   // Convert image file to base64 for Cloudinary upload
@@ -148,46 +195,65 @@ const CategoryList = () => {
       return;
     }
 
+    if (!formData.name) {
+      toast.error("Vui lòng nhập tên danh mục");
+      return;
+    }
+
     try {
       let updatedData = { ...formData };
 
-      // If image input type is file and a file is selected
       if (imageInputType === "file" && imageFile) {
-        // Convert file to base64 for Cloudinary upload
         const base64Image = await fileToBase64(imageFile);
         updatedData.image = base64Image;
       }
 
-      // Send the update request
       const response = await editData(`/api/categories/${editId}`, updatedData);
       console.log("Update response:", response);
-      loadCategories();
-      handleClose();
+
+      if (response) {
+        toast.success("Cập nhật danh mục thành công!");
+        loadCategories();
+        handleClose();
+      }
     } catch (error) {
       console.error(
         "Error updating category:",
         error.response?.data || error.message
       );
+      toast.error("Không thể cập nhật danh mục. Vui lòng thử lại.");
     }
   };
 
   const handleDelete = (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xoá danh mục này không?")) {
-      deleteData("/api/categories/", id)
-        .then((res) => {
-          console.log("Kết quả xoá:", res);
-          if (res.success) {
-            alert("Xoá thành công");
-            loadCategories();
-          } else {
-            alert("Xoá thất bại");
-          }
-        })
-        .catch((err) => {
-          console.error("Lỗi khi xoá:", err);
-          alert("Đã xảy ra lỗi khi xoá");
-        });
-    }
+    setDeleteDialog({
+      open: true,
+      id: id,
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    deleteData("/api/categories/", deleteDialog.id)
+      .then((res) => {
+        console.log("Kết quả xoá:", res);
+        if (res.success) {
+          toast.success("Xóa danh mục thành công!");
+          loadCategories();
+        } else {
+          toast.error("Xóa thất bại");
+        }
+      })
+      .catch((err) => {
+        console.error("Lỗi khi xoá:", err);
+        toast.error("Đã xảy ra lỗi khi xóa");
+      })
+      .finally(() => {
+        setDeleteDialog({ open: false, id: null });
+      });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialog({ open: false, id: null });
   };
 
   // Tính toán số hiển thị
@@ -232,11 +298,11 @@ const CategoryList = () => {
             <tbody>
               {getCurrentItems().map((item, index) => {
                 return (
-                  <tr key={item.id || index}>
+                  <tr key={item._id || index}>
                     <td>
                       <input type="checkbox" />
                     </td>
-                    <td>{item.id}</td>
+                    <td>{item._id}</td>
                     <td>
                       <div className="category-info">
                         <img src={item.image} alt="Ảnh Danh Mục" />
@@ -258,7 +324,7 @@ const CategoryList = () => {
                       <div className="action-buttons">
                         <button
                           className="edit-btn"
-                          onClick={() => editCategory(item.id)}
+                          onClick={() => editCategory(item._id)}
                           type="button"
                         >
                           <FaEdit />
@@ -266,7 +332,7 @@ const CategoryList = () => {
                         <button
                           className="delete-btn"
                           type="button"
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => handleDelete(item._id)}
                         >
                           <FaTrash />
                         </button>
@@ -301,11 +367,20 @@ const CategoryList = () => {
         open={open}
         onClose={handleClose}
         maxWidth="md"
+        PaperProps={{
+          style: {
+            backgroundColor: isDarkMode ? "#1a2035" : "#fff",
+          },
+        }}
       >
-        <DialogTitle>Chỉnh sửa</DialogTitle>
+        <DialogTitle sx={{ color: isDarkMode ? "#fff" : "#000" }}>
+          Chỉnh sửa
+        </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
-            <DialogContentText>Chỉnh sửa danh mục sản phẩm</DialogContentText>
+            <DialogContentText sx={{ color: isDarkMode ? "#fff" : "#000" }}>
+              Chỉnh sửa danh mục sản phẩm
+            </DialogContentText>
             <TextField
               autoFocus
               required
@@ -317,22 +392,77 @@ const CategoryList = () => {
               value={formData.name}
               fullWidth
               onChange={changeInput}
+              sx={{
+                "& .MuiInputLabel-root": {
+                  color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined,
+                },
+                "& .MuiInputBase-input": {
+                  color: isDarkMode ? "#fff" : undefined,
+                },
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: isDarkMode
+                      ? "rgba(255, 255, 255, 0.23)"
+                      : undefined,
+                  },
+                  "&:hover fieldset": {
+                    borderColor: isDarkMode
+                      ? "rgba(255, 255, 255, 0.23)"
+                      : undefined,
+                  },
+                },
+              }}
             />
 
             {/* Image upload options */}
             <FormControl component="fieldset" className="mt-3 mb-2">
-              <FormLabel component="legend">Phương thức chọn ảnh</FormLabel>
+              <FormLabel
+                component="legend"
+                sx={{
+                  color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined,
+                }}
+              >
+                Phương thức chọn ảnh
+              </FormLabel>
               <RadioGroup
                 row
                 name="imageInputType"
                 value={imageInputType}
                 onChange={handleImageTypeChange}
               >
-                <FormControlLabel value="url" control={<Radio />} label="URL" />
+                <FormControlLabel
+                  value="url"
+                  control={
+                    <Radio
+                      sx={{
+                        color: isDarkMode
+                          ? "rgba(255, 255, 255, 0.7)"
+                          : undefined,
+                        "&.Mui-checked": {
+                          color: isDarkMode ? "#90caf9" : undefined,
+                        },
+                      }}
+                    />
+                  }
+                  label="URL"
+                  sx={{ color: isDarkMode ? "#fff" : undefined }}
+                />
                 <FormControlLabel
                   value="file"
-                  control={<Radio />}
+                  control={
+                    <Radio
+                      sx={{
+                        color: isDarkMode
+                          ? "rgba(255, 255, 255, 0.7)"
+                          : undefined,
+                        "&.Mui-checked": {
+                          color: isDarkMode ? "#90caf9" : undefined,
+                        },
+                      }}
+                    />
+                  }
                   label="Upload File"
+                  sx={{ color: isDarkMode ? "#fff" : undefined }}
                 />
               </RadioGroup>
             </FormControl>
@@ -349,6 +479,26 @@ const CategoryList = () => {
                 value={formData.image}
                 fullWidth
                 onChange={handleUrlChange}
+                sx={{
+                  "& .MuiInputLabel-root": {
+                    color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined,
+                  },
+                  "& .MuiInputBase-input": {
+                    color: isDarkMode ? "#fff" : undefined,
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: isDarkMode
+                        ? "rgba(255, 255, 255, 0.23)"
+                        : undefined,
+                    },
+                    "&:hover fieldset": {
+                      borderColor: isDarkMode
+                        ? "rgba(255, 255, 255, 0.23)"
+                        : undefined,
+                    },
+                  },
+                }}
               />
             ) : (
               <div className="file-upload-container mt-2 mb-2">
@@ -364,18 +514,41 @@ const CategoryList = () => {
                     variant="outlined"
                     component="span"
                     startIcon={<FaUpload />}
+                    sx={{
+                      color: isDarkMode ? "#fff" : undefined,
+                      borderColor: isDarkMode
+                        ? "rgba(255, 255, 255, 0.23)"
+                        : undefined,
+                      "&:hover": {
+                        borderColor: isDarkMode
+                          ? "rgba(255, 255, 255, 0.23)"
+                          : undefined,
+                        backgroundColor: isDarkMode
+                          ? "rgba(255, 255, 255, 0.08)"
+                          : undefined,
+                      },
+                    }}
                   >
                     Chọn File Ảnh
                   </Button>
                 </label>
-                {imageFile && <span className="ml-2">{imageFile.name}</span>}
+                {imageFile && (
+                  <span
+                    className="ml-2"
+                    style={{ color: isDarkMode ? "#fff" : undefined }}
+                  >
+                    {imageFile.name}
+                  </span>
+                )}
               </div>
             )}
 
             {/* Image preview */}
             {imagePreview && (
               <div className="image-preview mt-2 mb-2">
-                <p>Xem trước:</p>
+                <p style={{ color: isDarkMode ? "#fff" : undefined }}>
+                  Xem trước:
+                </p>
                 <img
                   src={imagePreview}
                   alt="Preview"
@@ -394,17 +567,114 @@ const CategoryList = () => {
               value={formData.color}
               fullWidth
               onChange={changeInput}
+              sx={{
+                "& .MuiInputLabel-root": {
+                  color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined,
+                },
+                "& .MuiInputBase-input": {
+                  color: isDarkMode ? "#fff" : undefined,
+                },
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: isDarkMode
+                      ? "rgba(255, 255, 255, 0.23)"
+                      : undefined,
+                  },
+                  "&:hover fieldset": {
+                    borderColor: isDarkMode
+                      ? "rgba(255, 255, 255, 0.23)"
+                      : undefined,
+                  },
+                },
+              }}
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose} variant="outlined" type="button">
+            <Button
+              onClick={handleClose}
+              variant="outlined"
+              type="button"
+              sx={{
+                color: isDarkMode ? "#fff" : undefined,
+                borderColor: isDarkMode
+                  ? "rgba(255, 255, 255, 0.23)"
+                  : undefined,
+                "&:hover": {
+                  borderColor: isDarkMode
+                    ? "rgba(255, 255, 255, 0.23)"
+                    : undefined,
+                  backgroundColor: isDarkMode
+                    ? "rgba(255, 255, 255, 0.08)"
+                    : undefined,
+                },
+              }}
+            >
               Cancel
             </Button>
-            <Button type="submit" variant="outlined">
+            <Button
+              type="submit"
+              variant="outlined"
+              sx={{
+                color: isDarkMode ? "#90caf9" : undefined,
+                borderColor: isDarkMode ? "#90caf9" : undefined,
+                "&:hover": {
+                  borderColor: isDarkMode ? "#90caf9" : undefined,
+                  backgroundColor: isDarkMode
+                    ? "rgba(144, 202, 249, 0.08)"
+                    : undefined,
+                },
+              }}
+            >
               Lưu
             </Button>
           </DialogActions>
         </form>
+      </Dialog>
+
+      {/* Dialog xác nhận xóa */}
+      <Dialog
+        open={deleteDialog.open}
+        onClose={handleDeleteCancel}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+        PaperProps={{
+          style: {
+            backgroundColor: isDarkMode ? "#1a2035" : "#fff",
+          },
+        }}
+      >
+        <DialogTitle
+          id="alert-dialog-title"
+          sx={{ color: isDarkMode ? "#fff" : "#000" }}
+        >
+          Xác nhận xóa
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText
+            id="alert-dialog-description"
+            sx={{ color: isDarkMode ? "#fff" : "#000" }}
+          >
+            Bạn có chắc chắn muốn xóa danh mục này? Hành động này không thể hoàn
+            tác.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleDeleteCancel}
+            sx={{ color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : undefined }}
+          >
+            Hủy
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            sx={{
+              color: isDarkMode ? "#f48fb1" : "#d32f2f",
+            }}
+            autoFocus
+          >
+            Xóa
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );

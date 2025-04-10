@@ -20,8 +20,10 @@ const Listing = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(9);
   const [filters, setFilters] = useState({
-    priceRange: [0, 60000],
+    priceRange: [0, 100000000],
     categories: [],
     brands: [],
   });
@@ -43,25 +45,46 @@ const Listing = () => {
   }, []);
 
   useEffect(() => {
+    console.log("Filtering products with:", filters);
+    console.log("Total products:", products.length);
+
     const filtered = products.filter((product) => {
+      // Lọc theo khoảng giá
       const priceInRange =
         product.price >= filters.priceRange[0] &&
         product.price <= filters.priceRange[1];
 
+      // Lọc theo danh mục - kiểm tra nhiều kiểu dữ liệu có thể có
       const categoryMatch =
         filters.categories.length === 0 ||
-        filters.categories.includes(product.category);
+        filters.categories.some(
+          (categoryId) =>
+            product.category === categoryId ||
+            product.categoryId === categoryId ||
+            (product.category && product.category._id === categoryId)
+        );
 
+      // Lọc theo thương hiệu - kiểm tra nhiều kiểu dữ liệu có thể có
       const brandMatch =
-        filters.brands.length === 0 || filters.brands.includes(product.brand);
+        filters.brands.length === 0 ||
+        filters.brands.some(
+          (brandId) =>
+            product.brand === brandId ||
+            product.brandId === brandId ||
+            (product.brand && product.brand._id === brandId)
+        );
 
       return priceInRange && categoryMatch && brandMatch;
     });
 
+    console.log("Filtered products:", filtered.length);
     setFilteredProducts(filtered);
+    setCurrentPage(1); // Reset về trang đầu tiên khi bộ lọc thay đổi
   }, [filters, products]);
 
+  // Xử lý thay đổi bộ lọc từ sidebar
   const handleFilterChange = (newFilters) => {
+    console.log("Filters received from sidebar:", newFilters);
     setFilters(newFilters);
   };
 
@@ -73,9 +96,30 @@ const Listing = () => {
     setAnchorEl(null);
   };
 
+  const handleItemsPerPageChange = (value) => {
+    setItemsPerPage(value);
+    setCurrentPage(1);
+    handleClose();
+  };
+
   const toggleFilter = () => {
     setShowFilter(!showFilter);
   };
+
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+  };
+
+  // Tính toán sản phẩm hiển thị trên trang hiện tại
+  const indexOfLastProduct = currentPage * itemsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
+  const currentProducts = filteredProducts.slice(
+    indexOfFirstProduct,
+    indexOfLastProduct
+  );
+
+  // Tính tổng số trang
+  const pageCount = Math.ceil(filteredProducts.length / itemsPerPage);
 
   // Check window size on initial render and resize
   useEffect(() => {
@@ -129,7 +173,10 @@ const Listing = () => {
                 width: window.innerWidth <= 767 ? "100%" : "auto",
               }}
             >
-              <Sidebar onFilterChange={handleFilterChange} />
+              <Sidebar
+                onFilterChange={handleFilterChange}
+                initialFilters={filters}
+              />
             </div>
 
             <div className="content_right">
@@ -172,7 +219,7 @@ const Listing = () => {
                 </div>
                 <div className="ml-auto showByFilter">
                   <Button onClick={handleClick}>
-                    Show 9 <FaAngleDown />
+                    Show {itemsPerPage} <FaAngleDown />
                   </Button>
                   <Menu
                     className="w-100 showPerPageDropdown"
@@ -184,28 +231,61 @@ const Listing = () => {
                       "aria-labelledby": "basic-button",
                     }}
                   >
-                    <MenuItem onClick={handleClose}>10</MenuItem>
-                    <MenuItem onClick={handleClose}>20</MenuItem>
-                    <MenuItem onClick={handleClose}>30</MenuItem>
-                    <MenuItem onClick={handleClose}>40</MenuItem>
-                    <MenuItem onClick={handleClose}>50</MenuItem>
-                    <MenuItem onClick={handleClose}>60</MenuItem>
-                    <MenuItem onClick={handleClose}>70</MenuItem>
+                    <MenuItem onClick={() => handleItemsPerPageChange(9)}>
+                      9
+                    </MenuItem>
+                    <MenuItem onClick={() => handleItemsPerPageChange(18)}>
+                      18
+                    </MenuItem>
+                    <MenuItem onClick={() => handleItemsPerPageChange(27)}>
+                      27
+                    </MenuItem>
+                    <MenuItem onClick={() => handleItemsPerPageChange(36)}>
+                      36
+                    </MenuItem>
+                    <MenuItem onClick={() => handleItemsPerPageChange(45)}>
+                      45
+                    </MenuItem>
                   </Menu>
                 </div>
               </div>
+
+              {/* Hiển thị thông tin số lượng sản phẩm */}
+              <div className="product-count mb-3">
+                <p>
+                  Hiển thị{" "}
+                  {currentProducts.length > 0 ? indexOfFirstProduct + 1 : 0} -{" "}
+                  {Math.min(indexOfLastProduct, filteredProducts.length)} của{" "}
+                  {filteredProducts.length} sản phẩm
+                </p>
+              </div>
+
               <div className="productListing">
-                {filteredProducts.map((product) => (
-                  <ProductItem
-                    key={product._id}
-                    product={product}
-                    itemView={productView}
+                {currentProducts.length > 0 ? (
+                  currentProducts.map((product) => (
+                    <ProductItem
+                      key={product._id}
+                      product={product}
+                      itemView={productView}
+                    />
+                  ))
+                ) : (
+                  <div className="no-products-found">
+                    <p>Không tìm thấy sản phẩm phù hợp với bộ lọc.</p>
+                  </div>
+                )}
+              </div>
+              {pageCount > 1 && (
+                <div className="pagination-responsive d-flex align-items-center justify-content-center mt-5">
+                  <Pagination
+                    count={pageCount}
+                    page={currentPage}
+                    onChange={handlePageChange}
+                    color="primary"
+                    size="large"
                   />
-                ))}
-              </div>
-              <div className="pagination-responsive d-flex align-items-center justify-content-center mt-5">
-                <Pagination count={10} color="primary" size="large" />
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

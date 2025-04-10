@@ -137,12 +137,12 @@ const SignUp = () => {
 
     try {
       const response = await register(formData);
-      context.setIsLogin(true);
       setShowSuccess(true);
 
+      // Chuyển về trang login sau 1.5 giây
       setTimeout(() => {
         context.setIsHeaderFooterShow(true);
-        navigate("/");
+        navigate("/signin");
       }, 1500);
     } catch (err) {
       // Xử lý lỗi cụ thể từ server

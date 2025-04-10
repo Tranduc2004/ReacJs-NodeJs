@@ -20,6 +20,8 @@ import BrandEdit from "./Pages/Brands/BrandEdit";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PrivateRoute from "./Components/PrivateRoute";
+import SliderList from "./Pages/Sliders/SliderList";
+import SliderForm from "./Pages/Sliders/SliderForm";
 // Layout component bọc các components cần Header và Sidebar
 const Layout = ({ children }) => {
   return (
@@ -92,6 +94,15 @@ function App() {
                         path="brands/brand-edit/:id"
                         element={<BrandEdit />}
                       />
+                      <Route path="sliders" element={<SliderList />} />
+                      <Route
+                        path="sliders/slider-list"
+                        element={<SliderList />}
+                      />
+                      <Route
+                        path="sliders/slider-add"
+                        element={<SliderForm />}
+                      />
                     </Routes>
                   </Layout>
                 </PrivateRoute>
@@ -108,7 +119,7 @@ function App() {
             pauseOnFocusLoss
             draggable
             pauseOnHover
-            theme="light"
+            theme="colored"
           />
         </BrowserRouter>
       </SidebarProvider>

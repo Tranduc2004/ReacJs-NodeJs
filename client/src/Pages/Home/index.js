@@ -138,14 +138,43 @@ const BestSellers = () => {
                 </Button>
               </div>
 
-              <div className="product_row productRow2 w-100 mt-4 d-flex">
-                {featuredProducts.length > 0 ? (
-                  featuredProducts.map((product) => (
-                    <ProductItem key={product._id} product={product} />
-                  ))
-                ) : (
-                  <div className="text-center">Không có sản phẩm nào</div>
-                )}
+              <div className="product_row w-100 mt-2">
+                <Swiper
+                  slidesPerView={4}
+                  spaceBetween={8}
+                  slidesPerGroup={1}
+                  pagination={{ clickable: true }}
+                  navigation={true}
+                  modules={[Navigation]}
+                  className="mySwiper"
+                  breakpoints={{
+                    // Mobile (default): 2 sản phẩm
+                    0: {
+                      slidesPerView: 2,
+                      spaceBetween: 10,
+                    },
+                    // Tablet: 3 sản phẩm
+                    768: {
+                      slidesPerView: 3,
+                      spaceBetween: 15,
+                    },
+                    // Desktop: 4 sản phẩm
+                    1024: {
+                      slidesPerView: 4,
+                      spaceBetween: 8,
+                    },
+                  }}
+                >
+                  {featuredProducts.length > 0 ? (
+                    featuredProducts.map((product) => (
+                      <SwiperSlide key={product._id}>
+                        <ProductItem product={product} />
+                      </SwiperSlide>
+                    ))
+                  ) : (
+                    <div className="text-center">Không có sản phẩm nào</div>
+                  )}
+                </Swiper>
               </div>
 
               <div className="d-flex mt-4 mb-5 bannerSec">

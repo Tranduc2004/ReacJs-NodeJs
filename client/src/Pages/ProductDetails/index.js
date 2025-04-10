@@ -3,13 +3,26 @@ import Rating from "@mui/material/Rating";
 import QuantityBox from "../../Components/QuantityBox";
 import Button from "@mui/material/Button";
 import { BsFillCartFill } from "react-icons/bs";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { FaRegHeart } from "react-icons/fa6";
 import { MdCompareArrows } from "react-icons/md";
 import Tooltip from "@mui/material/Tooltip";
 import RelatedProducts from "../../Components/ProductDetails/RelatedProducts";
 import { useParams } from "react-router-dom";
-import { getProductById, getBrands } from "../../services/api";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { MyContext } from "../../App";
+import {
+  getProductById,
+  getBrands,
+  getReviewsByProduct,
+  addReview,
+  addToCart,
+  getSuggestedProducts,
+  addToWishlist,
+  removeFromWishlist,
+  checkWishlistStatus,
+} from "../../services/api";
 import {
   Box,
   Typography,
@@ -20,8 +33,14 @@ import {
   TableCell,
   TableRow,
   TextField,
+  Alert,
+  Snackbar,
+  Container,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
+import { useAuth } from "../../context/AuthContext"; // Update the import path as needed
+import { FaHeart } from "react-icons/fa";
+
 // Styled components
 const StyledTabs = styled(Tabs)(({ theme }) => ({
   backgroundColor: "#00aaff10",
@@ -87,46 +106,113 @@ const SubmitButton = styled(Button)(({ theme }) => ({
     backgroundColor: "#0195df",
   },
 }));
+
 const ProductDetails = () => {
   const { id } = useParams();
+  console.log("[ProductDetails] ID từ URL params:", id);
+  const { isAuthenticated } = useAuth(); // Use the auth context
   const [product, setProduct] = useState(null);
   const [brandName, setBrandName] = useState("");
   const [loading, setLoading] = useState(true);
   const [activeSize, setActiveSize] = useState(null);
   const [tabValue, setTabValue] = useState(0);
   const [review, setReview] = useState("");
+  const context = useContext(MyContext);
   const [rating, setRating] = useState(1);
+  const [quantity, setQuantity] = useState(1);
+  const navigate = useNavigate();
+  const isInStock = product?.countInStock > 0;
+  const [reviews, setReviews] = useState([]);
+  const [alert, setAlert] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [error, setError] = useState(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchProductDetails = async () => {
       try {
-        const data = await getProductById(id);
-        console.log("Product data:", data);
-        setProduct(data);
+        setLoading(true);
+        console.log("[ProductDetails] Đang lấy thông tin sản phẩm với ID:", id);
+        const productData = await getProductById(id);
+        console.log("[ProductDetails] Dữ liệu sản phẩm:", productData);
+        setProduct(productData);
 
-        // Fetch brand information if we have a brand ID
-        if (data.brand) {
-          console.log("Fetching brand with ID:", data.brand);
+        // Kiểm tra nếu brand đã được populate
+        if (productData.brand && typeof productData.brand === "object") {
+          setBrandName(productData.brand.name);
+        }
+        // Nếu brand chỉ là ID, thì mới cần fetch brands
+        else if (productData.brand) {
           const brands = await getBrands();
-          const brand = brands.find((b) => b._id === data.brand);
+          const brand = brands.find((b) => b._id === productData.brand);
           if (brand) {
-            console.log("Brand found:", brand);
             setBrandName(brand.name);
           }
-        } else {
-          console.log("No brand ID found in product data");
         }
-      } catch (error) {
-        console.error("Lỗi khi lấy thông tin sản phẩm:", error);
+
+        // Lấy sản phẩm liên quan
+        if (productData && productData._id) {
+          console.log(
+            "[ProductDetails] Đang lấy sản phẩm liên quan cho sản phẩm:",
+            productData._id
+          );
+          const related = await getSuggestedProducts(productData._id);
+          console.log("[ProductDetails] Sản phẩm liên quan:", related);
+          setRelatedProducts(related);
+        }
+      } catch (err) {
+        console.error("[ProductDetails] Lỗi khi lấy thông tin sản phẩm:", err);
+        setError(err.message);
+        toast.error("Không thể tải thông tin sản phẩm");
+        setRelatedProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
     if (id) {
-      fetchProduct();
+      fetchProductDetails();
     }
   }, [id]);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await getReviewsByProduct(id);
+        // Check the structure of the response to extract reviews correctly
+        const reviewsData = response.data || response;
+        setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+      } catch (error) {
+        console.error("Lỗi khi lấy đánh giá:", error);
+        setReviews([]);
+      }
+    };
+
+    if (id) {
+      fetchReviews();
+    }
+  }, [id]);
+
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      if (!product?._id) return;
+
+      try {
+        const response = await checkWishlistStatus(product._id);
+        setIsLiked(response.isLiked);
+      } catch (error) {
+        console.error("Lỗi khi kiểm tra trạng thái yêu thích:", error);
+      }
+    };
+
+    checkLikeStatus();
+  }, [product?._id]);
 
   if (loading) {
     return <div>Đang tải...</div>;
@@ -152,326 +238,515 @@ const ProductDetails = () => {
     setRating(newValue);
   };
 
-  const handleSubmitReview = () => {
-    console.log("Review submitted:", { review, rating });
-    setReview("");
-    setRating(1);
+  const handleSubmitReview = async () => {
+    if (!isAuthenticated) {
+      setAlert({
+        open: true,
+        message: "Bạn cần đăng nhập để gửi đánh giá",
+        severity: "warning",
+      });
+      return;
+    }
+
+    if (!review.trim()) {
+      setAlert({
+        open: true,
+        message: "Vui lòng nhập nội dung đánh giá",
+        severity: "warning",
+      });
+      return;
+    }
+
+    try {
+      const result = await addReview({
+        productId: id,
+        rating,
+        comment: review,
+      });
+
+      // Extract the new review data from the result
+      const newReview = result.data || result;
+
+      // Add new review to the existing reviews
+      setReviews([newReview, ...reviews]);
+
+      // Reset form
+      setReview("");
+      setRating(1);
+      setHasReviewed(true);
+
+      setAlert({
+        open: true,
+        message: "Đánh giá của bạn đã được gửi thành công",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Lỗi khi gửi đánh giá:", error);
+      setAlert({
+        open: true,
+        message: error.response?.data?.message || "Không thể gửi đánh giá",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleCloseAlert = () => {
+    setAlert({ ...alert, open: false });
+  };
+
+  // Format date for display
+  const formatReviewDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const options = { year: "numeric", month: "long", day: "numeric" };
+    return new Date(dateString).toLocaleDateString("vi-VN", options);
+  };
+
+  const handleAddToCart = async () => {
+    try {
+      // Kiểm tra đăng nhập từ context
+      if (!context.isLogin) {
+        toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
+        localStorage.setItem("redirectUrl", window.location.pathname);
+        setTimeout(() => {
+          navigate("/signin");
+        }, 2000);
+        return;
+      }
+
+      // Kiểm tra số lượng
+      if (!quantity || quantity < 1) {
+        toast.error("Vui lòng chọn số lượng hợp lệ");
+        return;
+      }
+
+      // Thêm vào giỏ hàng với số lượng đã chọn
+      const response = await addToCart(product._id, quantity);
+
+      if (response) {
+        toast.success("Đã thêm sản phẩm vào giỏ hàng!");
+      }
+    } catch (error) {
+      console.error("Lỗi khi thêm vào giỏ hàng:", error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Có lỗi xảy ra khi thêm vào giỏ hàng");
+      }
+    }
+  };
+
+  const handleWishlistClick = async () => {
+    if (isLoading || !product._id) return;
+
+    // Kiểm tra đăng nhập
+    if (!context.isLogin) {
+      toast.error("Vui lòng đăng nhập để thêm sản phẩm vào yêu thích");
+      localStorage.setItem("redirectUrl", window.location.pathname);
+      setTimeout(() => {
+        navigate("/signin");
+      }, 2000);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (isLiked) {
+        await removeFromWishlist(product._id);
+        setIsLiked(false);
+        toast.success("Đã xóa khỏi danh sách yêu thích");
+      } else {
+        await addToWishlist(product._id);
+        setIsLiked(true);
+        toast.success("Đã thêm vào danh sách yêu thích");
+      }
+    } catch (error) {
+      toast.error("Có lỗi xảy ra, vui lòng thử lại");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <>
-      <section className="productDetails section">
-        <div className="container">
-          <div className="row">
-            <div className="col-md-4 pl-5">
-              <ProductZoom product={product} />
-            </div>
-            <div className="col-md-7 pl-5">
-              <h2 className="hd text-capitalize">{product?.name}</h2>
-              <ul className="list list-inline">
-                <li className="list-inline-item">
-                  <div className="d-flex align-items-center">
-                    <span className="text-light1 mr-2">Brands : </span>
-                    <span>{brandName || "No Brand"}</span>
-                  </div>
-                </li>
-                <li className="list-inline-item d-flex align-items-center">
-                  <div className="d-flex align-items-center">
-                    <Rating
-                      name="read-only"
-                      value={product?.rating || 0}
-                      size="small"
-                      readOnly
-                      precision={0.5}
-                    />
-                    <span className="text-light1 cursor ml-2">
-                      {product?.reviews?.length || 0} Review
+    <Container maxWidth="xl" className="product-details-container">
+      {loading ? (
+        <div>Đang tải...</div>
+      ) : error ? (
+        <div>Lỗi: {error}</div>
+      ) : (
+        <>
+          <Snackbar
+            open={alert.open}
+            autoHideDuration={6000}
+            onClose={handleCloseAlert}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          >
+            <Alert onClose={handleCloseAlert} severity={alert.severity}>
+              {alert.message}
+            </Alert>
+          </Snackbar>
+
+          <section className="productDetails section">
+            <div className="container">
+              <div className="row">
+                <div className="col-md-4 pl-5">
+                  <ProductZoom product={product} />
+                </div>
+                <div className="col-md-7 pl-5">
+                  <h2 className="hd text-capitalize">{product?.name}</h2>
+                  <ul className="list list-inline">
+                    <li className="list-inline-item">
+                      <div className="d-flex align-items-center mr-3">
+                        <span className="text-light1 mr-2">Brands : </span>
+                        <span>{brandName || "No Brand"}</span>
+                      </div>
+                    </li>
+                    <li className="list-inline-item d-flex align-items-center">
+                      <div className="d-flex align-items-center">
+                        <Rating
+                          name="read-only"
+                          value={product?.rating || 0}
+                          size="small"
+                          readOnly
+                          precision={0.5}
+                        />
+                        <span className="text-light1 cursor ml-2">
+                          {reviews.length || 0} Review
+                        </span>
+                      </div>
+                    </li>
+                  </ul>
+                  <div className="d-flex info mb-3">
+                    {product?.discount > 0 && (
+                      <span className="oldPrice">${product?.price}</span>
+                    )}
+                    <span className="netPrice text-danger ml-2">
+                      ${discountedPrice}
                     </span>
                   </div>
-                </li>
-              </ul>
-              <div className="d-flex info mb-3">
-                {product?.discount > 0 && (
-                  <span className="oldPrice">${product?.price}</span>
-                )}
-                <span className="netPrice text-danger ml-2">
-                  ${discountedPrice}
-                </span>
-              </div>
-              <span
-                className={`badge ${
-                  product?.inStock > 0 ? "text-success" : "text-danger"
-                }`}
-              >
-                {product?.inStock > 0 ? "IN STOCK" : "OUT OF STOCK"}
-              </span>
+                  <span
+                    className={`badge ${
+                      isInStock ? "bg-success" : "bg-danger"
+                    }`}
+                  >
+                    {isInStock ? "IN STOCK" : "OUT OF STOCK"}
+                  </span>
 
-              <p className="mt-3">
-                Vivamus adipiscing nisl ut dolor dignissim semper. Nulla luctus
-                malesuada tincidunt. Class aptent taciti sociosqu ad litora
-                torquent
-              </p>
-              <div className="productSize d-flex align-items-center">
-                <span>Size / Weight:</span>
-                <ul className="list list-inline mb-0 pl-0 ml-3">
-                  <li className="list-inline-item">
-                    {" "}
-                    <a
-                      href="#/"
-                      className={`tag ${activeSize === 0 ? "active" : ""}`}
-                      onClick={() => isActive(0)}
-                    >
-                      50g
-                    </a>
-                  </li>
-                  <li className="list-inline-item">
-                    {" "}
-                    <a
-                      href="#/"
-                      className={`tag ${activeSize === 1 ? "active" : ""}`}
-                      onClick={() => isActive(1)}
-                    >
-                      100g
-                    </a>
-                  </li>
-                  <li className="list-inline-item">
-                    {" "}
-                    <a
-                      href="#/"
-                      className={`tag ${activeSize === 2 ? "active" : ""}`}
-                      onClick={() => isActive(2)}
-                    >
-                      200g
-                    </a>
-                  </li>
-                  <li className="list-inline-item">
-                    {" "}
-                    <a
-                      href="#/"
-                      className={`tag ${activeSize === 3 ? "active" : ""}`}
-                      onClick={() => isActive(3)}
-                    >
-                      500g
-                    </a>
-                  </li>
-                </ul>
-              </div>
+                  <p className="mt-3">
+                    Vivamus adipiscing nisl ut dolor dignissim semper. Nulla
+                    luctus malesuada tincidunt. Class aptent taciti sociosqu ad
+                    litora torquent
+                  </p>
+                  <div className="productSize d-flex align-items-center">
+                    <span>Size / Weight:</span>
+                    <ul className="list list-inline mb-0 pl-0 ml-3">
+                      <li className="list-inline-item">
+                        {" "}
+                        <a
+                          href="#/"
+                          className={`tag ${activeSize === 0 ? "active" : ""}`}
+                          onClick={() => isActive(0)}
+                        >
+                          50g
+                        </a>
+                      </li>
+                      <li className="list-inline-item">
+                        {" "}
+                        <a
+                          href="#/"
+                          className={`tag ${activeSize === 1 ? "active" : ""}`}
+                          onClick={() => isActive(1)}
+                        >
+                          100g
+                        </a>
+                      </li>
+                      <li className="list-inline-item">
+                        {" "}
+                        <a
+                          href="#/"
+                          className={`tag ${activeSize === 2 ? "active" : ""}`}
+                          onClick={() => isActive(2)}
+                        >
+                          200g
+                        </a>
+                      </li>
+                      <li className="list-inline-item">
+                        {" "}
+                        <a
+                          href="#/"
+                          className={`tag ${activeSize === 3 ? "active" : ""}`}
+                          onClick={() => isActive(3)}
+                        >
+                          500g
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
 
-              <div className="d-flex align-items-center mt-3">
-                <QuantityBox />
-                <Button
-                  className="btn-lg btn-big btn-round ml-3"
-                  sx={{
-                    backgroundColor: "#00aaff",
-                    color: "white",
-                    "&:hover": {
-                      backgroundColor: "#0088cc",
-                    },
-                  }}
-                >
-                  <BsFillCartFill /> &nbsp; Add to Cart
-                </Button>
-                <Tooltip title="Add to Wishlist" placement="top">
-                  <Button
-                    className="btn-lg btn-big btn-circle ml-4"
-                    sx={{
-                      backgroundColor: "#00aaff",
-                      color: "white",
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        backgroundColor: "white",
-                        color: "#00aaff",
-                        border: "1px solid #00aaff",
-                      },
-                      "&:active": {
+                  <div className="d-flex align-items-center mt-3">
+                    <QuantityBox value={quantity} onChange={setQuantity} />
+                    <Button
+                      className="btn-lg btn-big btn-round ml-3"
+                      sx={{
                         backgroundColor: "#00aaff",
                         color: "white",
-                      },
-                    }}
-                  >
-                    <FaRegHeart />
-                  </Button>
-                </Tooltip>
-                <Tooltip title="Add to Compare" placement="top">
-                  <Button
-                    className="btn-lg btn-big btn-circle ml-2"
-                    sx={{
-                      backgroundColor: "#00aaff",
-                      color: "white",
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        backgroundColor: "white",
-                        color: "#00aaff",
-                        border: "1px solid #00aaff",
-                      },
-                      "&:active": {
-                        backgroundColor: "#00aaff",
-                        color: "white",
-                      },
-                    }}
-                  >
-                    <MdCompareArrows />
-                  </Button>
-                </Tooltip>
-              </div>
-            </div>
-          </div>
-          <br />
-
-          <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto", p: 3 }}>
-            <StyledTabs
-              value={tabValue}
-              onChange={handleTabChange}
-              variant="fullWidth"
-            >
-              <Tab label="Description" />
-              <Tab label="Additional Info" />
-              <Tab label={`Reviews (${product?.reviews?.length || 0})`} />
-            </StyledTabs>
-
-            <ContentBox>
-              {tabValue === 0 && (
-                <Typography fontSize="1.1rem" lineHeight={1.7}>
-                  {product?.description || "No description available."}
-                </Typography>
-              )}
-
-              {tabValue === 1 && (
-                <Table
-                  sx={{
-                    "& .MuiTableCell-root": { fontSize: "1.05rem", py: 2 },
-                  }}
-                >
-                  <TableBody>
-                    {product?.specifications?.map((spec) => (
-                      <TableRow
-                        key={spec.name}
+                        "&:hover": {
+                          backgroundColor: "#0088cc",
+                        },
+                      }}
+                      onClick={handleAddToCart}
+                    >
+                      <BsFillCartFill /> &nbsp; Add to Cart
+                    </Button>
+                    <Tooltip title="Add to Wishlist" placement="top">
+                      <Button
+                        className="btn-lg btn-big btn-circle ml-4"
                         sx={{
-                          "&:last-child td, &:last-child th": { border: 0 },
+                          backgroundColor: "#00aaff",
+                          color: "white",
+                          transition: "all 0.3s ease",
+                          "&:hover": {
+                            backgroundColor: "white",
+                            color: "#00aaff",
+                            border: "1px solid #00aaff",
+                          },
+                          "&:active": {
+                            backgroundColor: "#00aaff",
+                            color: "white",
+                          },
+                        }}
+                        onClick={handleWishlistClick}
+                        disabled={isLoading}
+                      >
+                        {isLiked ? (
+                          <FaHeart style={{ color: "red", fill: "red" }} />
+                        ) : (
+                          <FaRegHeart style={{ color: "red", fill: "red" }} />
+                        )}
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="Add to Compare" placement="top">
+                      <Button
+                        className="btn-lg btn-big btn-circle ml-2"
+                        sx={{
+                          backgroundColor: "#00aaff",
+                          color: "white",
+                          transition: "all 0.3s ease",
+                          "&:hover": {
+                            backgroundColor: "white",
+                            color: "#00aaff",
+                            border: "1px solid #00aaff",
+                          },
+                          "&:active": {
+                            backgroundColor: "#00aaff",
+                            color: "white",
+                          },
                         }}
                       >
-                        <TableCell
-                          component="th"
-                          scope="row"
-                          sx={{
-                            fontWeight: "medium",
-                            color: "#333",
-                            width: "40%",
-                          }}
-                        >
-                          {spec.name}
-                        </TableCell>
-                        <TableCell>{spec.value}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+                        <MdCompareArrows />
+                      </Button>
+                    </Tooltip>
+                  </div>
+                </div>
+              </div>
+              <br />
 
-              {tabValue === 2 && (
-                <Box>
-                  {/* Add a review section */}
-                  <Box sx={{ mb: 5 }}>
-                    <Typography variant="h6" sx={{ mb: 3, fontWeight: 500 }}>
-                      Add a review
+              <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto", p: 3 }}>
+                <StyledTabs
+                  value={tabValue}
+                  onChange={handleTabChange}
+                  variant="fullWidth"
+                >
+                  <Tab label="Description" />
+                  <Tab label="Additional Info" />
+                  <Tab label={`Reviews (${reviews.length || 0})`} />
+                </StyledTabs>
+
+                <ContentBox>
+                  {tabValue === 0 && (
+                    <Typography fontSize="1.1rem" lineHeight={1.7}>
+                      {product?.description || "No description available."}
                     </Typography>
+                  )}
 
-                    <ReviewTextField
-                      multiline
-                      rows={6}
-                      placeholder="Write a Review"
-                      value={review}
-                      onChange={handleReviewChange}
-                      variant="outlined"
-                    />
-
-                    <Box
+                  {tabValue === 1 && (
+                    <Table
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        mb: 3,
+                        "& .MuiTableCell-root": { fontSize: "1.05rem", py: 2 },
                       }}
                     >
-                      <Rating
-                        value={rating}
-                        onChange={handleRatingChange}
-                        sx={{
-                          "& .MuiRating-iconFilled": {
-                            fontSize: "1.8rem",
-                            color: "#ffc107",
-                          },
-                          "& .MuiRating-iconEmpty": { fontSize: "1.8rem" },
-                        }}
+                      <TableBody>
+                        {product?.specifications?.map((spec) => (
+                          <TableRow
+                            key={spec.name}
+                            sx={{
+                              "&:last-child td, &:last-child th": { border: 0 },
+                            }}
+                          >
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              sx={{
+                                fontWeight: "medium",
+                                color: "#333",
+                                width: "40%",
+                              }}
+                            >
+                              {spec.name}
+                            </TableCell>
+                            <TableCell>{spec.value}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+
+                  {tabValue === 2 && (
+                    <Box>
+                      {/* Add a review section - only show if user hasn't already reviewed */}
+                      {!hasReviewed && (
+                        <Box sx={{ mb: 5 }}>
+                          <Typography
+                            variant="h6"
+                            sx={{ mb: 3, fontWeight: 500 }}
+                          >
+                            Add a review
+                          </Typography>
+
+                          {!isAuthenticated && (
+                            <Alert severity="info" sx={{ mb: 3 }}>
+                              Bạn cần đăng nhập để gửi đánh giá
+                            </Alert>
+                          )}
+
+                          <ReviewTextField
+                            multiline
+                            rows={6}
+                            placeholder="Write a Review"
+                            value={review}
+                            onChange={handleReviewChange}
+                            variant="outlined"
+                            disabled={!isAuthenticated}
+                          />
+
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              mb: 3,
+                            }}
+                          >
+                            <Rating
+                              value={rating}
+                              onChange={handleRatingChange}
+                              disabled={!isAuthenticated}
+                              sx={{
+                                "& .MuiRating-iconFilled": {
+                                  fontSize: "1.8rem",
+                                  color: "#ffc107",
+                                },
+                                "& .MuiRating-iconEmpty": {
+                                  fontSize: "1.8rem",
+                                },
+                              }}
+                            />
+
+                            <SubmitButton
+                              variant="contained"
+                              onClick={handleSubmitReview}
+                              disabled={!isAuthenticated}
+                            >
+                              Submit Review
+                            </SubmitButton>
+                          </Box>
+                        </Box>
+                      )}
+
+                      {hasReviewed && (
+                        <Alert severity="success" sx={{ mb: 4 }}>
+                          Cảm ơn bạn đã gửi đánh giá cho sản phẩm này!
+                        </Alert>
+                      )}
+
+                      {/* Divider */}
+                      <Box
+                        sx={{ height: 1, backgroundColor: "#e0e0e0", mb: 4 }}
                       />
 
-                      <SubmitButton
-                        variant="contained"
-                        onClick={handleSubmitReview}
-                      >
-                        Submit Review
-                      </SubmitButton>
-                    </Box>
-                  </Box>
-
-                  {/* Divider */}
-                  <Box sx={{ height: 1, backgroundColor: "#e0e0e0", mb: 4 }} />
-
-                  {/* Existing reviews */}
-                  <Typography variant="h5" sx={{ mb: 4, fontWeight: 500 }}>
-                    Customer questions & answers
-                  </Typography>
-
-                  {product?.reviews?.map((review, index) => (
-                    <ReviewItem key={index}>
-                      <Typography
-                        variant="h6"
-                        sx={{ fontWeight: "medium", mb: 0.5 }}
-                      >
-                        {review.user}
+                      {/* Existing reviews */}
+                      <Typography variant="h5" sx={{ mb: 4, fontWeight: 500 }}>
+                        Customer Reviews{" "}
+                        {reviews.length > 0 ? `(${reviews.length})` : ""}
                       </Typography>
-                      <Typography
-                        variant="body1"
-                        color="text.secondary"
-                        sx={{ mb: 1.5 }}
-                      >
-                        {review.date}
-                      </Typography>
-                      <Rating
-                        value={review.rating}
-                        readOnly
-                        precision={0.5}
-                        sx={{
-                          mb: 2,
-                          "& .MuiRating-iconFilled": {
-                            fontSize: "1.5rem",
-                            color: "#ffc107",
-                          },
-                          "& .MuiRating-iconEmpty": { fontSize: "1.5rem" },
-                        }}
-                      />
-                      {review.comment && (
+
+                      {reviews.length === 0 && (
                         <Typography
                           variant="body1"
-                          fontSize="1.1rem"
-                          lineHeight={1.6}
+                          sx={{ fontStyle: "italic", color: "text.secondary" }}
                         >
-                          {review.comment}
+                          Chưa có đánh giá nào cho sản phẩm này.
                         </Typography>
                       )}
-                    </ReviewItem>
-                  ))}
-                </Box>
-              )}
-            </ContentBox>
-          </Box>
 
-          <br />
-          <RelatedProducts title="RELATED PRODUCTS" />
-          <RelatedProducts title="RELATED PRODUCTS" />
-        </div>
-      </section>
-    </>
+                      {reviews.map((reviewItem, index) => (
+                        <ReviewItem key={reviewItem._id || index}>
+                          <Typography
+                            variant="h6"
+                            sx={{ fontWeight: "medium", mb: 0.5 }}
+                          >
+                            {reviewItem.user?.name || "Anonymous"}
+                          </Typography>
+                          <Typography
+                            variant="body1"
+                            color="text.secondary"
+                            sx={{ mb: 1.5 }}
+                          >
+                            {formatReviewDate(
+                              reviewItem.date || reviewItem.createdAt
+                            )}
+                          </Typography>
+                          <Rating
+                            value={reviewItem.rating}
+                            readOnly
+                            precision={0.5}
+                            sx={{
+                              mb: 2,
+                              "& .MuiRating-iconFilled": {
+                                fontSize: "1.5rem",
+                                color: "#ffc107",
+                              },
+                              "& .MuiRating-iconEmpty": { fontSize: "1.5rem" },
+                            }}
+                          />
+                          {reviewItem.comment && (
+                            <Typography
+                              variant="body1"
+                              fontSize="1.1rem"
+                              lineHeight={1.6}
+                            >
+                              {reviewItem.comment}
+                            </Typography>
+                          )}
+                        </ReviewItem>
+                      ))}
+                    </Box>
+                  )}
+                </ContentBox>
+              </Box>
+
+              <br />
+              {/* Sản phẩm gợi ý */}
+              {product && product._id && (
+                <RelatedProducts
+                  title="Sản phẩm tương tự"
+                  productId={product._id}
+                />
+              )}
+            </div>
+          </section>
+        </>
+      )}
+    </Container>
   );
 };
 export default ProductDetails;

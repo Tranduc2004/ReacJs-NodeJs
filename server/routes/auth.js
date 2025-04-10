@@ -82,6 +82,7 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log("Login attempt:", { email });
 
     // Kiểm tra dữ liệu đầu vào
     if (!email || !password) {
@@ -92,6 +93,8 @@ router.post("/login", async (req, res) => {
 
     // Tìm người dùng theo email
     const user = await User.findOne({ email }).select("+password");
+    console.log("Found user:", user ? "Yes" : "No");
+
     if (!user) {
       return res
         .status(401)
@@ -100,6 +103,8 @@ router.post("/login", async (req, res) => {
 
     // Kiểm tra mật khẩu
     const isMatch = await user.matchPassword(password);
+    console.log("Password match:", isMatch);
+
     if (!isMatch) {
       return res
         .status(401)
@@ -123,8 +128,11 @@ router.post("/login", async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error("Lỗi đăng nhập:", error);
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("Lỗi đăng nhập chi tiết:", error);
+    res.status(500).json({
+      message: "Lỗi server",
+      error: error.message,
+    });
   }
 });
 
