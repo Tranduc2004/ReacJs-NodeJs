@@ -70,7 +70,7 @@ const SignIn = () => {
     return () => {
       context.setIsHeaderFooterShow(true);
     };
-  }, []); // Chỉ chạy 1 lần khi mount
+  }); // Chỉ chạy 1 lần khi mount
 
   const handleChange = (e) => {
     setFormData({
@@ -86,24 +86,33 @@ const SignIn = () => {
 
     try {
       const response = await login(formData);
-      context.setIsLogin(true);
-      // Lưu thông tin user vào context
-      context.setUser({
-        name: response.name,
-        email: response.email,
-        phone: response.phone,
-        role: response.role,
-      });
-      setShowSuccess(true);
+      if (response) {
+        context.setIsLogin(true);
+        // Lưu thông tin user vào context
+        context.setUser({
+          name: response.name,
+          email: response.email,
+          phone: response.phone,
+          role: response.role,
+        });
+        setShowSuccess(true);
 
-      // Chuyển hướng sau khi hiển thị thông báo thành công
-      setTimeout(() => {
-        navigate("/");
-      }, 1500);
+        // Chuyển hướng sau khi hiển thị thông báo thành công
+        setTimeout(() => {
+          navigate("/");
+        }, 1500);
+      }
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại."
-      );
+      console.error("Login error:", err);
+      if (err.response?.data?.message === "Tài khoản đã bị vô hiệu hóa") {
+        setError(
+          "Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên để được hỗ trợ."
+        );
+      } else {
+        setError(
+          err.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -191,11 +200,16 @@ const SignIn = () => {
               Sign In
             </Typography>
 
-            <Box component="form" onSubmit={handleSubmit} sx={{ mb: 3 }}>
+            <Box
+              component="form"
+              onSubmit={handleSubmit}
+              noValidate
+              sx={{ mb: 3 }}
+            >
               {error && (
-                <Typography color="error" align="center" sx={{ mb: 2 }}>
+                <Alert severity="error" sx={{ mb: 2 }}>
                   {error}
-                </Typography>
+                </Alert>
               )}
               <TextField
                 margin="normal"

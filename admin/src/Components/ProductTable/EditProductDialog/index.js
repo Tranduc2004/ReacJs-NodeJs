@@ -118,6 +118,15 @@ const EditProductDialog = ({
       console.log("Selected category:", value);
     }
 
+    // Kiểm tra giới hạn số lượng trong kho
+    if (name === "countInStock") {
+      const stockValue = Number(value);
+      if (stockValue > 1000) {
+        toast.error("Số lượng trong kho không được vượt quá 1000");
+        return;
+      }
+    }
+
     setProductData((prevData) => ({
       ...prevData,
       [name]: type === "checkbox" ? checked : value,
@@ -189,12 +198,29 @@ const EditProductDialog = ({
     setErrorMessage("");
 
     try {
-      // Chuẩn bị dữ liệu cập nhật cơ bản
+      // Kiểm tra dữ liệu bắt buộc
+      if (!productData.name?.trim()) {
+        throw new Error("Tên sản phẩm không được để trống");
+      }
+      if (!productData.category) {
+        throw new Error("Vui lòng chọn danh mục sản phẩm");
+      }
+      if (!productData.price || Number(productData.price) <= 0) {
+        throw new Error("Giá sản phẩm phải lớn hơn 0");
+      }
+      if (!productData.countInStock || Number(productData.countInStock) < 0) {
+        throw new Error("Số lượng trong kho không được âm");
+      }
+      if (Number(productData.countInStock) > 1000) {
+        throw new Error("Số lượng trong kho không được vượt quá 1000");
+      }
+
+      // Chuẩn bị dữ liệu cập nhật
       const updatedProductData = {
-        name: productData.name?.trim() || "",
+        name: productData.name.trim(),
         description: productData.description?.trim() || "",
-        price: Number(productData.price) || 0,
-        countInStock: Number(productData.countInStock) || 0,
+        price: Number(productData.price),
+        countInStock: Number(productData.countInStock),
         category: productData.category,
         isFeatured: Boolean(productData.isFeatured),
       };
@@ -214,10 +240,10 @@ const EditProductDialog = ({
         // Xử lý upload file ảnh
         const formData = new FormData();
         formData.append("file", selectedImageFile);
-        formData.append("upload_preset", "your_upload_preset"); // Thay thế bằng upload preset của bạn
+        formData.append("upload_preset", "your_upload_preset");
 
         const uploadResponse = await axios.post(
-          "https://api.cloudinary.com/v1_1/your_cloud_name/image/upload", // Thay thế bằng cloud name của bạn
+          "https://api.cloudinary.com/v1_1/your_cloud_name/image/upload",
           formData
         );
 
@@ -229,39 +255,18 @@ const EditProductDialog = ({
         `/api/products/${product._id}`,
         updatedProductData
       );
-      console.log("API Response:", response); // Log để debug
 
-      // Kiểm tra response và xử lý dữ liệu
       if (response) {
-        // Nếu response có success và data
-        if (response.success && response.data) {
-          toast.success("Cập nhật sản phẩm thành công!");
-          if (onProductUpdated && typeof onProductUpdated === "function") {
-            onProductUpdated(response.data);
-          }
-          handleClose();
+        toast.success("Cập nhật sản phẩm thành công!");
+        if (onProductUpdated) {
+          onProductUpdated(response);
         }
-        // Nếu response chỉ là data
-        else if (response._id) {
-          toast.success("Cập nhật sản phẩm thành công!");
-          if (onProductUpdated && typeof onProductUpdated === "function") {
-            onProductUpdated(response);
-          }
-          handleClose();
-        }
-        // Nếu response không có dữ liệu hợp lệ
-        else {
-          toast.success("Cập nhật sản phẩm thành công!");
-          handleClose();
-        }
-      } else {
-        toast.error("Cập nhật sản phẩm thất bại!");
-        console.error("Response không hợp lệ:", response);
+        handleClose();
       }
     } catch (error) {
       console.error("Lỗi khi cập nhật sản phẩm:", error);
-      toast.error("Đã xảy ra lỗi khi cập nhật sản phẩm");
-      setErrorMessage(error.message || "Đã xảy ra lỗi khi cập nhật sản phẩm");
+      setErrorMessage(error.message);
+      toast.error(error.message || "Đã xảy ra lỗi khi cập nhật sản phẩm");
     } finally {
       setIsLoading(false);
     }
@@ -422,7 +427,7 @@ const EditProductDialog = ({
                 onChange={handleInputChange}
                 fullWidth
                 variant="outlined"
-                InputProps={{ inputProps: { min: 0 } }}
+                InputProps={{ inputProps: { min: 0, max: 1000 } }}
                 sx={inputStyle}
               />
             </Grid>

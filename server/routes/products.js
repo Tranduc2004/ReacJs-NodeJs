@@ -3,7 +3,7 @@ const router = express.Router();
 const { Product } = require("../models/products.js");
 const Category = require("../models/category.js");
 const { Brand } = require("../models/brands.js");
-const authenticate = require("../middleware/auth");
+const { authenticateJWT } = require("../middleware/auth");
 const admin = require("../middleware/admin");
 const multer = require("multer");
 const path = require("path");
@@ -62,7 +62,7 @@ router.get(`/`, async (req, res) => {
 });
 
 // Lấy danh sách sản phẩm yêu thích của người dùng
-router.get("/likes", authenticate, async (req, res) => {
+router.get("/likes", authenticateJWT, async (req, res) => {
   try {
     const userId = req.user._id;
     console.log("User ID:", userId); // Debug log

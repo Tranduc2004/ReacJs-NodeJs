@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Rating from "@mui/material/Rating";
 import QuantityBox from "../../Components/QuantityBox";
 import { IoIosClose } from "react-icons/io";
@@ -10,6 +10,7 @@ import { getCart, updateCartItem, removeFromCart } from "../../services/api";
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchCart();
@@ -183,6 +184,7 @@ const Cart = () => {
                     color: "white",
                     "&:hover": { backgroundColor: "#0088cc" },
                   }}
+                  onClick={() => navigate("/checkout")}
                 >
                   <IoCartSharp /> &nbsp; Tiếp tục
                 </Button>

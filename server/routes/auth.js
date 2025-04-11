@@ -29,10 +29,17 @@ const auth = async (req, res, next) => {
 };
 
 // Tạo token JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: "30d",
-  });
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "30d",
+    }
+  );
 };
 
 // Đăng ký người dùng
@@ -62,7 +69,7 @@ router.post("/register", async (req, res) => {
     });
 
     // Tạo token
-    const token = generateToken(user._id);
+    const token = generateToken(user);
 
     res.status(201).json({
       _id: user._id,
@@ -117,7 +124,7 @@ router.post("/login", async (req, res) => {
     }
 
     // Tạo token
-    const token = generateToken(user._id);
+    const token = generateToken(user);
 
     res.json({
       _id: user._id,

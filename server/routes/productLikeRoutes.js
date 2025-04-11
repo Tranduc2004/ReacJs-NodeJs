@@ -3,14 +3,14 @@ const express = require("express");
 const router = express.Router({ mergeParams: true });
 const ProductLike = require("../models/ProductLike");
 const { Product } = require("../models/products.js"); // Sửa lại cách import
-const authenticate = require("../middleware/auth");
+const { authenticateJWT } = require("../middleware/auth");
 
 /**
  * @route   GET /api/products/:productId/like
  * @desc    Kiểm tra trạng thái yêu thích
  * @access  Private (yêu cầu đăng nhập)
  */
-router.get("/", authenticate, async (req, res) => {
+router.get("/", authenticateJWT, async (req, res) => {
   try {
     const productId = req.params.productId;
     const userId = req.user.id;
@@ -37,7 +37,7 @@ router.get("/", authenticate, async (req, res) => {
  * @desc    Thêm vào danh sách yêu thích
  * @access  Private (yêu cầu đăng nhập)
  */
-router.post("/", authenticate, async (req, res) => {
+router.post("/", authenticateJWT, async (req, res) => {
   try {
     const productId = req.params.productId;
     const userId = req.user.id;
@@ -91,7 +91,7 @@ router.post("/", authenticate, async (req, res) => {
  * @desc    Xóa khỏi danh sách yêu thích
  * @access  Private (yêu cầu đăng nhập)
  */
-router.delete("/", authenticate, async (req, res) => {
+router.delete("/", authenticateJWT, async (req, res) => {
   try {
     const productId = req.params.productId;
     const userId = req.user.id;

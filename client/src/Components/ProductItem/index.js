@@ -99,7 +99,8 @@ const ProductItem = memo(({ product, itemView }) => {
       : "https://klbtheme.com/bacola/wp-content/uploads/2021/04/product-image-62-346x310.jpg";
   const isInStock = product?.countInStock > 0;
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (e) => {
+    e.stopPropagation(); // Ngăn chặn event bubbling
     try {
       // Kiểm tra đăng nhập từ context
       if (!context.isLogin) {
@@ -199,16 +200,16 @@ const ProductItem = memo(({ product, itemView }) => {
           <Button
             className="add-to-cart-btn"
             sx={{
-              backgroundColor: "transparent",
-              border: "2px solid #00aaff", // Blue border
-              color: "#00aaff", // Blue text
-              fontWeight: "500", // Medium weight
-              textTransform: "none", // No uppercase
-              borderRadius: "20px", // Rounded corners
+              backgroundColor: isInStock ? "transparent" : "#ffcccc", // màu nền nhạt khi hết hàng
+              border: isInStock ? "2px solid #00aaff" : "2px solid red",
+              color: isInStock ? "#00aaff" : "red",
+              fontWeight: "500",
+              textTransform: "none",
+              borderRadius: "20px",
               "&:hover": {
-                backgroundColor: "#00aaff", // Hover background color
-                color: "white", // White text on hover
-                borderColor: "#00aaff", // Keep border color blue
+                backgroundColor: isInStock ? "#00aaff" : "#ff4d4d",
+                color: "white",
+                borderColor: isInStock ? "#00aaff" : "red",
               },
             }}
             onClick={handleAddToCart}

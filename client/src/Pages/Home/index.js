@@ -14,11 +14,12 @@ import { CiMail } from "react-icons/ci";
 import { useState, useEffect } from "react";
 import { getProducts } from "../../services/api";
 import { Link } from "react-router-dom";
+import ProductItem from "../../Components/ProductItem";
+import Chatbot from "../../Components/Chatbot";
 
 // Import Swiper styles
 import "swiper/css";
 import "swiper/css/pagination";
-import ProductItem from "../../Components/ProductItem";
 
 const BestSellers = () => {
   const [products, setProducts] = useState([]);
@@ -29,9 +30,18 @@ const BestSellers = () => {
     const fetchProducts = async () => {
       try {
         const data = await getProducts();
-        setProducts(data);
+        console.log("Dữ liệu sản phẩm:", data);
+
+        // Kiểm tra data có phải là mảng không
+        if (Array.isArray(data)) {
+          setProducts(data);
+        } else {
+          console.error("Dữ liệu không phải là mảng:", data);
+          setProducts([]);
+        }
         setLoading(false);
       } catch (err) {
+        console.error("Lỗi khi lấy sản phẩm:", err);
         setError("Không thể tải sản phẩm. Vui lòng thử lại sau.");
         setLoading(false);
       }
@@ -48,12 +58,18 @@ const BestSellers = () => {
     return <div>{error}</div>;
   }
 
+  // Kiểm tra products có phải là mảng không
+  if (!Array.isArray(products)) {
+    console.error("products không phải là mảng:", products);
+    return <div>Không có sản phẩm nào</div>;
+  }
+
   // Lấy 8 sản phẩm đầu tiên để hiển thị
   const bestSellers = products.slice(0, 8);
   const featuredProducts = products.slice(8, 13);
 
   return (
-    <>
+    <div className="home">
       <HomeBanner />
       <HomeCat />
       <section className="homeProducts">
@@ -214,7 +230,8 @@ const BestSellers = () => {
           </div>
         </div>
       </section>
-    </>
+      <Chatbot />
+    </div>
   );
 };
 

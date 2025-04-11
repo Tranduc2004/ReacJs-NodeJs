@@ -1,19 +1,12 @@
 const admin = (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({
+  if (req.user && req.user.role === "admin") {
+    next();
+  } else {
+    res.status(403).json({
       success: false,
-      message: "Bạn cần đăng nhập để thực hiện thao tác này",
+      message: "Không có quyền truy cập, yêu cầu quyền admin",
     });
   }
-
-  if (!req.user.isAdmin) {
-    return res.status(403).json({
-      success: false,
-      message: "Bạn không có quyền thực hiện thao tác này",
-    });
-  }
-
-  next();
 };
 
 module.exports = admin;
