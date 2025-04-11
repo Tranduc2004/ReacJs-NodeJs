@@ -474,10 +474,27 @@ export const chatWithBot = async (message) => {
 // API cho orders
 export const createOrderFromCart = async (orderData) => {
   try {
+    // Kiểm tra dữ liệu đơn hàng
+    if (!orderData.shippingAddress || !orderData.paymentMethod) {
+      throw new Error("Thiếu thông tin bắt buộc");
+    }
+
+    // Kiểm tra định dạng địa chỉ
+    const { fullName, phone, address, city, district, ward } =
+      orderData.shippingAddress;
+    if (!fullName || !phone || !address || !city || !district || !ward) {
+      throw new Error("Vui lòng nhập đầy đủ thông tin địa chỉ");
+    }
+
+    console.log("Dữ liệu đơn hàng:", orderData);
     const response = await api.post("/orders", orderData);
     return response;
   } catch (error) {
-    console.error("Lỗi khi tạo đơn hàng:", error);
+    console.error("Lỗi khi tạo đơn hàng:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+    });
     throw error;
   }
 };

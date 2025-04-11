@@ -178,12 +178,15 @@ const UserDetail = () => {
                   Tổng tiền
                 </TableCell>
                 <TableCell sx={{ color: "text.secondary", fontWeight: "bold" }}>
+                  Phương thức thanh toán
+                </TableCell>
+                <TableCell sx={{ color: "text.secondary", fontWeight: "bold" }}>
                   Trạng thái
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {user.orders?.length > 0 ? (
+              {user.orders && user.orders.length > 0 ? (
                 user.orders.map((order) => (
                   <TableRow
                     key={order._id}
@@ -197,28 +200,48 @@ const UserDetail = () => {
                       {order._id}
                     </TableCell>
                     <TableCell sx={{ color: "text.primary" }}>
-                      {new Date(order.createdAt).toLocaleDateString()}
+                      {new Date(order.createdAt).toLocaleDateString("vi-VN")}
                     </TableCell>
                     <TableCell sx={{ color: "text.primary" }}>
-                      {order.total.toLocaleString("vi-VN")}đ
+                      {order.totalAmount.toLocaleString("vi-VN")}đ
+                    </TableCell>
+                    <TableCell sx={{ color: "text.primary" }}>
+                      {order.paymentMethod === "COD"
+                        ? "Thanh toán khi nhận hàng"
+                        : "Momo"}
                     </TableCell>
                     <TableCell>
                       <Typography
                         sx={{
                           color:
-                            order.status === "Completed"
+                            order.status === "delivered"
                               ? "success.main"
+                              : order.status === "cancelled"
+                              ? "error.main"
                               : "warning.main",
                           backgroundColor:
-                            order.status === "Completed"
+                            order.status === "delivered"
                               ? "success.lighter"
+                              : order.status === "cancelled"
+                              ? "error.lighter"
                               : "warning.lighter",
                           padding: "4px 8px",
                           borderRadius: "4px",
                           display: "inline-block",
+                          textTransform: "capitalize",
                         }}
                       >
-                        {order.status}
+                        {order.status === "pending"
+                          ? "Đang chờ xử lý"
+                          : order.status === "processing"
+                          ? "Đang xử lý"
+                          : order.status === "shipped"
+                          ? "Đang giao hàng"
+                          : order.status === "delivered"
+                          ? "Đã giao hàng"
+                          : order.status === "cancelled"
+                          ? "Đã hủy"
+                          : order.status}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -226,7 +249,7 @@ const UserDetail = () => {
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     align="center"
                     sx={{ color: "text.secondary" }}
                   >

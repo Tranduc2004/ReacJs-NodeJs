@@ -6,6 +6,7 @@ import { CircleButton, CircleCartButton } from "../common/CircleButtons";
 import CartBadge from "../common/CartBadge";
 import { FaUserLarge } from "react-icons/fa6";
 import { FaHeart } from "react-icons/fa";
+import { BsCartCheck } from "react-icons/bs";
 import {
   useMediaQuery,
   Menu,
@@ -18,6 +19,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { logout } from "../../../services/api";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { IoIosLogOut } from "react-icons/io";
+import { toast } from "react-hot-toast";
 
 const UserControls = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -39,6 +41,7 @@ const UserControls = () => {
     context.setIsLogin(false);
     context.setUser(null);
     handleClose();
+    toast.success("Đăng xuất thành công!");
     navigate("/");
   };
 
@@ -120,6 +123,15 @@ const UserControls = () => {
                 >
                   <FaHeart />
                   Danh sách yêu thích
+                </MenuItem>
+                <MenuItem
+                  component={Link}
+                  to="/orders"
+                  onClick={handleClose}
+                  className="blue-menu-item"
+                >
+                  <BsCartCheck />
+                  Lịch sử đơn hàng
                 </MenuItem>
                 <MenuItem
                   component={Link}

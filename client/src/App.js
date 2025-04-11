@@ -19,6 +19,9 @@ import { AuthProvider } from "./context/AuthContext";
 import Wishlist from "./Pages/Wishlist";
 import ProductByCategory from "./Components/ProductByCategory";
 import Checkout from "./Pages/Checkout";
+import ThankYou from "./Pages/ThankYou";
+import OrderHistory from "./Pages/OrderHistory";
+import OrderDetail from "./Pages/OrderDetail";
 
 const MyContext = createContext();
 
@@ -108,6 +111,9 @@ function App() {
             <Route exact={true} path="/search" element={<Search />} />
             <Route exact={true} path="/wishlist" element={<Wishlist />} />
             <Route exact={true} path="/checkout" element={<Checkout />} />
+            <Route exact={true} path="/thank-you" element={<ThankYou />} />
+            <Route path="/orders" element={<OrderHistory />} />
+            <Route path="/orders/:orderId" element={<OrderDetail />} />
           </Routes>
           {isHeaderFooterShow && <Footer />}
         </BrowserRouter>

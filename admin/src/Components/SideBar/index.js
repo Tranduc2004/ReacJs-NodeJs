@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { TbLayoutDashboard, TbFileDescription } from "react-icons/tb";
 import { FaRegUser } from "react-icons/fa";
 import { BiPackage, BiMessageDetail } from "react-icons/bi";
@@ -22,8 +22,16 @@ import { MdChangeCircle } from "react-icons/md";
 import { useSidebar } from "../../context/SidebarContext";
 import { IoBag } from "react-icons/io5";
 import { MdBrandingWatermark } from "react-icons/md";
+import { getNewOrdersCount } from "../../utils/api";
 
-const MenuItem = ({ icon: Icon, text, badge, children, isDropdown }) => {
+const MenuItem = ({
+  icon: Icon,
+  text,
+  badge,
+  children,
+  isDropdown,
+  onClick,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   if (isDropdown) {
@@ -49,7 +57,7 @@ const MenuItem = ({ icon: Icon, text, badge, children, isDropdown }) => {
   }
 
   return (
-    <Link to={`/${text.toLowerCase()}`} className="menu-item">
+    <Link to={`/${text.toLowerCase()}`} className="menu-item" onClick={onClick}>
       <div className="d-flex align-items-center justify-content-between py-2 px-3">
         <div className="d-flex align-items-center">
           <Icon className="menu-icon" />
@@ -81,6 +89,27 @@ const MenuSection = ({ title, children }) => (
 
 const Sidebar = () => {
   const { isSidebarOpen } = useSidebar();
+  const [newOrdersCount, setNewOrdersCount] = useState(0);
+
+  const fetchNewOrdersCount = async () => {
+    try {
+      const response = await getNewOrdersCount();
+      setNewOrdersCount(response.count);
+    } catch (error) {
+      console.error("Error fetching new orders count:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchNewOrdersCount();
+    // Cập nhật mỗi 5 phút
+    const interval = setInterval(fetchNewOrdersCount, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleOrdersClick = () => {
+    setNewOrdersCount(0); // Reset số đơn hàng mới khi click vào menu Orders
+  };
 
   return (
     <div className={`sidebar ${isSidebarOpen ? "" : "collapsed"}`}>
@@ -114,7 +143,12 @@ const Sidebar = () => {
         <MenuItem
           icon={BsCart3}
           text="Orders"
-          badge={{ type: "count", text: "5" }}
+          badge={
+            newOrdersCount > 0
+              ? { type: "count", text: newOrdersCount.toString() }
+              : null
+          }
+          onClick={handleOrdersClick}
         />
         <MenuItem
           icon={BiMessageDetail}

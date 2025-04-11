@@ -1,13 +1,16 @@
 const Order = require("../models/Order");
-const Product = require("../models/products");
+const { Product } = require("../models/products");
 const Cart = require("../models/cart");
+const User = require("../models/user");
 const mongoose = require("mongoose");
 
 // Tạo đơn hàng từ giỏ hàng
 exports.createOrderFromCart = async (req, res) => {
   try {
+    console.log("Request body:", JSON.stringify(req.body, null, 2));
+
     // Kiểm tra user
-    if (!req.user || !req.user._id) {
+    if (!req.user || !req.user.id) {
       console.error("Không tìm thấy thông tin người dùng");
       return res.status(401).json({
         success: false,
@@ -17,11 +20,8 @@ exports.createOrderFromCart = async (req, res) => {
     }
 
     const { shippingAddress, paymentMethod, note } = req.body;
-    const userId = req.user._id;
 
-    console.log("Request body:", req.body);
-
-    // Validate dữ liệu đầu vào
+    // Kiểm tra dữ liệu đầu vào
     if (!shippingAddress || !paymentMethod) {
       console.error("Thiếu thông tin bắt buộc:", {
         shippingAddress,
@@ -31,6 +31,36 @@ exports.createOrderFromCart = async (req, res) => {
         success: false,
         message: "Thiếu thông tin bắt buộc",
         error: "Missing required fields",
+      });
+    }
+
+    // Kiểm tra định dạng shippingAddress
+    if (
+      !shippingAddress.fullName ||
+      !shippingAddress.phone ||
+      !shippingAddress.address ||
+      !shippingAddress.city ||
+      !shippingAddress.district ||
+      !shippingAddress.ward
+    ) {
+      console.error("Thiếu thông tin địa chỉ:", shippingAddress);
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng nhập đầy đủ thông tin địa chỉ",
+        error: "Invalid shipping address",
+      });
+    }
+
+    // Chuyển đổi userId thành ObjectId
+    let userId;
+    try {
+      userId = new mongoose.Types.ObjectId(req.user.id);
+    } catch (error) {
+      console.error("Lỗi khi chuyển đổi userId:", error);
+      return res.status(400).json({
+        success: false,
+        message: "ID người dùng không hợp lệ",
+        error: "Invalid user ID",
       });
     }
 
@@ -45,10 +75,11 @@ exports.createOrderFromCart = async (req, res) => {
       });
     }
 
-    console.log("Cart items:", cart.items);
+    console.log("Cart items:", JSON.stringify(cart.items, null, 2));
 
     // Kiểm tra số lượng sản phẩm còn trong kho
     for (const item of cart.items) {
+      console.log("Kiểm tra sản phẩm:", item.product._id);
       const product = await Product.findById(item.product._id);
       if (!product) {
         console.error("Sản phẩm không tồn tại:", {
@@ -80,29 +111,36 @@ exports.createOrderFromCart = async (req, res) => {
       0
     );
 
-    console.log("Total amount:", totalAmount);
-
     // Tạo đơn hàng mới
     const order = new Order({
       user: userId,
       items: cart.items.map((item) => ({
         product: item.product._id,
+        name: item.product.name,
         quantity: item.quantity,
         price: item.product.price,
+        image:
+          item.product.image ||
+          (item.product.images && item.product.images.length > 0
+            ? item.product.images[0]
+            : ""),
+        images: item.product.images || [],
       })),
       shippingAddress,
       paymentMethod,
-      totalAmount,
       note,
-      status: "pending",
+      totalAmount: cart.totalAmount,
     });
 
-    console.log("New order:", order);
-
     // Lưu đơn hàng
-    await order.save();
+    const savedOrder = await order.save();
 
-    // Cập nhật số lượng tồn kho
+    // Cập nhật orders trong User model
+    await User.findByIdAndUpdate(userId, {
+      $push: { orders: savedOrder._id },
+    });
+
+    // Cập nhật số lượng sản phẩm trong kho
     for (const item of cart.items) {
       await Product.findByIdAndUpdate(item.product._id, {
         $inc: { countInStock: -item.quantity },
@@ -114,14 +152,11 @@ exports.createOrderFromCart = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: order,
+      message: "Đặt hàng thành công",
+      data: savedOrder,
     });
   } catch (error) {
-    console.error("Lỗi khi tạo đơn hàng:", {
-      message: error.message,
-      stack: error.stack,
-      userId: req.user?._id,
-    });
+    console.error("Lỗi khi tạo đơn hàng:", error);
     res.status(500).json({
       success: false,
       message: "Lỗi server",
@@ -133,7 +168,7 @@ exports.createOrderFromCart = async (req, res) => {
 // Lấy danh sách đơn hàng của người dùng
 exports.getUserOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id })
+    const orders = await Order.find({ user: req.user.id })
       .populate("items.product", "name image")
       .sort({ createdAt: -1 });
 
@@ -145,7 +180,7 @@ exports.getUserOrders = async (req, res) => {
     console.error("Lỗi khi lấy danh sách đơn hàng:", {
       message: error.message,
       stack: error.stack,
-      userId: req.user._id,
+      userId: req.user.id,
     });
     res.status(500).json({
       success: false,
@@ -160,7 +195,7 @@ exports.getOrderDetail = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate("user", "name email")
-      .populate("items.product", "name price image");
+      .populate("items.product", "name price image images");
 
     if (!order) {
       return res.status(404).json({
@@ -170,12 +205,15 @@ exports.getOrderDetail = async (req, res) => {
     }
 
     // Kiểm tra quyền truy cập
-    if (order.user._id.toString() !== req.user._id.toString()) {
+    if (order.user._id.toString() !== req.user.id.toString()) {
       return res.status(403).json({
         success: false,
         message: "Không có quyền truy cập",
       });
     }
+
+    // Log để debug
+    console.log("Order data:", JSON.stringify(order, null, 2));
 
     res.json({
       success: true,
@@ -186,7 +224,7 @@ exports.getOrderDetail = async (req, res) => {
       message: error.message,
       stack: error.stack,
       orderId: req.params.id,
-      userId: req.user._id,
+      userId: req.user.id,
     });
     res.status(500).json({
       success: false,
@@ -209,7 +247,7 @@ exports.cancelOrder = async (req, res) => {
     }
 
     // Kiểm tra quyền truy cập
-    if (order.user.toString() !== req.user._id.toString()) {
+    if (order.user.toString() !== req.user.id.toString()) {
       return res.status(403).json({
         success: false,
         message: "Không có quyền truy cập",
@@ -244,7 +282,7 @@ exports.cancelOrder = async (req, res) => {
       message: error.message,
       stack: error.stack,
       orderId: req.params.id,
-      userId: req.user._id,
+      userId: req.user.id,
     });
     res.status(500).json({
       success: false,

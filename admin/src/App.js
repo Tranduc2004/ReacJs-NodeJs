@@ -24,6 +24,7 @@ import SliderList from "./Pages/Sliders/SliderList";
 import SliderForm from "./Pages/Sliders/SliderForm";
 import UserManagement from "./Components/UserManagement/index";
 import UserDetail from "./Components/UserManagement/UserDetail";
+import Orders from "./Pages/Orders";
 // Layout component bọc các components cần Header và Sidebar
 const Layout = ({ children }) => {
   return (
@@ -121,6 +122,7 @@ function App() {
                           </PrivateRoute>
                         }
                       />
+                      <Route path="/orders" element={<Orders />} />
                     </Routes>
                   </Layout>
                 </PrivateRoute>

@@ -2,6 +2,8 @@
 
 import axios from "axios";
 
+const API_URL = "http://localhost:4000/api";
+
 // Create a base axios instance with consistent configuration
 export const apiClient = axios.create({
   baseURL: "http://localhost:4000",
@@ -230,6 +232,17 @@ export const fetchUserDetailApi = async (userId) => {
   }
 };
 
+// Thêm API lấy lịch sử đơn hàng của user
+export const fetchUserOrdersApi = async (userId) => {
+  try {
+    const response = await apiClient.get(`/api/admin/users/${userId}/orders`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user orders:", error);
+    throw error;
+  }
+};
+
 export const toggleUserStatusApi = async (userId, isActive) => {
   try {
     const response = await apiClient.put(
@@ -265,6 +278,32 @@ export const deleteUserApi = async (userId) => {
     return response.data;
   } catch (error) {
     console.error("Lỗi khi xóa người dùng:", error);
+    throw error;
+  }
+};
+
+// Thêm API lấy tất cả đơn hàng
+export const fetchAllOrdersApi = async () => {
+  try {
+    const response = await apiClient.get(`/api/admin/orders`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching all orders:", error);
+    throw error;
+  }
+};
+
+// Lấy số đơn hàng mới
+export const getNewOrdersCount = async () => {
+  try {
+    const response = await apiClient.get("/api/admin/orders/new-count");
+    if (response.data.success) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || "Lỗi khi lấy số đơn hàng mới");
+    }
+  } catch (error) {
+    console.error("Error in getNewOrdersCount:", error);
     throw error;
   }
 };
