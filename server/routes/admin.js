@@ -58,6 +58,7 @@ router.post("/login", async (req, res) => {
         id: admin._id,
         username: admin.username,
         role: admin.role,
+        isAdmin: true,
       },
       process.env.JWT_SECRET || "your_jwt_secret_key_here",
       { expiresIn: "24h" }

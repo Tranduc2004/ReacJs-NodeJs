@@ -24,4 +24,18 @@ const authenticateJWT = (req, res, next) => {
   }
 };
 
-module.exports = { authenticateJWT };
+const isAdmin = (req, res, next) => {
+  console.log("User role:", req.user?.role);
+  if (!req.user || !req.user.role) {
+    return res.status(403).json({ message: "Không có quyền truy cập" });
+  }
+
+  // Kiểm tra role không phân biệt chữ hoa chữ thường
+  const userRole = req.user.role.toLowerCase();
+  if (userRole !== "admin") {
+    return res.status(403).json({ message: "Không có quyền truy cập" });
+  }
+  next();
+};
+
+module.exports = { authenticateJWT, isAdmin };
