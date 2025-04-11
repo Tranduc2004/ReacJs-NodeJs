@@ -18,6 +18,7 @@ import Search from "./Pages/Search";
 import { AuthProvider } from "./context/AuthContext";
 import Wishlist from "./Pages/Wishlist";
 import ProductByCategory from "./Components/ProductByCategory";
+import Checkout from "./Pages/Checkout";
 
 const MyContext = createContext();
 
@@ -78,9 +79,9 @@ function App() {
   };
 
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <MyContext.Provider value={values}>
+    <MyContext.Provider value={values}>
+      <AuthProvider>
+        <BrowserRouter>
           <Toaster position="top-right" />
           {isHeaderFooterShow && <Header />}
           <Routes>
@@ -98,15 +99,20 @@ function App() {
             <Route exact={true} path="/cart" element={<Cart />} />
             <Route exact={true} path="/signIn" element={<SignIn />} />
             <Route exact={true} path="/signUp" element={<SignUp />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/change-password" element={<ChangePassword />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/wishlist" element={<Wishlist />} />
+            <Route exact={true} path="/profile" element={<Profile />} />
+            <Route
+              exact={true}
+              path="/change-password"
+              element={<ChangePassword />}
+            />
+            <Route exact={true} path="/search" element={<Search />} />
+            <Route exact={true} path="/wishlist" element={<Wishlist />} />
+            <Route exact={true} path="/checkout" element={<Checkout />} />
           </Routes>
           {isHeaderFooterShow && <Footer />}
-        </MyContext.Provider>
-      </BrowserRouter>
-    </AuthProvider>
+        </BrowserRouter>
+      </AuthProvider>
+    </MyContext.Provider>
   );
 }
 

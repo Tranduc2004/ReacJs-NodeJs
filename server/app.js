@@ -11,10 +11,14 @@ const categoryRoutes = require("./routes/categories");
 const productRoutes = require("./routes/products");
 const brandRoutes = require("./routes/brands");
 const adminRoutes = require("./routes/admin");
+const adminUsersRoutes = require("./routes/adminUsers");
 const authRoutes = require("./routes/auth");
 const cartRoutes = require("./routes/cart");
 const sliderRoutes = require("./routes/sliders");
 const reviewRoutes = require("./routes/reviews");
+const chatbotRoutes = require("./routes/chatbotRoutes");
+const momoRoutes = require("./routes/momopayment");
+const orderRoutes = require("./routes/orders");
 
 // Kết nối MongoDB
 mongoose
@@ -25,7 +29,11 @@ mongoose
 // Cấu hình CORS
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:3001"],
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:4000",
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -41,14 +49,36 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/brands", brandRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin", adminUsersRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/sliders", sliderRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/momo", momoRoutes);
+app.use("/api/orders", orderRoutes);
 
 // Basic route để test
 app.get("/", (req, res) => {
   res.send("Server đang chạy");
+});
+
+// Xử lý lỗi 404
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    message: "Không tìm thấy route",
+  });
+});
+
+// Xử lý lỗi server
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: "Có lỗi xảy ra ở server",
+    error: err.message,
+  });
 });
 
 app.listen(process.env.PORT, () => {

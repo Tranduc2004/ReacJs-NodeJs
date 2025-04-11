@@ -22,6 +22,8 @@ import "react-toastify/dist/ReactToastify.css";
 import PrivateRoute from "./Components/PrivateRoute";
 import SliderList from "./Pages/Sliders/SliderList";
 import SliderForm from "./Pages/Sliders/SliderForm";
+import UserManagement from "./Components/UserManagement/index";
+import UserDetail from "./Components/UserManagement/UserDetail";
 // Layout component bọc các components cần Header và Sidebar
 const Layout = ({ children }) => {
   return (
@@ -102,6 +104,22 @@ function App() {
                       <Route
                         path="sliders/slider-add"
                         element={<SliderForm />}
+                      />
+                      <Route
+                        path="users"
+                        element={
+                          <PrivateRoute>
+                            <UserManagement />
+                          </PrivateRoute>
+                        }
+                      />
+                      <Route
+                        path="users/:id"
+                        element={
+                          <PrivateRoute>
+                            <UserDetail />
+                          </PrivateRoute>
+                        }
                       />
                     </Routes>
                   </Layout>

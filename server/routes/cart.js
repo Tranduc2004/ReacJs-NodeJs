@@ -2,10 +2,10 @@ const express = require("express");
 const router = express.Router();
 const Cart = require("../models/cart");
 const { Product } = require("../models/products");
-const auth = require("../middleware/auth");
+const { authenticateJWT } = require("../middleware/auth");
 
 // Lấy giỏ hàng của user hiện tại
-router.get("/", auth, async (req, res) => {
+router.get("/", authenticateJWT, async (req, res) => {
   try {
     let cart = await Cart.findOne({ user: req.user._id }).populate({
       path: "items.product",
@@ -22,14 +22,24 @@ router.get("/", auth, async (req, res) => {
     res.json(cart);
   } catch (error) {
     console.error("Lỗi khi lấy giỏ hàng:", error);
-    res.status(500).json({ message: "Lỗi server" });
+    res.status(500).json({
+      message: "Lỗi server",
+      error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
   }
 });
 
 // Thêm sản phẩm vào giỏ hàng
-router.post("/add", auth, async (req, res) => {
+router.post("/add", authenticateJWT, async (req, res) => {
   try {
     const { productId, quantity } = req.body;
+
+    if (!productId || !quantity) {
+      return res
+        .status(400)
+        .json({ message: "Thiếu thông tin sản phẩm hoặc số lượng" });
+    }
 
     // Kiểm tra sản phẩm có tồn tại không
     const product = await Product.findById(productId);
@@ -53,45 +63,44 @@ router.post("/add", auth, async (req, res) => {
       });
     } else {
       // Kiểm tra sản phẩm đã có trong giỏ hàng chưa
-      const existingItem = cart.items.find(
+      const itemIndex = cart.items.findIndex(
         (item) => item.product.toString() === productId
       );
 
-      if (existingItem) {
-        // Nếu có rồi thì cập nhật số lượng
-        existingItem.quantity += quantity;
+      if (itemIndex > -1) {
+        // Nếu đã có, cập nhật số lượng
+        cart.items[itemIndex].quantity += quantity;
       } else {
-        // Nếu chưa có thì thêm mới
+        // Nếu chưa có, thêm mới
         cart.items.push({
           product: productId,
           quantity,
           price: product.price,
         });
       }
-
-      await cart.save();
     }
 
-    // Populate thông tin sản phẩm trước khi trả về
-    await cart.populate({
-      path: "items.product",
-      select: "name price images description",
-    });
-
+    await cart.save();
     res.json(cart);
   } catch (error) {
-    console.error("Lỗi khi thêm vào giỏ hàng:", error);
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("Lỗi khi thêm sản phẩm vào giỏ hàng:", error);
+    res.status(500).json({
+      message: "Lỗi server",
+      error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
   }
 });
 
 // Cập nhật số lượng sản phẩm trong giỏ hàng
-router.put("/update", auth, async (req, res) => {
+router.put("/update", authenticateJWT, async (req, res) => {
   try {
     const { productId, quantity } = req.body;
 
-    if (quantity < 1) {
-      return res.status(400).json({ message: "Số lượng không hợp lệ" });
+    if (!productId || !quantity) {
+      return res
+        .status(400)
+        .json({ message: "Thiếu thông tin sản phẩm hoặc số lượng" });
     }
 
     const cart = await Cart.findOne({ user: req.user._id });
@@ -99,35 +108,37 @@ router.put("/update", auth, async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy giỏ hàng" });
     }
 
-    const item = cart.items.find(
+    const itemIndex = cart.items.findIndex(
       (item) => item.product.toString() === productId
     );
 
-    if (!item) {
-      return res
+    if (itemIndex > -1) {
+      cart.items[itemIndex].quantity = quantity;
+      await cart.save();
+      res.json(cart);
+    } else {
+      res
         .status(404)
         .json({ message: "Không tìm thấy sản phẩm trong giỏ hàng" });
     }
-
-    item.quantity = quantity;
-    await cart.save();
-
-    await cart.populate({
-      path: "items.product",
-      select: "name price images description",
-    });
-
-    res.json(cart);
   } catch (error) {
     console.error("Lỗi khi cập nhật giỏ hàng:", error);
-    res.status(500).json({ message: "Lỗi server" });
+    res.status(500).json({
+      message: "Lỗi server",
+      error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
   }
 });
 
 // Xóa sản phẩm khỏi giỏ hàng
-router.delete("/remove/:productId", auth, async (req, res) => {
+router.delete("/remove/:productId", authenticateJWT, async (req, res) => {
   try {
     const { productId } = req.params;
+
+    if (!productId) {
+      return res.status(400).json({ message: "Thiếu thông tin sản phẩm" });
+    }
 
     const cart = await Cart.findOne({ user: req.user._id });
     if (!cart) {
@@ -139,21 +150,19 @@ router.delete("/remove/:productId", auth, async (req, res) => {
     );
 
     await cart.save();
-
-    await cart.populate({
-      path: "items.product",
-      select: "name price images description",
-    });
-
     res.json(cart);
   } catch (error) {
     console.error("Lỗi khi xóa sản phẩm khỏi giỏ hàng:", error);
-    res.status(500).json({ message: "Lỗi server" });
+    res.status(500).json({
+      message: "Lỗi server",
+      error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
   }
 });
 
 // Xóa toàn bộ giỏ hàng
-router.delete("/clear", auth, async (req, res) => {
+router.delete("/clear", authenticateJWT, async (req, res) => {
   try {
     const cart = await Cart.findOne({ user: req.user._id });
     if (!cart) {
@@ -162,11 +171,14 @@ router.delete("/clear", auth, async (req, res) => {
 
     cart.items = [];
     await cart.save();
-
-    res.json({ message: "Đã xóa toàn bộ giỏ hàng" });
+    res.json(cart);
   } catch (error) {
     console.error("Lỗi khi xóa giỏ hàng:", error);
-    res.status(500).json({ message: "Lỗi server" });
+    res.status(500).json({
+      message: "Lỗi server",
+      error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
   }
 });
 

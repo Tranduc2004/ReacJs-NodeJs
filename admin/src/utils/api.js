@@ -40,11 +40,11 @@ apiClient.interceptors.response.use(
       if (!requestUrl.includes("/login") && !requestUrl.includes("/register")) {
         console.log("Token hết hạn, xóa trạng thái xác thực");
 
-        // Không xóa token ngay lập tức để tránh vòng lặp vô hạn
-        // localStorage.removeItem("admin_token");
-        // localStorage.removeItem("admin_info");
+        // Xóa token và thông tin admin
+        localStorage.removeItem("admin_token");
+        localStorage.removeItem("admin_info");
 
-        // Thay vào đó, chỉ ghi log và để component xử lý
+        // Không chuyển hướng tự động, để component xử lý
         console.log("Token không hợp lệ hoặc đã hết hạn");
       }
     }
@@ -138,10 +138,27 @@ export const postData = async (url, formData) => {
 export const editData = async (url, updatedData) => {
   try {
     const response = await apiClient.put(url, updatedData);
-    return response.data; // Trả về dữ liệu từ phản hồi
+    return response.data;
   } catch (error) {
-    console.error(`Error editing data at ${url}:`, error); // In chi tiết lỗi với URL
-    throw new Error(`Failed to edit data at ${url}: ${error.message}`); // Ném lỗi có thông báo chi tiết
+    console.error(
+      `Lỗi khi cập nhật dữ liệu tại ${url}:`,
+      error.response?.data || error.message
+    );
+
+    // Nếu là lỗi 401, xóa token và chuyển hướng về trang đăng nhập
+    if (error.response?.status === 401) {
+      setAuthToken(null);
+      window.location.href = "/login";
+      return;
+    }
+
+    // Nếu có thông báo lỗi từ server, ném lỗi với thông báo đó
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+
+    // Nếu không có thông báo lỗi từ server, ném lỗi với thông báo mặc định
+    throw new Error(`Không thể cập nhật dữ liệu: ${error.message}`);
   }
 };
 
@@ -191,6 +208,63 @@ export const registerAdmin = async (adminData) => {
       throw new Error(error.response.data.message);
     }
 
+    throw error;
+  }
+};
+
+// User Management APIs
+export const fetchUsersApi = async (page = 1, search = "") => {
+  const response = await apiClient.get(`/api/admin/users`, {
+    params: { page, limit: 10, search },
+  });
+  return response.data;
+};
+
+export const fetchUserDetailApi = async (userId) => {
+  try {
+    const response = await apiClient.get(`/api/admin/users/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user detail:", error);
+    throw error;
+  }
+};
+
+export const toggleUserStatusApi = async (userId, isActive) => {
+  try {
+    const response = await apiClient.put(
+      `/api/admin/users/${userId}/toggle-status`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi thay đổi trạng thái:", error);
+    throw error;
+  }
+};
+
+export const exportUsersExcelApi = async () => {
+  const response = await apiClient.get("/api/admin/users/export", {
+    responseType: "blob",
+  });
+  return response.data;
+};
+
+export const updateUserApi = async (userId, data) => {
+  try {
+    const response = await apiClient.put(`/api/admin/users/${userId}`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi cập nhật người dùng:", error);
+    throw error;
+  }
+};
+
+export const deleteUserApi = async (userId) => {
+  try {
+    const response = await apiClient.delete(`/api/admin/users/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi xóa người dùng:", error);
     throw error;
   }
 };

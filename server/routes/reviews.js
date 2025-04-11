@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Review = require("../models/review");
-const { protect } = require("../middleware/jwt");
+const { authenticateJWT } = require("../middleware/auth");
 const mongoose = require("mongoose");
 
 // Lấy tất cả reviews của một sản phẩm
@@ -25,7 +25,7 @@ router.get("/product/:productId", async (req, res) => {
 });
 
 // Thêm review mới
-router.post("/", protect, async (req, res) => {
+router.post("/", authenticateJWT, async (req, res) => {
   try {
     const { productId, rating, comment } = req.body;
 
@@ -51,12 +51,8 @@ router.post("/", protect, async (req, res) => {
 
     await review.save();
 
-    // Populate user info before sending response
-    await review.populate("user", "name email");
-
     res.status(201).json({
       success: true,
-      message: "Đánh giá đã được thêm thành công",
       data: review,
     });
   } catch (error) {
@@ -69,9 +65,10 @@ router.post("/", protect, async (req, res) => {
 });
 
 // Cập nhật review
-router.put("/:id", protect, async (req, res) => {
+router.put("/:id", authenticateJWT, async (req, res) => {
   try {
     const { rating, comment } = req.body;
+
     const review = await Review.findById(req.params.id);
 
     if (!review) {
@@ -81,21 +78,21 @@ router.put("/:id", protect, async (req, res) => {
       });
     }
 
-    // Kiểm tra xem user có quyền sửa review này không
+    // Kiểm tra quyền sở hữu
     if (review.user.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
-        message: "Bạn không có quyền sửa đánh giá này",
+        message: "Bạn không có quyền cập nhật đánh giá này",
       });
     }
 
-    review.rating = rating || review.rating;
-    review.comment = comment || review.comment;
+    review.rating = rating;
+    review.comment = comment;
+
     await review.save();
 
     res.json({
       success: true,
-      message: "Đánh giá đã được cập nhật",
       data: review,
     });
   } catch (error) {
@@ -108,7 +105,7 @@ router.put("/:id", protect, async (req, res) => {
 });
 
 // Xóa review
-router.delete("/:id", protect, async (req, res) => {
+router.delete("/:id", authenticateJWT, async (req, res) => {
   try {
     const review = await Review.findById(req.params.id);
 
@@ -119,7 +116,7 @@ router.delete("/:id", protect, async (req, res) => {
       });
     }
 
-    // Kiểm tra xem user có quyền xóa review này không
+    // Kiểm tra quyền sở hữu
     if (review.user.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
@@ -131,7 +128,7 @@ router.delete("/:id", protect, async (req, res) => {
 
     res.json({
       success: true,
-      message: "Đánh giá đã được xóa",
+      data: {},
     });
   } catch (error) {
     res.status(500).json({

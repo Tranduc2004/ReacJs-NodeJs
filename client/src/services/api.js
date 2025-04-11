@@ -26,8 +26,11 @@ api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response?.status === 401) {
-      // Chỉ xử lý logout khi không phải API cart
-      if (!error.config.url.includes("/cart")) {
+      // Chỉ xử lý logout khi không phải API cart và không phải đang ở trang đăng nhập
+      if (
+        !error.config.url.includes("/cart") &&
+        !window.location.pathname.includes("/signin")
+      ) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         window.location.href = "/signin";
@@ -53,10 +56,8 @@ export const getCart = async () => {
     return response;
   } catch (error) {
     console.error("Lỗi khi lấy giỏ hàng:", error);
-    if (error.response?.status === 401) {
-      return { items: [] };
-    }
-    throw error;
+    // Trả về giỏ hàng rỗng cho tất cả các lỗi
+    return { items: [] };
   }
 };
 
@@ -83,6 +84,11 @@ export const addToCart = async (productId, quantity) => {
     return response;
   } catch (error) {
     console.error("Lỗi khi thêm vào giỏ hàng:", error);
+    if (error.response?.status === 500) {
+      throw new Error(
+        "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng. Vui lòng thử lại sau."
+      );
+    }
     throw error;
   }
 };
@@ -96,6 +102,11 @@ export const updateCartItem = async (productId, quantity) => {
     return response;
   } catch (error) {
     console.error("Lỗi khi cập nhật giỏ hàng:", error);
+    if (error.response?.status === 500) {
+      throw new Error(
+        "Có lỗi xảy ra khi cập nhật giỏ hàng. Vui lòng thử lại sau."
+      );
+    }
     throw error;
   }
 };
@@ -109,6 +120,11 @@ export const removeFromCart = async (productId) => {
     return response;
   } catch (error) {
     console.error("Lỗi khi xóa sản phẩm khỏi giỏ hàng:", error);
+    if (error.response?.status === 500) {
+      throw new Error(
+        "Có lỗi xảy ra khi xóa sản phẩm khỏi giỏ hàng. Vui lòng thử lại sau."
+      );
+    }
     throw error;
   }
 };
@@ -122,6 +138,9 @@ export const clearCart = async () => {
     return response;
   } catch (error) {
     console.error("Lỗi khi xóa giỏ hàng:", error);
+    if (error.response?.status === 500) {
+      throw new Error("Có lỗi xảy ra khi xóa giỏ hàng. Vui lòng thử lại sau.");
+    }
     throw error;
   }
 };
@@ -183,8 +202,11 @@ const login = async (credentials) => {
     const response = await api.post("/auth/login", credentials);
     if (response && response.token) {
       localStorage.setItem("token", response.token);
+      // Lưu thông tin user không bao gồm token
       const { token, ...userData } = response;
       localStorage.setItem("user", JSON.stringify(userData));
+      // Cập nhật header Authorization cho các request sau
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     }
     return response;
   } catch (error) {
@@ -399,6 +421,97 @@ export const getSuggestedProducts = async (productId) => {
       console.error("[getSuggestedProducts] Data:", error.response.data);
     }
     return [];
+  }
+};
+
+// API cho chatbot
+export const chatWithBot = async (message) => {
+  try {
+    console.log("1. Đang gửi tin nhắn đến chatbot:", message);
+    const response = await api.post("/chatbot/chat", { message });
+    console.log("2. Response từ server:", response);
+    console.log("3. Response data:", response.data);
+
+    if (!response) {
+      console.error("4. Không có response từ server");
+      throw new Error("Không nhận được phản hồi từ server");
+    }
+
+    if (!response.data) {
+      console.error("5. Response không có data");
+      throw new Error("Không nhận được dữ liệu từ server");
+    }
+
+    if (response.data.success === false) {
+      console.error("6. Server trả về lỗi:", response.data.message);
+      throw new Error(response.data.message || "Có lỗi xảy ra từ server");
+    }
+
+    // Kiểm tra cấu trúc response.data
+    if (typeof response.data === "string") {
+      return { success: true, message: response.data };
+    }
+
+    if (response.data.message) {
+      return { success: true, message: response.data.message };
+    }
+
+    if (response.data.text) {
+      return { success: true, message: response.data.text };
+    }
+
+    return { success: true, message: JSON.stringify(response.data) };
+  } catch (error) {
+    console.error("7. Lỗi khi gọi chatbot:", error);
+    if (error.response) {
+      console.error("8. Status code:", error.response.status);
+      console.error("9. Error data:", error.response.data);
+    }
+    throw error;
+  }
+};
+
+// API cho orders
+export const createOrderFromCart = async (orderData) => {
+  try {
+    const response = await api.post("/orders", orderData);
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi tạo đơn hàng:", error);
+    throw error;
+  }
+};
+
+// Lấy danh sách đơn hàng của người dùng
+export const getUserOrders = async () => {
+  try {
+    const response = await api.get("/orders");
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách đơn hàng:", error);
+    throw error;
+  }
+};
+
+// Lấy chi tiết đơn hàng
+export const getOrderDetail = async (orderId) => {
+  try {
+    const response = await api.get(`/orders/${orderId}`);
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi lấy chi tiết đơn hàng:", error);
+    throw error;
+  }
+};
+
+// Hủy đơn hàng
+export const cancelOrder = async (orderId) => {
+  try {
+    const response = await api.put(`/orders/${orderId}/cancel`);
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi hủy đơn hàng:", error);
+    throw error;
   }
 };
 
