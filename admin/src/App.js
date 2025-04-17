@@ -25,6 +25,10 @@ import SliderForm from "./Pages/Sliders/SliderForm";
 import UserManagement from "./Components/UserManagement/index";
 import UserDetail from "./Components/UserManagement/UserDetail";
 import Orders from "./Pages/Orders";
+import PostsList from "./Pages/Posts/PostsList";
+import PostAdd from "./Pages/Posts/PostAdd";
+import PostEdit from "./Pages/Posts/PostEdit";
+
 // Layout component bọc các components cần Header và Sidebar
 const Layout = ({ children }) => {
   return (
@@ -47,7 +51,6 @@ function App() {
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-
             {/* Redirect from root to dashboard if logged in, otherwise to login */}
             <Route
               path="/"
@@ -96,6 +99,14 @@ function App() {
                       <Route
                         path="brands/brand-edit/:id"
                         element={<BrandEdit />}
+                      />
+                      {/* Posts */}
+                      <Route path="posts" element={<PostsList />} />
+                      <Route path="posts/posts-list" element={<PostsList />} />
+                      <Route path="posts/post-add" element={<PostAdd />} />
+                      <Route
+                        path="posts/post-edit/:id"
+                        element={<PostEdit />}
                       />
                       <Route path="sliders" element={<SliderList />} />
                       <Route

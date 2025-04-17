@@ -88,21 +88,41 @@ const CategoryAdd = () => {
     try {
       let categoryData = { ...formData };
 
+      // Validate form data
+      if (!categoryData.name) {
+        throw new Error("Vui lòng nhập tên danh mục");
+      }
+      if (!categoryData.color) {
+        throw new Error("Vui lòng chọn màu cho danh mục");
+      }
+      if (!categoryData.image) {
+        throw new Error("Vui lòng thêm ảnh cho danh mục");
+      }
+
+      // Đảm bảo màu được gửi đúng định dạng
+      if (!categoryData.color.startsWith("#")) {
+        categoryData.color = "#" + categoryData.color;
+      }
+
+      // Validate màu hex
+      const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+      if (!hexColorRegex.test(categoryData.color)) {
+        throw new Error(
+          "Màu không hợp lệ. Vui lòng nhập mã màu hex (ví dụ: #FF0000)"
+        );
+      }
+
       // If image input type is file and a file is selected
       if (imageInputType === "file" && imageFile) {
-        // Convert file to base64 for Cloudinary upload
         const base64Image = await fileToBase64(imageFile);
         categoryData.image = base64Image;
       }
 
-      // Validate form data
-      if (!categoryData.name || !categoryData.color || !categoryData.image) {
-        throw new Error("Vui lòng điền đầy đủ thông tin danh mục");
-      }
+      console.log("Dữ liệu gửi đi:", categoryData); // Log dữ liệu trước khi gửi
 
       // Send data to the server
       const response = await postData("/api/categories/", categoryData);
-      console.log("Category added:", response);
+      console.log("Phản hồi từ server:", response); // Log phản hồi từ server
 
       // Reset form on success
       setFormData({
@@ -118,7 +138,7 @@ const CategoryAdd = () => {
         message: "Thêm danh mục thành công!",
       });
     } catch (error) {
-      console.error("Error adding category:", error);
+      console.error("Lỗi khi thêm danh mục:", error);
       setSubmitResult({
         success: false,
         message: error.message || "Có lỗi xảy ra khi thêm danh mục",

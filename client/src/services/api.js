@@ -215,6 +215,83 @@ const login = async (credentials) => {
   }
 };
 
+// API cho quên mật khẩu
+// API cho quên mật khẩu - Cải tiến xử lý lỗi
+const forgotPassword = async (data) => {
+  try {
+    const response = await api.post(
+      "/auth/forgot-password",
+      typeof data === "string" ? { email: data } : data
+    );
+
+    // Đảm bảo trả về đúng định dạng đã được chuẩn hóa
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    console.error("Lỗi khi gửi yêu cầu quên mật khẩu:", error);
+
+    // Xử lý phản hồi lỗi từ server (nếu có)
+    if (error.response) {
+      return {
+        success: false,
+        message:
+          error.response.data?.message || "Có lỗi xảy ra. Vui lòng thử lại.",
+        statusCode: error.response.status,
+      };
+    }
+
+    // Lỗi mạng hoặc lỗi khác
+    return {
+      success: false,
+      message: "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.",
+      error: error,
+    };
+  }
+};
+
+// API cho đặt lại mật khẩu
+const resetPassword = async (token, password) => {
+  try {
+    console.log("Đang gửi yêu cầu đặt lại mật khẩu...");
+    console.log("Token:", token);
+    console.log("Password:", password);
+
+    if (!token) {
+      throw new Error("Token không hợp lệ");
+    }
+
+    const response = await api.post(`/auth/reset-password/${token}`, {
+      password,
+    });
+    console.log("Phản hồi từ server:", response);
+
+    // Kiểm tra nếu response có success: true
+    if (response.success) {
+      return response;
+    }
+
+    // Nếu không có success, trả về response gốc
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi đặt lại mật khẩu:", error);
+
+    // Nếu server trả về success: true trong error.response.data
+    if (error.response?.data?.success) {
+      return error.response.data;
+    }
+
+    // Nếu có message trong error.response.data
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+
+    // Nếu không có message, ném lỗi mặc định
+    throw new Error("Có lỗi xảy ra khi đặt lại mật khẩu. Vui lòng thử lại.");
+  }
+};
+
 const logout = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
@@ -543,6 +620,8 @@ export {
   register,
   login,
   logout,
+  resetPassword,
   searchProducts,
   getSearchSuggestions,
+  forgotPassword,
 };

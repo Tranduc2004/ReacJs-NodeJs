@@ -24,7 +24,7 @@ const Search = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [productView, setProductView] = useState("four");
+  const [productView, setProductView] = useState("two");
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState({
     priceRange: [0, 100000000],
@@ -33,7 +33,7 @@ const Search = () => {
   });
 
   const [anchorEl, setAnchorEl] = useState(null);
-  const [itemsPerPage, setItemsPerPage] = useState(9);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
   const [currentPage, setCurrentPage] = useState(1);
 
   const query = searchParams.get("q");
@@ -207,19 +207,12 @@ const Search = () => {
         {window.innerWidth <= 767 && (
           <button
             className="filter-toggle"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "8px 16px",
-              borderRadius: "4px",
-              backgroundColor: "#f5f5f5",
-              border: "1px solid #ddd",
-              width: "100%",
-              marginBottom: "15px",
-              cursor: "pointer",
-            }}
             onClick={toggleFilter}
+            style={{
+              backgroundColor: "#00aaff",
+              color: "white",
+              borderColor: "#00aaff",
+            }}
           >
             {showFilter ? (
               <>

@@ -63,6 +63,7 @@ router.post("/", async (req, res) => {
       name: req.body.name,
       description: req.body.description || "",
       image: imageUrl,
+      color: req.body.color || "",
       isActive: req.body.isActive !== undefined ? req.body.isActive : true,
       parent: req.body.parent || null,
     });

@@ -63,7 +63,7 @@ const BrandList = () => {
 
   const handleDeleteConfirm = async () => {
     try {
-      await deleteData("/api/brands/", deleteDialog.brandId);
+      await deleteData(`/api/brands/${deleteDialog.brandId}`);
       toast.success("Xóa thương hiệu thành công");
       fetchBrands();
     } catch (err) {

@@ -119,34 +119,58 @@ const Sidebar = ({ onFilterChange = () => {}, initialFilters = {} }) => {
   ]);
 
   // Hàm xử lý thay đổi danh mục
-  const handleCategoryChange = useCallback((categoryId) => {
-    setSelectedCategories((prev) => {
-      if (prev.includes(categoryId)) {
-        return prev.filter((id) => id !== categoryId);
-      }
-      return [...prev, categoryId];
-    });
-    setAppliedFilter(true);
-  }, []);
+  const handleCategoryChange = useCallback(
+    (categoryId) => {
+      setSelectedCategories((prev) => {
+        const newCategories = prev.includes(categoryId)
+          ? prev.filter((id) => id !== categoryId)
+          : [...prev, categoryId];
+        setAppliedFilter(true);
+        onFilterChange({
+          priceRange,
+          categories: newCategories,
+          brands: selectedBrands,
+        });
+        return newCategories;
+      });
+    },
+    [priceRange, selectedBrands, onFilterChange]
+  );
 
   // Hàm xử lý thay đổi thương hiệu
-  const handleBrandChange = useCallback((brandId) => {
-    setSelectedBrands((prev) => {
-      if (prev.includes(brandId)) {
-        return prev.filter((id) => id !== brandId);
-      }
-      return [...prev, brandId];
-    });
-    setAppliedFilter(true);
-  }, []);
+  const handleBrandChange = useCallback(
+    (brandId) => {
+      setSelectedBrands((prev) => {
+        const newBrands = prev.includes(brandId)
+          ? prev.filter((id) => id !== brandId)
+          : [...prev, brandId];
+        setAppliedFilter(true);
+        onFilterChange({
+          priceRange,
+          categories: selectedCategories,
+          brands: newBrands,
+        });
+        return newBrands;
+      });
+    },
+    [priceRange, selectedCategories, onFilterChange]
+  );
 
   // Hàm xử lý thay đổi khoảng giá từ slider
-  const handlePriceChange = useCallback((value) => {
-    setPriceRange(value);
-    setCustomMinPrice(value[0]);
-    setCustomMaxPrice(value[1]);
-    setAppliedFilter(true);
-  }, []);
+  const handlePriceChange = useCallback(
+    (value) => {
+      setPriceRange(value);
+      setCustomMinPrice(value[0]);
+      setCustomMaxPrice(value[1]);
+      setAppliedFilter(true);
+      onFilterChange({
+        priceRange: value,
+        categories: selectedCategories,
+        brands: selectedBrands,
+      });
+    },
+    [selectedCategories, selectedBrands, onFilterChange]
+  );
 
   // Hàm xử lý thay đổi giá input tùy chỉnh
   const handleCustomMinPriceChange = (e) => {
@@ -173,9 +197,14 @@ const Sidebar = ({ onFilterChange = () => {}, initialFilters = {} }) => {
     min = Math.max(0, Math.min(min, MAX_PRICE));
     max = Math.max(min, Math.min(max, MAX_PRICE));
 
-    setPriceRange([min, max]);
+    const newPriceRange = [min, max];
+    setPriceRange(newPriceRange);
     setAppliedFilter(true);
-    console.log("Price range applied:", [min, max]); // Thêm dòng này để debug
+    onFilterChange({
+      priceRange: newPriceRange,
+      categories: selectedCategories,
+      brands: selectedBrands,
+    });
   };
 
   // Hàm chọn mức giá từ preset
@@ -184,6 +213,11 @@ const Sidebar = ({ onFilterChange = () => {}, initialFilters = {} }) => {
     setCustomMinPrice(range[0]);
     setCustomMaxPrice(range[1]);
     setAppliedFilter(true);
+    onFilterChange({
+      priceRange: range,
+      categories: selectedCategories,
+      brands: selectedBrands,
+    });
   };
 
   // Hàm chuyển đổi hiển thị sidebar (dành cho mobile)
@@ -193,12 +227,18 @@ const Sidebar = ({ onFilterChange = () => {}, initialFilters = {} }) => {
 
   // Hàm reset tất cả bộ lọc
   const resetFilters = () => {
-    setPriceRange([0, MAX_PRICE]);
+    const defaultPriceRange = [0, MAX_PRICE];
+    setPriceRange(defaultPriceRange);
     setCustomMinPrice(0);
     setCustomMaxPrice(MAX_PRICE);
     setSelectedCategories([]);
     setSelectedBrands([]);
     setAppliedFilter(true);
+    onFilterChange({
+      priceRange: defaultPriceRange,
+      categories: [],
+      brands: [],
+    });
   };
 
   return (

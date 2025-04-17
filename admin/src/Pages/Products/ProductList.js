@@ -68,25 +68,19 @@ const ProductList = () => {
     });
   };
 
-  const handleDeleteConfirm = () => {
-    deleteData("/api/products/", deleteDialog.id)
-      .then((res) => {
-        console.log("Kết quả xoá:", res);
-        if (res.success) {
-          toast.success("Xóa sản phẩm thành công!");
-          // Refresh data after deletion
-          fetchStats();
-        } else {
-          toast.error("Xóa thất bại");
-        }
-      })
-      .catch((err) => {
-        console.error("Lỗi khi xoá:", err);
-        toast.error("Đã xảy ra lỗi khi xóa");
-      })
-      .finally(() => {
-        setDeleteDialog({ open: false, id: null });
-      });
+  const handleDeleteConfirm = async () => {
+    try {
+      await deleteData(`/api/products/${deleteDialog.id}`);
+      toast.success("Xóa sản phẩm thành công");
+      fetchStats();
+    } catch (error) {
+      console.error("Lỗi khi xóa sản phẩm:", error);
+      toast.error(
+        error.response?.data?.message || "Có lỗi xảy ra khi xóa sản phẩm"
+      );
+    } finally {
+      setDeleteDialog({ open: false, id: null });
+    }
   };
 
   const handleDeleteCancel = () => {

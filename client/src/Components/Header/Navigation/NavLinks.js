@@ -30,17 +30,17 @@ const NavLinks = () => {
 
   const menuItems = [
     {
-      name: "HOME",
+      name: "Trang chủ",
       link: "/",
     },
     {
-      name: "SHOP",
+      name: "Cửa hàng",
       link: "/listing",
     },
     { name: "MEATS & SEAFOOD", link: "/meats-seafood" },
     { name: "BAKERY", link: "/bakery" },
     { name: "BEVERAGES", link: "/beverages" },
-    { name: "BLOG", link: "/blog" },
+    { name: "Bài viết", link: "/posts" },
     { name: "CONTACT", link: "/contact" },
   ];
 

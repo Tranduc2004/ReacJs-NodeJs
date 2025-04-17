@@ -197,7 +197,7 @@ const SignIn = () => {
               fontWeight="medium"
               mb={4}
             >
-              Sign In
+              Đăng nhập
             </Typography>
 
             <Box
@@ -229,7 +229,7 @@ const SignIn = () => {
                 required
                 fullWidth
                 name="password"
-                label="Password"
+                label="Mật khẩu"
                 type="password"
                 id="password"
                 value={formData.password}
@@ -240,7 +240,13 @@ const SignIn = () => {
               />
 
               <Box sx={{ textAlign: "left", mb: 2 }}>
-                <Button color="primary" size="small" sx={{ pl: 0 }}>
+                <Button
+                  component={Link}
+                  to="/forgot-password"
+                  color="primary"
+                  size="small"
+                  sx={{ pl: 0, textTransform: "none" }}
+                >
                   Quên mật khẩu?
                 </Button>
               </Box>
@@ -265,7 +271,7 @@ const SignIn = () => {
                     sx={{ py: 1.5 }}
                     onClick={handleCancel}
                   >
-                    Cancel
+                    Hủy bỏ
                   </Button>
                 </Grid>
               </Grid>
@@ -273,7 +279,7 @@ const SignIn = () => {
 
             <Box sx={{ mt: 2, mb: 3, textAlign: "center" }}>
               <Typography variant="body2" color="text.secondary">
-                Not Registered?
+                Bạn chưa có tài khoản?
                 <Button
                   component={Link}
                   to="/signup"
@@ -288,7 +294,7 @@ const SignIn = () => {
 
             <Divider sx={{ mb: 3 }}>
               <Typography variant="body2" color="text.secondary">
-                Or continue with social account
+                Hoặc tiếp tục với tài khoản xã hội
               </Typography>
             </Divider>
 
@@ -302,7 +308,7 @@ const SignIn = () => {
                 justifyContent: "center",
               }}
             >
-              <GoogleIcon /> Sign in With Google
+              <GoogleIcon /> Đăng nhập với Google
             </Button>
           </Paper>
         </Container>

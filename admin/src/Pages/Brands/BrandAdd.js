@@ -129,7 +129,7 @@ const BrandAdd = () => {
     <div
       className="brand-add-container"
       style={{
-        bgcolor: isDarkMode ? "#0f1824" : "#f5f5f5",
+        backgroundColor: isDarkMode ? "#0f1824" : "#f5f5f5",
         minHeight: "100vh",
         width: "100%",
         position: "relative",
@@ -139,7 +139,7 @@ const BrandAdd = () => {
       <div
         className="header"
         style={{
-          bgcolor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#fff",
+          backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#fff",
           padding: "16px",
           borderRadius: "8px",
           marginBottom: "20px",
@@ -148,40 +148,83 @@ const BrandAdd = () => {
             : "0 2px 10px rgba(0, 0, 0, 0.1)",
         }}
       >
-        <h1>Thêm thương hiệu mới</h1>
+        <h1 style={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
+          Thêm thương hiệu mới
+        </h1>
         <div className="breadcrumbs">
-          <Link to="/" className="breadcrumb-link">
+          <Link
+            to="/"
+            className="breadcrumb-link"
+            style={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+          >
             Trang chủ
           </Link>
-          <span className="separator">~</span>
-          <Link to="/brands" className="breadcrumb-link">
+          <span
+            className="separator"
+            style={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+          >
+            ~
+          </span>
+          <Link
+            to="/brands"
+            className="breadcrumb-link"
+            style={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+          >
             Thương hiệu
           </Link>
-          <span className="separator">~</span>
-          <span>Thêm thương hiệu</span>
+          <span
+            className="separator"
+            style={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+          >
+            ~
+          </span>
+          <span style={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
+            Thêm thương hiệu
+          </span>
         </div>
       </div>
 
       {/* Back Button */}
       <div className="back-button-container">
-        <Link to="/brands" className="back-button">
+        <Link
+          to="/brands"
+          className="back-button"
+          style={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+        >
           <FaArrowLeft /> Quay lại danh sách
         </Link>
       </div>
 
       {/* Error Message */}
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div
+          className="error-message"
+          style={{ color: isDarkMode ? "#ff4444" : "#d32f2f" }}
+        >
+          {error}
+        </div>
+      )}
 
       {/* Brand Form */}
       <div
         className="form-container"
         style={{
-          bgcolor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#fff",
+          backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#fff",
+          padding: "20px",
+          borderRadius: "8px",
+          boxShadow: isDarkMode
+            ? "0 2px 10px rgba(0, 0, 0, 0.2)"
+            : "0 2px 10px rgba(0, 0, 0, 0.1)",
         }}
       >
         <form onSubmit={handleSubmit} className="brand-form">
           <div className="form-group">
-            <label htmlFor="name">Tên thương hiệu *</label>
+            <label
+              htmlFor="name"
+              style={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+            >
+              Tên thương hiệu *
+            </label>
             <input
               type="text"
               id="name"
@@ -190,11 +233,23 @@ const BrandAdd = () => {
               onChange={handleChange}
               placeholder="Nhập tên thương hiệu"
               required
+              style={{
+                backgroundColor: isDarkMode ? "rgba(0, 0, 0, 0.2)" : "#f5f5f5",
+                color: isDarkMode ? "#fff" : "#1a1a1a",
+                border: "none",
+                padding: "12px",
+                borderRadius: "4px",
+              }}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="logo">Logo thương hiệu *</label>
+            <label
+              htmlFor="logo"
+              style={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+            >
+              Logo thương hiệu *
+            </label>
 
             {/* Chọn nguồn ảnh */}
             <div className="image-source-selector">
@@ -204,6 +259,16 @@ const BrandAdd = () => {
                   imageSource === "file" ? "active" : ""
                 }`}
                 onClick={() => handleImageSourceChange("file")}
+                style={{
+                  backgroundColor: isDarkMode
+                    ? "rgba(0, 0, 0, 0.2)"
+                    : "#f5f5f5",
+                  color: isDarkMode ? "#fff" : "#1a1a1a",
+                  border: "none",
+                  padding: "10px 20px",
+                  borderRadius: "4px",
+                  marginRight: "10px",
+                }}
               >
                 <FaUpload /> Tải lên file
               </button>
@@ -213,6 +278,15 @@ const BrandAdd = () => {
                   imageSource === "url" ? "active" : ""
                 }`}
                 onClick={() => handleImageSourceChange("url")}
+                style={{
+                  backgroundColor: isDarkMode
+                    ? "rgba(0, 0, 0, 0.2)"
+                    : "#f5f5f5",
+                  color: isDarkMode ? "#fff" : "#1a1a1a",
+                  border: "none",
+                  padding: "10px 20px",
+                  borderRadius: "4px",
+                }}
               >
                 <FaLink /> Nhập URL
               </button>
@@ -228,8 +302,23 @@ const BrandAdd = () => {
                   onChange={handleImageChange}
                   accept="image/*"
                   className="file-input"
+                  style={{ display: "none" }}
                 />
-                <label htmlFor="logo" className="file-label">
+                <label
+                  htmlFor="logo"
+                  className="file-label"
+                  style={{
+                    backgroundColor: isDarkMode
+                      ? "rgba(0, 0, 0, 0.2)"
+                      : "#f5f5f5",
+                    color: isDarkMode ? "#fff" : "#1a1a1a",
+                    border: "none",
+                    padding: "10px 20px",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    display: "inline-block",
+                  }}
+                >
                   <FaUpload /> Chọn ảnh
                 </label>
               </div>
@@ -246,20 +335,39 @@ const BrandAdd = () => {
                   onChange={handleImageUrlChange}
                   placeholder="https://example.com/logo.png"
                   className="url-input"
+                  style={{
+                    backgroundColor: isDarkMode
+                      ? "rgba(0, 0, 0, 0.2)"
+                      : "#f5f5f5",
+                    color: isDarkMode ? "#fff" : "#1a1a1a",
+                    border: "none",
+                    padding: "12px",
+                    borderRadius: "4px",
+                    width: "100%",
+                  }}
                 />
               </div>
             )}
 
             {/* Xem trước ảnh */}
             {previewImage && (
-              <div className="image-preview">
-                <img src={previewImage} alt="Preview" />
+              <div className="image-preview" style={{ marginTop: "20px" }}>
+                <img
+                  src={previewImage}
+                  alt="Preview"
+                  style={{ maxWidth: "200px", borderRadius: "4px" }}
+                />
               </div>
             )}
           </div>
 
           <div className="form-group">
-            <label htmlFor="description">Mô tả</label>
+            <label
+              htmlFor="description"
+              style={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+            >
+              Mô tả
+            </label>
             <textarea
               id="description"
               name="description"
@@ -267,11 +375,24 @@ const BrandAdd = () => {
               onChange={handleChange}
               placeholder="Nhập mô tả về thương hiệu"
               rows="4"
+              style={{
+                backgroundColor: isDarkMode ? "rgba(0, 0, 0, 0.2)" : "#f5f5f5",
+                color: isDarkMode ? "#fff" : "#1a1a1a",
+                border: "none",
+                padding: "12px",
+                borderRadius: "4px",
+                width: "100%",
+              }}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="website">Website</label>
+            <label
+              htmlFor="website"
+              style={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+            >
+              Website
+            </label>
             <input
               type="url"
               id="website"
@@ -279,6 +400,14 @@ const BrandAdd = () => {
               value={formData.website}
               onChange={handleChange}
               placeholder="https://example.com"
+              style={{
+                backgroundColor: isDarkMode ? "rgba(0, 0, 0, 0.2)" : "#f5f5f5",
+                color: isDarkMode ? "#fff" : "#1a1a1a",
+                border: "none",
+                padding: "12px",
+                borderRadius: "4px",
+                width: "100%",
+              }}
             />
           </div>
 
@@ -289,8 +418,16 @@ const BrandAdd = () => {
               name="isActive"
               checked={formData.isActive}
               onChange={handleChange}
+              style={{
+                marginRight: "10px",
+              }}
             />
-            <label htmlFor="isActive">Thương hiệu đang hoạt động</label>
+            <label
+              htmlFor="isActive"
+              style={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+            >
+              Thương hiệu đang hoạt động
+            </label>
           </div>
 
           <div className="form-actions">
@@ -298,10 +435,31 @@ const BrandAdd = () => {
               type="button"
               className="cancel-button"
               onClick={() => navigate("/brands")}
+              style={{
+                backgroundColor: isDarkMode ? "rgba(0, 0, 0, 0.2)" : "#f5f5f5",
+                color: isDarkMode ? "#fff" : "#1a1a1a",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "4px",
+                marginRight: "10px",
+              }}
             >
               Hủy
             </button>
-            <button type="submit" className="submit-button" disabled={loading}>
+            <button
+              type="submit"
+              className="submit-button"
+              disabled={loading}
+              style={{
+                backgroundColor: "#0858f7",
+                color: "#fff",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "4px",
+                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.7 : 1,
+              }}
+            >
               {loading ? "Đang xử lý..." : "Thêm thương hiệu"}
             </button>
           </div>

@@ -36,6 +36,7 @@ import {
   Alert,
   Snackbar,
   Container,
+  Grid,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { useAuth } from "../../context/AuthContext"; // Update the import path as needed
@@ -396,7 +397,7 @@ const ProductDetails = () => {
                   <ul className="list list-inline">
                     <li className="list-inline-item">
                       <div className="d-flex align-items-center mr-3">
-                        <span className="text-light1 mr-2">Brands : </span>
+                        <span className="text-light1 mr-2">Thương hiệu : </span>
                         <span>{brandName || "No Brand"}</span>
                       </div>
                     </li>
@@ -410,7 +411,7 @@ const ProductDetails = () => {
                           precision={0.5}
                         />
                         <span className="text-light1 cursor ml-2">
-                          {reviews.length || 0} Review
+                          {reviews.length || 0} Đánh giá
                         </span>
                       </div>
                     </li>
@@ -428,7 +429,7 @@ const ProductDetails = () => {
                       isInStock ? "bg-success" : "bg-danger"
                     }`}
                   >
-                    {isInStock ? "IN STOCK" : "OUT OF STOCK"}
+                    {isInStock ? "Còn hàng" : "Hết hàng"}
                   </span>
 
                   <p className="mt-3">
@@ -487,17 +488,27 @@ const ProductDetails = () => {
                     <Button
                       className="btn-lg btn-big btn-round ml-3"
                       sx={{
-                        backgroundColor: "#00aaff",
+                        backgroundColor: isInStock ? "#00aaff" : "#cccccc",
                         color: "white",
                         "&:hover": {
-                          backgroundColor: "#0088cc",
+                          backgroundColor: isInStock ? "#0088cc" : "#cccccc",
+                        },
+                        "&:disabled": {
+                          backgroundColor: "#faf7f7",
+                          border: "1px solid #b81616",
+                          color: "red",
                         },
                       }}
                       onClick={handleAddToCart}
+                      disabled={!isInStock}
                     >
-                      <BsFillCartFill /> &nbsp; Add to Cart
+                      <BsFillCartFill /> &nbsp;{" "}
+                      {isInStock ? "Thêm vào giỏ " : "Hết hàng"}
                     </Button>
-                    <Tooltip title="Add to Wishlist" placement="top">
+                    <Tooltip
+                      title="Thêm vào danh sách yêu thích"
+                      placement="top"
+                    >
                       <Button
                         className="btn-lg btn-big btn-circle ml-4"
                         sx={{
@@ -524,7 +535,7 @@ const ProductDetails = () => {
                         )}
                       </Button>
                     </Tooltip>
-                    <Tooltip title="Add to Compare" placement="top">
+                    <Tooltip title="So sánh" placement="top">
                       <Button
                         className="btn-lg btn-big btn-circle ml-2"
                         sx={{
@@ -556,15 +567,15 @@ const ProductDetails = () => {
                   onChange={handleTabChange}
                   variant="fullWidth"
                 >
-                  <Tab label="Description" />
-                  <Tab label="Additional Info" />
-                  <Tab label={`Reviews (${reviews.length || 0})`} />
+                  <Tab label="Mô tả" />
+                  <Tab label="Thông số" />
+                  <Tab label={`Đánh giá (${reviews.length || 0})`} />
                 </StyledTabs>
 
                 <ContentBox>
                   {tabValue === 0 && (
                     <Typography fontSize="1.1rem" lineHeight={1.7}>
-                      {product?.description || "No description available."}
+                      {product?.description || "Không có mô tả."}
                     </Typography>
                   )}
 
@@ -575,27 +586,70 @@ const ProductDetails = () => {
                       }}
                     >
                       <TableBody>
-                        {product?.specifications?.map((spec) => (
-                          <TableRow
-                            key={spec.name}
+                        <TableRow
+                          sx={{
+                            "&:last-child td, &:last-child th": { border: 0 },
+                          }}
+                        >
+                          <TableCell
+                            component="th"
+                            scope="row"
                             sx={{
-                              "&:last-child td, &:last-child th": { border: 0 },
+                              fontWeight: "medium",
+                              color: "#333",
+                              width: "40%",
                             }}
                           >
-                            <TableCell
-                              component="th"
-                              scope="row"
-                              sx={{
-                                fontWeight: "medium",
-                                color: "#333",
-                                width: "40%",
-                              }}
-                            >
-                              {spec.name}
-                            </TableCell>
-                            <TableCell>{spec.value}</TableCell>
-                          </TableRow>
-                        ))}
+                            Danh mục
+                          </TableCell>
+                          <TableCell>
+                            {product.category?.name || "Chưa có danh mục"}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow
+                          sx={{
+                            "&:last-child td, &:last-child th": { border: 0 },
+                          }}
+                        >
+                          <TableCell
+                            component="th"
+                            scope="row"
+                            sx={{
+                              fontWeight: "medium",
+                              color: "#333",
+                              width: "40%",
+                            }}
+                          >
+                            Thương hiệu
+                          </TableCell>
+                          <TableCell>
+                            {brandName || "Chưa có thương hiệu"}
+                          </TableCell>
+                        </TableRow>
+                        <TableRow
+                          sx={{
+                            "&:last-child td, &:last-child th": { border: 0 },
+                          }}
+                        >
+                          <TableCell
+                            component="th"
+                            scope="row"
+                            sx={{
+                              fontWeight: "medium",
+                              color: "#333",
+                              width: "40%",
+                            }}
+                          >
+                            Tình trạng
+                          </TableCell>
+                          <TableCell
+                            className={
+                              isInStock ? "text-success" : "text-danger"
+                            }
+                          >
+                            {isInStock ? "Còn hàng" : "Hết hàng"}
+                          </TableCell>
+                        </TableRow>
                       </TableBody>
                     </Table>
                   )}
@@ -609,7 +663,7 @@ const ProductDetails = () => {
                             variant="h6"
                             sx={{ mb: 3, fontWeight: 500 }}
                           >
-                            Add a review
+                            Đánh giá sản phẩm
                           </Typography>
 
                           {!isAuthenticated && (
@@ -621,7 +675,7 @@ const ProductDetails = () => {
                           <ReviewTextField
                             multiline
                             rows={6}
-                            placeholder="Write a Review"
+                            placeholder="Viết đánh giá"
                             value={review}
                             onChange={handleReviewChange}
                             variant="outlined"
@@ -656,7 +710,7 @@ const ProductDetails = () => {
                               onClick={handleSubmitReview}
                               disabled={!isAuthenticated}
                             >
-                              Submit Review
+                              Gửi đánh giá
                             </SubmitButton>
                           </Box>
                         </Box>
@@ -675,7 +729,7 @@ const ProductDetails = () => {
 
                       {/* Existing reviews */}
                       <Typography variant="h5" sx={{ mb: 4, fontWeight: 500 }}>
-                        Customer Reviews{" "}
+                        Đánh giá khách hàng{" "}
                         {reviews.length > 0 ? `(${reviews.length})` : ""}
                       </Typography>
 

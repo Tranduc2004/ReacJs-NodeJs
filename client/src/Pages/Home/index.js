@@ -66,7 +66,7 @@ const BestSellers = () => {
 
   // Lấy 8 sản phẩm đầu tiên để hiển thị
   const bestSellers = products.slice(0, 8);
-  const featuredProducts = products.slice(8, 13);
+  const featuredProducts = products.slice(8, 15);
 
   return (
     <div className="home">
@@ -94,9 +94,9 @@ const BestSellers = () => {
                   </p>
                 </div>
 
-                <Link to="/cat/1" className="ml-auto">
+                <Link to="listing" className="ml-auto">
                   <Button className="viewAllBtn ml-auto">
-                    View All&nbsp;
+                    Xem tất cả&nbsp;
                     <FaArrowRight className="arrow" />
                   </Button>
                 </Link>
@@ -149,9 +149,11 @@ const BestSellers = () => {
                   </p>
                 </div>
 
-                <Button className="viewAllBtn ml-auto">
-                  Xem tất cả <FaArrowRight className="arrow" />
-                </Button>
+                <Link to="/listing" className="ml-auto">
+                  <Button className="viewAllBtn ml-auto">
+                    Xem tất cả <FaArrowRight className="arrow" />
+                  </Button>
+                </Link>
               </div>
 
               <div className="product_row w-100 mt-2">
@@ -195,12 +197,43 @@ const BestSellers = () => {
 
               <div className="d-flex mt-4 mb-5 bannerSec">
                 <div className="banner">
-                  <img src={banner3} alt="" className="cursor w-100" />
+                  <img
+                    src={banner3}
+                    alt=""
+                    className="cursor w-100 rounded-3"
+                  />
                 </div>
                 <div className="banner">
-                  <img src={banner4} alt="" className="cursor w-100" />
+                  <img
+                    src={banner4}
+                    alt=""
+                    className="cursor w-100 rounded-3"
+                    style={{ borderRadius: "7px" }}
+                  />
                 </div>
               </div>
+              {/* Phần hiển thị tất cả sản phẩm còn lại */}
+              <section className="allProducts mt-5">
+                <div className="container">
+                  <div className="section-header mb-4">
+                    <h2 className="text-left hd">TẤT CẢ SẢN PHẨM</h2>
+                    <p className="text-left text-light1">
+                      Khám phá thêm nhiều sản phẩm hấp dẫn khác
+                    </p>
+                  </div>
+
+                  <div className="row g-2">
+                    {products.slice(16).map((product) => (
+                      <div
+                        key={product._id}
+                        className="col-6 col-sm-6 col-md-4 col-lg-3"
+                      >
+                        <ProductItem product={product} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
             </div>
           </div>
         </div>

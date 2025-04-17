@@ -13,6 +13,8 @@ import SignIn from "./Pages/SignIn";
 import SignUp from "./Pages/SignUp";
 import Profile from "./Pages/Profile";
 import ChangePassword from "./Pages/ChangePassword";
+import ForgotPassword from "./Pages/ForgotPassword";
+import ResetPassword from "./Pages/ResetPassword";
 import { Toaster } from "react-hot-toast";
 import Search from "./Pages/Search";
 import { AuthProvider } from "./context/AuthContext";
@@ -22,6 +24,8 @@ import Checkout from "./Pages/Checkout";
 import ThankYou from "./Pages/ThankYou";
 import OrderHistory from "./Pages/OrderHistory";
 import OrderDetail from "./Pages/OrderDetail";
+import Posts from "./Pages/Posts";
+import PostDetail from "./Pages/PostDetail";
 
 const MyContext = createContext();
 
@@ -71,6 +75,17 @@ function App() {
     }
   };
 
+  // Hàm kiểm tra có nên hiển thị header và footer không
+  const shouldShowHeaderFooter = (pathname) => {
+    const pathsWithoutHeaderFooter = [
+      "/signin",
+      "/signup",
+      "/forgot-password",
+      "/reset-password",
+    ];
+    return !pathsWithoutHeaderFooter.some((path) => pathname.startsWith(path));
+  };
+
   const values = {
     countryList,
     isHeaderFooterShow,
@@ -86,7 +101,7 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Toaster position="top-right" />
-          {isHeaderFooterShow && <Header />}
+          {shouldShowHeaderFooter(window.location.pathname) && <Header />}
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/listing" exact={true} element={<Listing />} />
@@ -100,13 +115,23 @@ function App() {
               element={<ProductDetails />}
             />
             <Route exact={true} path="/cart" element={<Cart />} />
-            <Route exact={true} path="/signIn" element={<SignIn />} />
-            <Route exact={true} path="/signUp" element={<SignUp />} />
+            <Route exact={true} path="/signin" element={<SignIn />} />
+            <Route exact={true} path="/signup" element={<SignUp />} />
             <Route exact={true} path="/profile" element={<Profile />} />
             <Route
               exact={true}
               path="/change-password"
               element={<ChangePassword />}
+            />
+            <Route
+              exact={true}
+              path="/forgot-password"
+              element={<ForgotPassword />}
+            />
+            <Route
+              exact={true}
+              path="/reset-password/:token"
+              element={<ResetPassword />}
             />
             <Route exact={true} path="/search" element={<Search />} />
             <Route exact={true} path="/wishlist" element={<Wishlist />} />
@@ -114,8 +139,10 @@ function App() {
             <Route exact={true} path="/thank-you" element={<ThankYou />} />
             <Route path="/orders" element={<OrderHistory />} />
             <Route path="/orders/:orderId" element={<OrderDetail />} />
+            <Route path="/posts" element={<Posts />} />
+            <Route path="/posts/:id" element={<PostDetail />} />
           </Routes>
-          {isHeaderFooterShow && <Footer />}
+          {shouldShowHeaderFooter(window.location.pathname) && <Footer />}
         </BrowserRouter>
       </AuthProvider>
     </MyContext.Provider>

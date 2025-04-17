@@ -139,7 +139,7 @@ const Sidebar = () => {
           <SubMenuItem text="Slider List" prefix="sliders" />
           <SubMenuItem text="Slider Add" prefix="sliders" />
         </MenuItem>
-        <MenuItem icon={RiBillLine} text="Invoices" />
+        <MenuItem icon={RiBillLine} text="Posts" />
         <MenuItem
           icon={BsCart3}
           text="Orders"

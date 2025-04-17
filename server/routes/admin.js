@@ -3,6 +3,9 @@ const router = express.Router();
 const Admin = require("../models/admin");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const User = require("../models/user");
+const Order = require("../models/Order");
+const Review = require("../models/review");
 
 // Middleware xác thực JWT
 const authenticateJWT = (req, res, next) => {
@@ -211,6 +214,31 @@ router.get("/check-first", async (req, res) => {
     res.json({ isFirst: adminCount === 0 });
   } catch (error) {
     console.error("Lỗi kiểm tra admin đầu tiên:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
+// Route lấy thống kê dashboard
+router.get("/dashboard-stats", authenticateJWT, async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const totalOrders = await Order.countDocuments();
+    const totalReviews = await Review.countDocuments();
+
+    // Tính tổng doanh thu từ các đơn hàng đã giao hàng
+    const totalRevenue = await Order.aggregate([
+      { $match: { status: "delivered" } },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+    ]);
+
+    res.json({
+      totalUsers,
+      totalOrders,
+      totalReviews,
+      totalRevenue: totalRevenue.length > 0 ? totalRevenue[0].total : 0,
+    });
+  } catch (error) {
+    console.error("Lỗi lấy thống kê dashboard:", error);
     res.status(500).json({ message: "Lỗi server" });
   }
 });
