@@ -8,6 +8,7 @@ import {
   Divider,
   Button,
   Container,
+  Rating,
 } from "@mui/material";
 import { Home as HomeIcon } from "@mui/icons-material";
 
@@ -54,18 +55,43 @@ const ThankYou = () => {
               Thông tin đơn hàng
             </Typography>
             <Divider sx={{ mb: 2 }} />
-            {order.items.map((item, index) => (
-              <Box key={index} mb={2}>
-                <Typography variant="body1">
-                  {item.product.name} x {item.quantity}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {formatPrice(item.price)}
-                </Typography>
-              </Box>
-            ))}
+            {order.items &&
+              order.items.map((item, index) => (
+                <Box key={index} mb={2}>
+                  <Typography variant="body1">
+                    {item.name ||
+                      item.product?.name ||
+                      "Sản phẩm không xác định"}{" "}
+                    x {item.quantity}
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 1,
+                    }}
+                  >
+                    <Rating
+                      value={item.product?.rating || 0}
+                      precision={0.5}
+                      readOnly
+                      size="small"
+                    />
+                    <Typography variant="body2" color="text.secondary">
+                      ({item.product?.numReviews || 0} đánh giá)
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {formatPrice(item.price)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Thành tiền: {formatPrice(item.price * item.quantity)}
+                  </Typography>
+                </Box>
+              ))}
             <Divider sx={{ my: 2 }} />
-            <Typography variant="h6">
+            <Typography variant="h6" className="text-red-500">
               Tổng tiền: {formatPrice(order.totalAmount)}
             </Typography>
             <Typography variant="body2" color="text.secondary" mt={1}>

@@ -81,7 +81,16 @@ const ProductUpload = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    console.log(`Setting ${name} to:`, value);
+
+    // Thêm validation cho countInStock
+    if (name === "countInStock") {
+      const count = parseInt(value);
+      if (count > 1000) {
+        toast.error("Số lượng sản phẩm không được vượt quá 1000");
+        return;
+      }
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -163,6 +172,12 @@ const ProductUpload = () => {
           selectedImages.length === 0 ? " và thêm ít nhất một hình ảnh" : ""
         }`
       );
+      return;
+    }
+
+    // Validate countInStock
+    if (parseInt(formData.countInStock) > 1000) {
+      toast.error("Số lượng sản phẩm không được vượt quá 1000");
       return;
     }
 
@@ -511,7 +526,13 @@ const ProductUpload = () => {
                   name="countInStock"
                   value={formData.countInStock}
                   onChange={handleChange}
-                  InputProps={{ inputProps: { min: 0 } }}
+                  InputProps={{
+                    inputProps: {
+                      min: 0,
+                      max: 1000,
+                    },
+                  }}
+                  helperText="Số lượng tối đa là 1000"
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       bgcolor: isDarkMode ? "rgba(0, 0, 0, 0.2)" : "#f5f5f5",
@@ -527,6 +548,12 @@ const ProductUpload = () => {
                     },
                     "& .MuiInputBase-input": {
                       color: isDarkMode ? "#fff" : "#1a1a1a",
+                    },
+                    "& .MuiFormHelperText-root": {
+                      color: isDarkMode
+                        ? "rgba(255, 255, 255, 0.5)"
+                        : "rgba(0, 0, 0, 0.5)",
+                      marginLeft: 0,
                     },
                   }}
                   required

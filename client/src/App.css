@@ -66,9 +66,10 @@ button {
   padding: 5px 15px !important;
   background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  font-size: 12px !important;
   border-radius: 30px !important;
-  color: #414141 !important;
-  font-weight: 600;
+  color: #a3a3a3 !important;
+  font-weight: 300 !important;
   text-transform: capitalize !important;
 }
 
@@ -149,8 +150,8 @@ button {
 /* Mobile optimization styles */
 @media (max-width: 767px) {
   .productItem {
-    max-width: 160px; /* Giảm chiều rộng tối đa trên mobile */
-    margin: 0 auto 15px;
+    max-width: 200px; /* Giảm chiều rộng tối đa trên mobile */
+    margin: 0;
   }
 
   .productItem .imgWrapper {
@@ -628,7 +629,7 @@ footer .container {
   align-items: center;
   color: #6c757d;
   border-right: #dedddd 1px solid;
-  padding: 7px 40px;
+  padding: 7px 20px;
 }
 
 .topInfo > div > span {
@@ -1025,7 +1026,7 @@ footer .container .row1 {
 .btn-big {
   font-size: 15px !important;
   padding: 7px 30px !important;
-  font-weight: bold !important;
+  font-weight: bold;
 }
 
 .btn-round {
@@ -1150,7 +1151,7 @@ footer .container .row1 {
 .product_Listing_Page .productListing .content_right {
   width: 78%;
   flex: 0 0 78%;
-  padding-left: 50px;
+  padding-left: 10px;
 }
 .range-slider {
   height: 5px !important;
@@ -1270,8 +1271,8 @@ footer .container .row1 {
 
 /* Sidebar wrapper for toggle functionality */
 .sidebar-wrapper {
-  width: 20%;
-  flex: 0 0 20%;
+  width: 25%;
+  flex: 0 0 25%;
 }
 
 /* Large screens (default desktop view) */
@@ -1301,54 +1302,22 @@ footer .container .row1 {
   .product_Listing_Page .productListing .content_right .showBy {
     padding: 10px 15px;
   }
-  .productListing .productItem.four {
-    width: 29%;
-  }
-  .productListing .productItem.two {
-    width: 47%;
-  }
-  .productListing .productItem.three {
-    width: 47%;
-  }
-}
-
-/* Small screens (tablets and large phones) */
-@media screen and (max-width: 767px) and (min-width: 576px) {
-  .filter-toggle {
-    display: flex;
-  }
-  .product_Listing_Page .productListing {
-    flex-direction: row;
-  }
-  .sidebar-wrapper {
-    width: 100%;
-    flex: 0 0 100%;
-    margin-bottom: 20px;
-  }
-  .product_Listing_Page .productListing .content_right {
-    width: 100%;
-    flex: 0 0 100%;
-    padding-left: 0;
-  }
-  .product_Listing_Page .productListing .content_right .showBy {
-    padding: 8px 12px;
-  }
-  .productListing .productItem.four,
-  .productListing .productItem.three {
-    width: 47%; /* 2 items per row */
-  }
-  .productListing .productItem.one .imgWrapper {
-    width: 40%;
-  }
 }
 
 /* Mobile devices */
-@media screen and (max-width: 575px) {
+@media screen and (max-width: 767px) {
   .container {
     padding: 0 15px;
   }
   .filter-toggle {
     display: flex;
+    width: 100%;
+    justify-content: center;
+    padding: 10px;
+    margin-bottom: 15px;
+    background: #f5f5f5;
+    border-radius: 5px;
+    border: none;
   }
   .product_Listing_Page .productListing {
     flex-direction: row;
@@ -1367,49 +1336,29 @@ footer .container .row1 {
   .product_Listing_Page .productListing .content_right .showBy {
     height: auto;
     padding: 8px 10px;
-    flex-wrap: wrap;
+    display: flex;
+    justify-content: flex-end;
   }
+
   .product_Listing_Page .productListing .content_right .showBy .btnWraper {
-    margin-bottom: 5px;
-    width: 100%;
-    justify-content: space-between;
+    display: none !important;
   }
+
   .showByFilter {
-    width: 100%;
-    margin-top: 5px;
+    width: auto;
   }
+
   .showByFilter button {
-    width: 100%;
+    min-width: 120px !important;
     justify-content: space-between;
+    padding: 5px 15px;
   }
   .productListing {
-    gap: 15px;
+    gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
   }
-  .productListing .productItem {
-    width: 48%; /* Đảm bảo mỗi hàng 2 sản phẩm */
-    margin-bottom: 15px;
-  }
-  .productListing .productItem.four,
-  .productListing .productItem.three,
-  .productListing .productItem.two {
-    width: 46%; /* 2 items per row */
-  }
-  .productListing .productItem.one {
-    flex-direction: column;
-  }
-  .productListing .productItem.one .imgWrapper {
-    width: 100%;
-    margin-bottom: 10px;
-  }
-}
-.product_Listing_Page
-  .productListing
-  .content_right
-  .showBy
-  .btnWraper
-  button.act
-  svg {
-  opacity: 1 !important;
 }
 
 @media (max-width: 768px) {
@@ -1562,7 +1511,7 @@ a:hover {
   background: #fafafa;
 }
 .cartPage .container {
-  max-width: 1400px !important;
+  max-width: 1600px !important;
   margin: auto;
 }
 .cartDetails {

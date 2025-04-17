@@ -31,7 +31,7 @@ const Profile = () => {
 
   useEffect(() => {
     fetchUserProfile();
-  });
+  }, []);
 
   const fetchUserProfile = async () => {
     try {

@@ -70,7 +70,7 @@ const SliderList = () => {
 
   const handleDeleteConfirm = async () => {
     try {
-      await deleteData("/api/sliders/", deleteDialog.sliderId);
+      await deleteData(`/api/sliders/${deleteDialog.sliderId}`);
       toast.success("Xóa slider thành công");
       fetchSliders();
     } catch (error) {

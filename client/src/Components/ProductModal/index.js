@@ -127,6 +127,14 @@ const ProductModal = ({ productId, closeProductModal }) => {
         return;
       }
 
+      // Kiểm tra số lượng tồn kho
+      if (quantity > product.countInStock) {
+        toast.error(
+          `Số lượng tồn kho không đủ. Chỉ còn ${product.countInStock} sản phẩm`
+        );
+        return;
+      }
+
       // Thêm vào giỏ hàng với số lượng đã chọn
       const response = await addToCart(product._id, quantity);
 
@@ -201,7 +209,7 @@ const ProductModal = ({ productId, closeProductModal }) => {
       <h4 className="mb-1 font-weight-bold">{product.name}</h4>
       <div className="d-flex align-items-center">
         <span className="mr-2">
-          Brands: <b>{brandName || "No Brand"}</b>
+          Thương hiệu: <b>{brandName || "Không có thương hiệu"}</b>
         </span>
         <Rating
           name="read-only"
@@ -234,7 +242,7 @@ const ProductModal = ({ productId, closeProductModal }) => {
             </span>
           </div>
           <span className={`badge  ${isInStock ? "bg-success" : "bg-danger"}`}>
-            {isInStock ? "IN STOCK" : "OUT OF STOCK"}
+            {isInStock ? "Còn hàng" : "Hết hàng"}
           </span>
           <p className="mt-3"></p>
 
@@ -244,15 +252,20 @@ const ProductModal = ({ productId, closeProductModal }) => {
             <Button
               className="btn-lg btn-big btn-round ml-3"
               sx={{
-                backgroundColor: "#00aaff",
+                backgroundColor: isInStock ? "#00aaff" : "#cccccc",
                 color: "white",
                 "&:hover": {
-                  backgroundColor: "#0088cc",
+                  backgroundColor: isInStock ? "#0088cc" : "#cccccc",
+                },
+                "&:disabled": {
+                  backgroundColor: "#cccccc",
+                  color: "white",
                 },
               }}
               onClick={handleAddToCart}
+              disabled={!isInStock}
             >
-              Add to Cart
+              {isInStock ? "Thêm giỏ hàng" : "Hết hàng"}
             </Button>
           </div>
 
@@ -273,7 +286,7 @@ const ProductModal = ({ productId, closeProductModal }) => {
               {isLiked ? "ĐÃ THÍCH" : "THÊM VÀO YÊU THÍCH"}
             </Button>
             <Button className="btn-round btn-sml ml-3" variant="outlined">
-              <MdOutlineCompareArrows /> &nbsp; COMPARE
+              <MdOutlineCompareArrows /> &nbsp; SO SÁNH
             </Button>
           </div>
         </div>

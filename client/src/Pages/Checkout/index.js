@@ -12,29 +12,32 @@ import {
   FormControl,
   Card,
   CardContent,
+  MenuItem,
+  Alert,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { IoLocationSharp, IoCardSharp } from "react-icons/io5";
 import { FaMoneyBillWave, FaWallet } from "react-icons/fa";
-import {
-  createOrderFromCart,
-  clearCart,
-  getCart,
-  api,
-} from "../../services/api";
+import { getCart } from "../../services/api";
 import { toast } from "react-hot-toast";
+import axios from "axios";
+
+// Set baseURL for axios
+axios.defaults.baseURL = "http://localhost:4000";
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
     address: "",
     city: "",
+    cityName: "",
     district: "",
+    districtName: "",
     ward: "",
-    paymentMethod: "COD",
-    note: "",
+    wardName: "",
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,29 +47,134 @@ const Checkout = () => {
   const [note, setNote] = useState("");
   const [error, setError] = useState(null);
 
+  // Address data
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+
   useEffect(() => {
-    // Kiểm tra đăng nhập
+    // Check if user is logged in
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/signin");
       return;
     }
 
-    // Lấy dữ liệu giỏ hàng
+    // Get user info from localStorage
+    const userData = JSON.parse(localStorage.getItem("user"));
+    if (userData) {
+      setUser(userData);
+
+      // Pre-fill user data if available
+      if (userData.fullName) {
+        setFormData((prev) => ({
+          ...prev,
+          fullName: userData.fullName || "",
+          phone: userData.phone || "",
+        }));
+      }
+    }
+
+    // Fetch cart data
     const fetchCart = async () => {
       try {
         const response = await getCart();
+        if (!response.items || response.items.length === 0) {
+          toast.error("Giỏ hàng trống");
+          navigate("/cart");
+          return;
+        }
         setCartItems(response.items || []);
       } catch (error) {
-        console.error("Lỗi khi lấy giỏ hàng:", error);
+        console.error("Error fetching cart:", error);
+        toast.error("Không thể tải giỏ hàng");
       } finally {
         setLoading(false);
       }
     };
 
+    // Fetch provinces
+    const fetchProvinces = async () => {
+      try {
+        const response = await fetch("https://provinces.open-api.vn/api/p/");
+        const data = await response.json();
+        setProvinces(data);
+      } catch (error) {
+        console.error("Error fetching provinces:", error);
+        toast.error("Không thể tải danh sách tỉnh/thành phố");
+      }
+    };
+
     fetchCart();
+    fetchProvinces();
   }, [navigate]);
 
+  // Fetch districts when province changes
+  const handleProvinceChange = async (e) => {
+    const provinceCode = e.target.value;
+    const selectedProvince = provinces.find((p) => p.code === provinceCode);
+
+    setFormData({
+      ...formData,
+      city: provinceCode,
+      cityName: selectedProvince ? selectedProvince.name : "",
+      district: "",
+      districtName: "",
+      ward: "",
+      wardName: "",
+    });
+
+    try {
+      const response = await fetch(
+        `https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`
+      );
+      const data = await response.json();
+      setDistricts(data.districts || []);
+      setWards([]);
+    } catch (error) {
+      console.error("Error fetching districts:", error);
+      toast.error("Không thể tải danh sách quận/huyện");
+    }
+  };
+
+  // Fetch wards when district changes
+  const handleDistrictChange = async (e) => {
+    const districtCode = e.target.value;
+    const selectedDistrict = districts.find((d) => d.code === districtCode);
+
+    setFormData({
+      ...formData,
+      district: districtCode,
+      districtName: selectedDistrict ? selectedDistrict.name : "",
+      ward: "",
+      wardName: "",
+    });
+
+    try {
+      const response = await fetch(
+        `https://provinces.open-api.vn/api/d/${districtCode}?depth=2`
+      );
+      const data = await response.json();
+      setWards(data.wards || []);
+    } catch (error) {
+      console.error("Error fetching wards:", error);
+      toast.error("Không thể tải danh sách phường/xã");
+    }
+  };
+
+  // Update ward when selected
+  const handleWardChange = (e) => {
+    const wardCode = e.target.value;
+    const selectedWard = wards.find((w) => w.code === wardCode);
+
+    setFormData({
+      ...formData,
+      ward: wardCode,
+      wardName: selectedWard ? selectedWard.name : "",
+    });
+  };
+
+  // Handle form field changes
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -74,30 +182,254 @@ const Checkout = () => {
     });
   };
 
+  // Validate form
   const validateForm = () => {
     const newErrors = {};
     if (!formData.fullName) newErrors.fullName = "Vui lòng nhập họ tên";
     if (!formData.phone) newErrors.phone = "Vui lòng nhập số điện thoại";
+    else if (!/^[0-9]{10}$/.test(formData.phone))
+      newErrors.phone = "Số điện thoại phải có 10 chữ số";
+
     if (!formData.address) newErrors.address = "Vui lòng nhập địa chỉ";
-    if (!formData.city) newErrors.city = "Vui lòng nhập thành phố";
-    if (!formData.district) newErrors.district = "Vui lòng nhập quận/huyện";
-    if (!formData.ward) newErrors.ward = "Vui lòng nhập phường/xã";
+    if (!formData.city) newErrors.city = "Vui lòng chọn tỉnh/thành phố";
+    if (!formData.district) newErrors.district = "Vui lòng chọn quận/huyện";
+    if (!formData.ward) newErrors.ward = "Vui lòng chọn phường/xã";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  // Calculate total
+  const calculateTotal = () => {
+    return cartItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+  };
+
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
+    setError(null);
 
     try {
-      // Kiểm tra dữ liệu trước khi gửi
       if (!validateForm()) {
-        setLoading(false);
+        setIsSubmitting(false);
         return;
       }
 
+      // Kiểm tra dữ liệu trước khi gửi
+      if (!user?._id) {
+        throw new Error("Không tìm thấy thông tin người dùng");
+      }
+
+      if (!cartItems || cartItems.length === 0) {
+        throw new Error("Giỏ hàng trống");
+      }
+
+      const totalAmount = calculateTotal();
+      if (totalAmount <= 0) {
+        throw new Error("Tổng tiền không hợp lệ");
+      }
+
+      // Chuẩn bị dữ liệu đơn hàng
       const orderData = {
+        userId: user._id,
+        items: cartItems.map((item) => ({
+          productId: item.product._id,
+          quantity: item.quantity,
+          price: item.price,
+          name: item.product.name,
+          image:
+            item.product.image ||
+            (item.product.images && item.product.images[0]) ||
+            "",
+        })),
+        totalAmount: totalAmount,
+        shippingAddress: {
+          fullName: formData.fullName,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.cityName,
+          district: formData.districtName,
+          ward: formData.wardName,
+        },
+        note: note || "",
+        paymentMethod: paymentMethod,
+      };
+
+      // If payment method is MoMo, proceed with MoMo payment
+      if (paymentMethod === "MOMO") {
+        await handleMomoPayment();
+      } else {
+        // For COD, create order directly
+        const orderPayload = {
+          ...orderData,
+          products: orderData.items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+            name: item.name,
+          })),
+        };
+
+        try {
+          const orderResponse = await axios.post("/api/orders", orderPayload, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+
+          if (orderResponse.data.success) {
+            toast.success("Đặt hàng thành công!");
+            navigate("/thank-you", {
+              state: {
+                order: orderResponse.data.data,
+                message: "Đơn hàng của bạn đã được đặt thành công!",
+              },
+            });
+          } else {
+            throw new Error("Không thể tạo đơn hàng");
+          }
+        } catch (error) {
+          console.error("Lỗi khi tạo đơn hàng:", error);
+          setError(error.response?.data?.message || "Lỗi khi tạo đơn hàng");
+          toast.error(error.response?.data?.message || "Lỗi khi tạo đơn hàng");
+        }
+      }
+    } catch (error) {
+      console.error("Error in checkout process:", error);
+      setError(error.message || "Có lỗi xảy ra khi xử lý đơn hàng");
+      toast.error(error.message || "Có lỗi xảy ra khi xử lý đơn hàng");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Thêm useEffect để kiểm tra trạng thái đơn hàng sau khi thanh toán
+  useEffect(() => {
+    const checkPaymentStatus = async () => {
+      const orderId = localStorage.getItem("orderId");
+      const isReturningFromPayment = localStorage.getItem(
+        "isReturningFromPayment"
+      );
+
+      if (!orderId || !isReturningFromPayment) return;
+
+      console.log("Checking payment status for order:", orderId);
+
+      try {
+        const response = await axios.get(`/api/momo/status/${orderId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        console.log("Payment status response:", response.data);
+
+        if (response.data.success) {
+          const { paymentStatus, orderStatus } = response.data.data;
+
+          if (paymentStatus === "PAID" && orderStatus === "PROCESSING") {
+            // Thanh toán thành công
+            console.log("Payment successful, redirecting to thank you page");
+            toast.success("Thanh toán thành công!");
+            localStorage.removeItem("orderId");
+            localStorage.removeItem("pendingOrder");
+            localStorage.removeItem("isReturningFromPayment");
+            navigate("/thank-you", {
+              state: {
+                order: response.data.data,
+                message: "Đơn hàng của bạn đã được thanh toán thành công!",
+              },
+            });
+          } else if (paymentStatus === "FAILED") {
+            // Thanh toán thất bại
+            console.log("Payment failed");
+            toast.error("Thanh toán thất bại. Vui lòng thử lại.");
+            localStorage.removeItem("orderId");
+            localStorage.removeItem("pendingOrder");
+            localStorage.removeItem("isReturningFromPayment");
+          }
+        }
+      } catch (error) {
+        console.error("Lỗi khi kiểm tra trạng thái thanh toán:", {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+        });
+      }
+    };
+
+    // Kiểm tra trạng thái mỗi 3 giây
+    const interval = setInterval(checkPaymentStatus, 3000);
+
+    return () => clearInterval(interval);
+  }, [navigate]);
+
+  // Thêm useEffect để kiểm tra khi quay lại từ trang thanh toán MoMo
+  useEffect(() => {
+    const checkReturnFromPayment = async () => {
+      const momoOrderId = localStorage.getItem("momoOrderId");
+      const isReturning = localStorage.getItem("isReturningFromPayment");
+
+      if (momoOrderId && isReturning === "true") {
+        try {
+          console.log("Checking order status for:", momoOrderId);
+          const response = await axios.get(
+            `http://localhost:4000/api/momo/status/${momoOrderId}`
+          );
+
+          if (response.data.success) {
+            const { paymentStatus, orderStatus } = response.data.data;
+
+            if (paymentStatus === "PAID" && orderStatus === "PROCESSING") {
+              toast.success("Thanh toán thành công!");
+              localStorage.removeItem("momoOrderId");
+              localStorage.removeItem("isReturningFromPayment");
+              navigate("/thank-you");
+            } else if (
+              paymentStatus === "FAILED" ||
+              orderStatus === "CANCELLED"
+            ) {
+              toast.error("Thanh toán thất bại. Vui lòng thử lại.");
+              localStorage.removeItem("momoOrderId");
+              localStorage.removeItem("isReturningFromPayment");
+            }
+          }
+        } catch (error) {
+          console.error(
+            "Lỗi khi kiểm tra trạng thái thanh toán sau khi quay lại:",
+            error
+          );
+          if (error.response?.status === 404) {
+            toast.error("Không tìm thấy đơn hàng. Vui lòng thử lại.");
+            localStorage.removeItem("momoOrderId");
+            localStorage.removeItem("isReturningFromPayment");
+          }
+        }
+      }
+    };
+
+    // Kiểm tra ngay khi component mount
+    checkReturnFromPayment();
+  }, [navigate]);
+
+  // Xử lý thanh toán MoMo
+  const handleMomoPayment = async () => {
+    try {
+      const orderData = {
+        items: cartItems.map((item) => ({
+          productId: item.product._id,
+          quantity: item.quantity,
+          price: item.product.price,
+          name: item.product.name,
+          image: item.product.images[0],
+          description: item.product.description,
+        })),
+        totalAmount: calculateTotal(),
+        userId: user._id,
         shippingAddress: {
           fullName: formData.fullName,
           phone: formData.phone,
@@ -106,94 +438,48 @@ const Checkout = () => {
           district: formData.district,
           ward: formData.ward,
         },
-        paymentMethod: paymentMethod,
-        note: note,
+        note: formData.note,
       };
 
-      if (paymentMethod === "MOMO") {
-        try {
-          const total = calculateTotal();
-          console.log("Số tiền thanh toán:", total);
+      console.log("Sending order data:", orderData);
 
-          // Gọi API tạo thanh toán MOMO
-          const momoResponse = await api.post("/momo/create", {
-            amount: Math.round(total),
-            orderInfo: `Thanh toan don hang cho ${formData.fullName}`,
-          });
-
-          console.log("MOMO Response:", momoResponse);
-
-          if (momoResponse.success && momoResponse.data?.payUrl) {
-            // Lưu thông tin đơn hàng vào localStorage để sử dụng sau khi thanh toán
-            localStorage.setItem(
-              "pendingOrder",
-              JSON.stringify({
-                ...orderData,
-                momoOrderId: momoResponse.data.orderId,
-              })
-            );
-
-            // Chuyển hướng đến trang thanh toán MOMO
-            toast.success("Đang chuyển đến trang thanh toán MOMO...");
-            window.location.href = momoResponse.data.payUrl;
-            return;
-          } else {
-            throw new Error(
-              momoResponse.message || "Không thể tạo thanh toán MOMO"
-            );
-          }
-        } catch (error) {
-          console.error("Lỗi khi tạo thanh toán MOMO:", error);
-          toast.error(
-            error.response?.data?.message ||
-              error.message ||
-              "Không thể tạo thanh toán MOMO. Vui lòng thử lại sau."
-          );
-          setError("Không thể tạo thanh toán MOMO. Vui lòng thử lại sau.");
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Nếu là COD hoặc các phương thức khác
-      const response = await createOrderFromCart(orderData);
-      console.log("Response from server:", response);
-
-      if (response.success && response.data) {
-        navigate("/thank-you", {
-          state: {
-            order: response.data,
-            message: response.message,
+      const response = await axios.post(
+        "http://localhost:4000/api/momo/create",
+        { orderData },
+        {
+          headers: {
+            "Content-Type": "application/json",
           },
-        });
+        }
+      );
+
+      console.log("MoMo API response:", response.data);
+
+      if (response.data.success) {
+        // Lưu momoOrderId vào localStorage
+        localStorage.setItem("momoOrderId", response.data.data.momoOrderId);
+        localStorage.setItem("isReturningFromPayment", "true");
+
+        // Chuyển hướng đến trang thanh toán MoMo
+        window.location.href = response.data.data.payUrl;
       } else {
-        setError(response.message || "Có lỗi xảy ra khi tạo đơn hàng");
+        toast.error(response.data.message || "Lỗi khi tạo thanh toán");
       }
     } catch (error) {
-      console.error("Lỗi khi tạo đơn hàng:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      setError(
-        error.response?.data?.message || "Có lỗi xảy ra khi tạo đơn hàng"
+      console.error("Error in handleMomoPayment:", error);
+      toast.error(
+        error.response?.data?.message || "Lỗi khi tạo thanh toán MoMo"
       );
-    } finally {
-      setLoading(false);
     }
-  };
-
-  const calculateTotal = () => {
-    return cartItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
   };
 
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: 4, textAlign: "center" }}>
         <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Đang tải thông tin...
+        </Typography>
       </Container>
     );
   }
@@ -204,8 +490,14 @@ const Checkout = () => {
         Thanh toán
       </Typography>
 
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
       <Grid container spacing={4}>
-        {/* Thông tin giao hàng */}
+        {/* Shipping Information */}
         <Grid item xs={12} md={8}>
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom>
@@ -222,6 +514,7 @@ const Checkout = () => {
                     onChange={handleChange}
                     error={!!errors.fullName}
                     helperText={errors.fullName}
+                    required
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -233,6 +526,7 @@ const Checkout = () => {
                     onChange={handleChange}
                     error={!!errors.phone}
                     helperText={errors.phone}
+                    required
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -244,42 +538,78 @@ const Checkout = () => {
                     onChange={handleChange}
                     error={!!errors.address}
                     helperText={errors.address}
+                    required
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Thành phố"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    error={!!errors.city}
-                    helperText={errors.city}
-                  />
+                  <FormControl fullWidth>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Tỉnh/Thành phố"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleProvinceChange}
+                      error={!!errors.city}
+                      helperText={errors.city}
+                      required
+                    >
+                      <MenuItem value="">Chọn tỉnh/thành phố</MenuItem>
+                      {provinces.map((province) => (
+                        <MenuItem key={province.code} value={province.code}>
+                          {province.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Quận/Huyện"
-                    name="district"
-                    value={formData.district}
-                    onChange={handleChange}
-                    error={!!errors.district}
-                    helperText={errors.district}
-                  />
+                  <FormControl fullWidth>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Quận/Huyện"
+                      name="district"
+                      value={formData.district}
+                      onChange={handleDistrictChange}
+                      error={!!errors.district}
+                      helperText={errors.district}
+                      disabled={!formData.city}
+                      required
+                    >
+                      <MenuItem value="">Chọn quận/huyện</MenuItem>
+                      {districts.map((district) => (
+                        <MenuItem key={district.code} value={district.code}>
+                          {district.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </FormControl>
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Phường/Xã"
-                    name="ward"
-                    value={formData.ward}
-                    onChange={handleChange}
-                    error={!!errors.ward}
-                    helperText={errors.ward}
-                  />
+                  <FormControl fullWidth>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Phường/Xã"
+                      name="ward"
+                      value={formData.ward}
+                      onChange={handleWardChange}
+                      error={!!errors.ward}
+                      helperText={errors.ward}
+                      disabled={!formData.district}
+                      required
+                    >
+                      <MenuItem value="">Chọn phường/xã</MenuItem>
+                      {wards.map((ward) => (
+                        <MenuItem key={ward.code} value={ward.code}>
+                          {ward.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </FormControl>
                 </Grid>
-                <Box sx={{ mt: 4 }}>
+                <Box sx={{ mt: 4, width: "100%" }}>
                   <Typography variant="h6" gutterBottom>
                     <IoCardSharp /> Phương thức thanh toán
                   </Typography>
@@ -375,11 +705,11 @@ const Checkout = () => {
                                     : "inherit",
                               }}
                             >
-                              Momo
+                              MoMo
                             </Typography>
                           </Box>
                           <Typography variant="body2" color="text.secondary">
-                            Thanh toán qua ví Momo
+                            Thanh toán qua ví MoMo
                           </Typography>
                         </CardContent>
                       </Card>
@@ -387,11 +717,7 @@ const Checkout = () => {
                   </Grid>
                 </Box>
                 <Box sx={{ mt: 4, width: "100%" }}>
-                  <Typography
-                    variant="h6"
-                    gutterBottom
-                    sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                  >
+                  <Typography variant="h6" gutterBottom>
                     <IoCardSharp /> Ghi chú đơn hàng
                   </Typography>
                   <Paper
@@ -422,15 +748,6 @@ const Checkout = () => {
                           },
                         },
                       }}
-                      InputProps={{
-                        sx: {
-                          fontSize: "0.9rem",
-                          "&::placeholder": {
-                            fontSize: "0.9rem",
-                            fontStyle: "italic",
-                          },
-                        },
-                      }}
                     />
                     <Typography
                       variant="caption"
@@ -453,17 +770,27 @@ const Checkout = () => {
                   color="primary"
                   size="large"
                   fullWidth
-                  disabled={loading}
+                  disabled={isSubmitting}
                   style={{ backgroundColor: "#00aaff" }}
                 >
-                  {loading ? "Đang xử lý..." : "Đặt hàng"}
+                  {isSubmitting ? (
+                    <>
+                      <CircularProgress
+                        size={24}
+                        sx={{ mr: 1, color: "white" }}
+                      />
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    "Đặt hàng"
+                  )}
                 </Button>
               </Box>
             </Box>
           </Paper>
         </Grid>
 
-        {/* Tóm tắt đơn hàng */}
+        {/* Order Summary */}
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
@@ -503,7 +830,7 @@ const Checkout = () => {
               sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}
             >
               <Typography variant="h6">Tổng cộng:</Typography>
-              <Typography variant="h6" color="primary">
+              <Typography variant="h6" color="red">
                 {calculateTotal().toLocaleString("vi-VN")}đ
               </Typography>
             </Box>

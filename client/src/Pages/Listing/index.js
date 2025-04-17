@@ -5,7 +5,7 @@ import { CgMenuGridO } from "react-icons/cg";
 import { BsGridFill } from "react-icons/bs";
 import { TfiLayoutGrid4Alt } from "react-icons/tfi";
 import { FaAngleDown } from "react-icons/fa6";
-import { FaFilter, FaTimes } from "react-icons/fa"; // Import filter icons
+import { FaFilter, FaTimes } from "react-icons/fa";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import * as React from "react";
@@ -16,12 +16,12 @@ import { getProducts } from "../../services/api";
 
 const Listing = () => {
   const [anchorEl, setAnchorEl] = useState(null);
-  const [productView, setProductView] = useState("four");
+  const [productView, setProductView] = useState("two");
   const [showFilter, setShowFilter] = useState(false);
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(9);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
   const [filters, setFilters] = useState({
     priceRange: [0, 100000000],
     categories: [],
@@ -45,16 +45,11 @@ const Listing = () => {
   }, []);
 
   useEffect(() => {
-    console.log("Filtering products with:", filters);
-    console.log("Total products:", products.length);
-
     const filtered = products.filter((product) => {
-      // Lọc theo khoảng giá
       const priceInRange =
         product.price >= filters.priceRange[0] &&
         product.price <= filters.priceRange[1];
 
-      // Lọc theo danh mục - kiểm tra nhiều kiểu dữ liệu có thể có
       const categoryMatch =
         filters.categories.length === 0 ||
         filters.categories.some(
@@ -64,7 +59,6 @@ const Listing = () => {
             (product.category && product.category._id === categoryId)
         );
 
-      // Lọc theo thương hiệu - kiểm tra nhiều kiểu dữ liệu có thể có
       const brandMatch =
         filters.brands.length === 0 ||
         filters.brands.some(
@@ -77,14 +71,11 @@ const Listing = () => {
       return priceInRange && categoryMatch && brandMatch;
     });
 
-    console.log("Filtered products:", filtered.length);
     setFilteredProducts(filtered);
-    setCurrentPage(1); // Reset về trang đầu tiên khi bộ lọc thay đổi
+    setCurrentPage(1);
   }, [filters, products]);
 
-  // Xử lý thay đổi bộ lọc từ sidebar
   const handleFilterChange = (newFilters) => {
-    console.log("Filters received from sidebar:", newFilters);
     setFilters(newFilters);
   };
 
@@ -110,7 +101,6 @@ const Listing = () => {
     setCurrentPage(value);
   };
 
-  // Tính toán sản phẩm hiển thị trên trang hiện tại
   const indexOfLastProduct = currentPage * itemsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
   const currentProducts = filteredProducts.slice(
@@ -118,13 +108,10 @@ const Listing = () => {
     indexOfLastProduct
   );
 
-  // Tính tổng số trang
   const pageCount = Math.ceil(filteredProducts.length / itemsPerPage);
 
-  // Check window size on initial render and resize
   useEffect(() => {
     const handleResize = () => {
-      // On larger screens, always show filter
       if (window.innerWidth > 767) {
         setShowFilter(true);
       } else {
@@ -132,13 +119,9 @@ const Listing = () => {
       }
     };
 
-    // Set initial state
     handleResize();
-
-    // Add event listener
     window.addEventListener("resize", handleResize);
 
-    // Cleanup
     return () => {
       window.removeEventListener("resize", handleResize);
     };
@@ -148,9 +131,16 @@ const Listing = () => {
     <>
       <section className="product_Listing_Page">
         <div className="container">
-          {/* Filter toggle button for mobile */}
           {window.innerWidth <= 767 && (
-            <button className="filter-toggle" onClick={toggleFilter}>
+            <button
+              className="filter-toggle"
+              onClick={toggleFilter}
+              style={{
+                backgroundColor: "#00aaff",
+                color: "white",
+                borderColor: "#00aaff",
+              }}
+            >
               {showFilter ? (
                 <>
                   Hide Filters <FaTimes />
@@ -164,7 +154,6 @@ const Listing = () => {
           )}
 
           <div className="productListing d-flex">
-            {/* Apply active class to sidebar when filter is shown */}
             <div
               className={`sidebar-wrapper ${showFilter ? "active" : ""}`}
               ref={sidebarRef}
@@ -187,7 +176,7 @@ const Listing = () => {
                 style={{ borderRadius: "10px" }}
               />
               <div className="showBy mt-3 mb-3 d-flex align-items-center">
-                <div className="d-flex align-items-center btnWraper">
+                <div className="d-flex align-items-center btnWraper hidden md:flex">
                   <Button
                     className={productView === "one" ? "act" : ""}
                     onClick={() => setProductView("one")}
@@ -201,23 +190,19 @@ const Listing = () => {
                     <BsGridFill />
                   </Button>
                   <Button
-                    className={`${
-                      productView === "three" ? "act" : ""
-                    } hidden md:block`}
+                    className={productView === "three" ? "act" : ""}
                     onClick={() => setProductView("three")}
                   >
                     <CgMenuGridO />
                   </Button>
                   <Button
-                    className={`${
-                      productView === "four" ? "act" : ""
-                    } hidden md:block`}
+                    className={productView === "four" ? "act" : ""}
                     onClick={() => setProductView("four")}
                   >
                     <TfiLayoutGrid4Alt />
                   </Button>
                 </div>
-                <div className="ml-auto showByFilter">
+                <div className="showByFilter">
                   <Button onClick={handleClick}>
                     Show {itemsPerPage} <FaAngleDown />
                   </Button>
@@ -231,26 +216,19 @@ const Listing = () => {
                       "aria-labelledby": "basic-button",
                     }}
                   >
-                    <MenuItem onClick={() => handleItemsPerPageChange(9)}>
-                      9
+                    <MenuItem onClick={() => handleItemsPerPageChange(12)}>
+                      12
                     </MenuItem>
-                    <MenuItem onClick={() => handleItemsPerPageChange(18)}>
-                      18
-                    </MenuItem>
-                    <MenuItem onClick={() => handleItemsPerPageChange(27)}>
-                      27
+                    <MenuItem onClick={() => handleItemsPerPageChange(24)}>
+                      24
                     </MenuItem>
                     <MenuItem onClick={() => handleItemsPerPageChange(36)}>
                       36
-                    </MenuItem>
-                    <MenuItem onClick={() => handleItemsPerPageChange(45)}>
-                      45
                     </MenuItem>
                   </Menu>
                 </div>
               </div>
 
-              {/* Hiển thị thông tin số lượng sản phẩm */}
               <div className="product-count mb-3">
                 <p>
                   Hiển thị{" "}

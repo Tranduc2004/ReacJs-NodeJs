@@ -4,6 +4,7 @@ import MainHeader from "./MainHeader";
 import Navigation from "./Navigation";
 import MobileMenu from "./Mobile/MobileMenu";
 import MobileSearch from "./Mobile/MobileSearch";
+import BottomNavigation from "./Mobile/BottomNavigation";
 
 const Header = () => {
   const [showLocationMenu, setShowLocationMenu] = useState(false);
@@ -30,26 +31,32 @@ const Header = () => {
   };
 
   return (
-    <header className="w-full">
-      <TopBar />
+    <>
+      <header className="w-full">
+        <TopBar />
 
-      <MainHeader
-        showLocationMenu={showLocationMenu}
-        toggleLocationMenu={toggleLocationMenu}
-        toggleMobileMenu={toggleMobileMenu}
-        toggleMobileSearch={toggleMobileSearch}
-        showMobileMenu={showMobileMenu}
-      />
+        <MainHeader
+          showLocationMenu={showLocationMenu}
+          toggleLocationMenu={toggleLocationMenu}
+          toggleMobileMenu={toggleMobileMenu}
+          toggleMobileSearch={toggleMobileSearch}
+          showMobileMenu={showMobileMenu}
+        />
 
-      <Navigation
-        showCategoryMenu={showCategoryMenu}
-        toggleCategoryMenu={toggleCategoryMenu}
-      />
+        <Navigation
+          showCategoryMenu={showCategoryMenu}
+          toggleCategoryMenu={toggleCategoryMenu}
+        />
 
-      {showMobileMenu && <MobileMenu toggleMobileMenu={toggleMobileMenu} />}
+        <MobileMenu
+          toggleMobileMenu={toggleMobileMenu}
+          isOpen={showMobileMenu}
+        />
 
-      {showMobileSearch && <MobileSearch />}
-    </header>
+        {showMobileSearch && <MobileSearch onClose={toggleMobileSearch} />}
+      </header>
+      <BottomNavigation toggleMobileSearch={toggleMobileSearch} />
+    </>
   );
 };
 

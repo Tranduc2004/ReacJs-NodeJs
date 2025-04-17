@@ -164,9 +164,10 @@ export const editData = async (url, updatedData) => {
   }
 };
 
-export const deleteData = async (url, id) => {
+export const deleteData = async (url) => {
   try {
-    const response = await apiClient.delete(`${url}${id}`);
+    console.log("Deleting data at URL:", url);
+    const response = await apiClient.delete(url);
     return response.data;
   } catch (error) {
     console.error("Error deleting data:", error);
@@ -304,6 +305,27 @@ export const getNewOrdersCount = async () => {
     }
   } catch (error) {
     console.error("Error in getNewOrdersCount:", error);
+    throw error;
+  }
+};
+
+// Thêm các hàm mới cho quản lý bài viết
+export const getData = async (url) => {
+  try {
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting data:", error);
+    throw error;
+  }
+};
+
+export const putData = async (url, data) => {
+  try {
+    const response = await apiClient.put(url, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating data:", error);
     throw error;
   }
 };

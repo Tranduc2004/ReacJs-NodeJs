@@ -58,8 +58,13 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
-      default: "pending",
+      enum: ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"],
+      default: "PENDING",
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["PENDING", "PAID", "FAILED"],
+      default: "PENDING",
     },
     totalAmount: {
       type: Number,
@@ -69,7 +74,15 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    momoOrderId: {
+      type: String,
+      default: "",
+    },
     momoTransactionId: {
+      type: String,
+      default: "",
+    },
+    payUrl: {
       type: String,
       default: "",
     },

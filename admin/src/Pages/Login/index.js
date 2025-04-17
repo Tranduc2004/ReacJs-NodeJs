@@ -5,6 +5,7 @@ import { FcGoogle } from "react-icons/fc";
 import logo from "../../assets/images/logo.webp";
 import { loginAdmin, setAuthToken } from "../../utils/api";
 import { toast } from "react-toastify";
+import { Box, Button } from "@mui/material";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -122,11 +123,17 @@ const Login = () => {
             {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
 
-          <div className="text-center mb-3">
-            <Link to="/forgot-password" className="forgot-link">
+          <Box sx={{ textAlign: "left", mb: 2 }}>
+            <Button
+              component={Link}
+              to="/forgot-password"
+              color="primary"
+              size="small"
+              sx={{ pl: 0 }}
+            >
               Quên mật khẩu?
-            </Link>
-          </div>
+            </Button>
+          </Box>
 
           <div className="divider">
             <span>hoặc</span>

@@ -233,7 +233,7 @@ const CategoryList = () => {
   };
 
   const handleDeleteConfirm = () => {
-    deleteData("/api/categories/", deleteDialog.id)
+    deleteData(`/api/categories/${deleteDialog.id}`)
       .then((res) => {
         console.log("Kết quả xoá:", res);
         if (res.success) {

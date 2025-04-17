@@ -13,7 +13,7 @@ import ProductModal from "../ProductModal";
 import { AiOutlineFullscreen } from "react-icons/ai";
 import { Link } from "react-router-dom";
 import { addToCart } from "../../services/api";
-import Button from "@mui/material/Button";
+import { Button, Rating, Box, Typography } from "@mui/material";
 
 const ProductItem = memo(({ product, itemView }) => {
   const [isOpenProductModal, setisProductModal] = useState(false);
@@ -153,7 +153,7 @@ const ProductItem = memo(({ product, itemView }) => {
             <Button
               className="b1"
               onClick={(e) => {
-                e.preventDefault(); // Ngăn chặn Link khi click vào nút
+                e.preventDefault();
                 viewProductDetails();
               }}
             >
@@ -179,12 +179,27 @@ const ProductItem = memo(({ product, itemView }) => {
         >
           <div className="info">
             <h4 className="productName">{product.name}</h4>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <Rating
+                value={product.rating || 0}
+                precision={0.5}
+                readOnly
+                size="small"
+              />
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: "0.8rem" }}
+              >
+                ({product.numReviews || 0} đánh giá)
+              </Typography>
+            </Box>
             <span
-              className={` d-block badge ${
+              className={`d-block badge ${
                 isInStock ? "bg-success" : "bg-danger"
               }`}
             >
-              {isInStock ? "IN STOCK" : "OUT OF STOCK"}
+              {isInStock ? "Còn hàng" : "Hết hàng"}
             </span>
             <div className="d-flex">
               <span className="netPrice text-danger ml-2">
@@ -200,7 +215,7 @@ const ProductItem = memo(({ product, itemView }) => {
           <Button
             className="add-to-cart-btn"
             sx={{
-              backgroundColor: isInStock ? "transparent" : "#ffcccc", // màu nền nhạt khi hết hàng
+              backgroundColor: isInStock ? "transparent" : "#ffcccc",
               border: isInStock ? "2px solid #00aaff" : "2px solid red",
               color: isInStock ? "#00aaff" : "red",
               fontWeight: "500",
