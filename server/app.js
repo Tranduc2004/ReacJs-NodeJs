@@ -18,8 +18,7 @@ const cartRoutes = require("./routes/cart");
 const sliderRoutes = require("./routes/sliders");
 const reviewRoutes = require("./routes/reviews");
 const chatbotRoutes = require("./routes/chatbotRoutes");
-const momoRoutes = require("./routes/momopayment");
-const orderRoutes = require("./routes/orders");
+const orderRoutes = require("./routes/order");
 const postRoutes = require("./routes/postRoutes");
 
 // Kết nối MongoDB
@@ -58,7 +57,6 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/sliders", sliderRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/chatbot", chatbotRoutes);
-app.use("/api/momo", momoRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/posts", postRoutes);
 
