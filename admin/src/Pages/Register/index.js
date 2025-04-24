@@ -342,13 +342,6 @@ const Register = () => {
           >
             {loading ? "ĐANG XỬ LÝ..." : "ĐĂNG KÝ"}
           </button>
-
-          <div className="text-center mt-4">
-            <span className="text-muted">Đã có tài khoản? </span>
-            <Link to="/login" className="login-link">
-              Đăng nhập
-            </Link>
-          </div>
         </form>
       </div>
     </div>

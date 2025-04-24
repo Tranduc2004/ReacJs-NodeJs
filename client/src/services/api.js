@@ -3,6 +3,7 @@ import axios from "axios";
 // Tạo instance axios cho tất cả API
 const api = axios.create({
   baseURL: "http://localhost:4000/api",
+  timeout: 30000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -502,49 +503,41 @@ export const getSuggestedProducts = async (productId) => {
 };
 
 // API cho chatbot
-export const chatWithBot = async (message) => {
+export const sendMessage = async (message) => {
   try {
-    console.log("1. Đang gửi tin nhắn đến chatbot:", message);
+    console.log("Sending message:", message);
     const response = await api.post("/chatbot/chat", { message });
-    console.log("2. Response từ server:", response);
-    console.log("3. Response data:", response.data);
+    console.log("Raw response:", response);
 
+    // Kiểm tra response trực tiếp (không cần .data vì interceptor đã xử lý)
     if (!response) {
-      console.error("4. Không có response từ server");
       throw new Error("Không nhận được phản hồi từ server");
     }
 
-    if (!response.data) {
-      console.error("5. Response không có data");
-      throw new Error("Không nhận được dữ liệu từ server");
+    // Nếu response là string
+    if (typeof response === "string") {
+      return {
+        success: true,
+        isProduct: false,
+        message: response,
+      };
     }
 
-    if (response.data.success === false) {
-      console.error("6. Server trả về lỗi:", response.data.message);
-      throw new Error(response.data.message || "Có lỗi xảy ra từ server");
-    }
+    // Đảm bảo response là object và có các trường cần thiết
+    const formattedResponse = {
+      success: true,
+      ...response,
+      isProduct: response.isProduct || false,
+      message: response.message || response.text || "",
+    };
 
-    // Kiểm tra cấu trúc response.data
-    if (typeof response.data === "string") {
-      return { success: true, message: response.data };
-    }
-
-    if (response.data.message) {
-      return { success: true, message: response.data.message };
-    }
-
-    if (response.data.text) {
-      return { success: true, message: response.data.text };
-    }
-
-    return { success: true, message: JSON.stringify(response.data) };
+    console.log("Formatted response:", formattedResponse);
+    return formattedResponse;
   } catch (error) {
-    console.error("7. Lỗi khi gọi chatbot:", error);
-    if (error.response) {
-      console.error("8. Status code:", error.response.status);
-      console.error("9. Error data:", error.response.data);
-    }
-    throw error;
+    console.error("Lỗi khi gửi tin nhắn:", error);
+    throw new Error(
+      error.response?.message || error.message || "Lỗi kết nối đến server"
+    );
   }
 };
 

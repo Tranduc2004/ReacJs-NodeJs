@@ -307,62 +307,50 @@ const Checkout = () => {
     }
   };
 
-  // Thêm useEffect để kiểm tra trạng thái thanh toán
+  // Thêm useEffect để kiểm tra trạng thái đơn hàng sau khi thanh toán
   useEffect(() => {
-    let checkCount = 0;
-    const maxChecks = 20; // Giới hạn số lần kiểm tra
-    let isChecking = false;
-
     const checkPaymentStatus = async () => {
-      if (isChecking || checkCount >= maxChecks) return;
-
-      const momoOrderId = localStorage.getItem("momoOrderId");
+      const orderId = localStorage.getItem("orderId");
       const isReturningFromPayment = localStorage.getItem(
         "isReturningFromPayment"
       );
 
-      if (!momoOrderId || !isReturningFromPayment) return;
+      if (!orderId || !isReturningFromPayment) return;
 
-      isChecking = true;
-      checkCount++;
+      console.log("Checking payment status for order:", orderId);
 
       try {
-        console.log(
-          `Checking payment status for order: ${momoOrderId} (attempt ${checkCount}/${maxChecks})`
-        );
+        const response = await axios.get(`/api/momo/status/${orderId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
 
-        const response = await axios.get(
-          `/api/orders/momo/status/${momoOrderId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        console.log("Payment status response:", response.data);
 
         if (response.data.success) {
-          const { paymentStatus, status } = response.data;
+          const { paymentStatus, orderStatus } = response.data.data;
 
-          if (paymentStatus === "PAID" && status === "PROCESSING") {
+          if (paymentStatus === "PAID" && orderStatus === "PROCESSING") {
             // Thanh toán thành công
             console.log("Payment successful, redirecting to thank you page");
             toast.success("Thanh toán thành công!");
-            localStorage.removeItem("momoOrderId");
+            localStorage.removeItem("orderId");
+            localStorage.removeItem("pendingOrder");
             localStorage.removeItem("isReturningFromPayment");
             navigate("/thank-you", {
               state: {
-                order: response.data,
+                order: response.data.data,
                 message: "Đơn hàng của bạn đã được thanh toán thành công!",
               },
             });
-            return;
-          } else if (paymentStatus === "FAILED" || status === "CANCELLED") {
+          } else if (paymentStatus === "FAILED") {
             // Thanh toán thất bại
             console.log("Payment failed");
             toast.error("Thanh toán thất bại. Vui lòng thử lại.");
-            localStorage.removeItem("momoOrderId");
+            localStorage.removeItem("orderId");
+            localStorage.removeItem("pendingOrder");
             localStorage.removeItem("isReturningFromPayment");
-            return;
           }
         }
       } catch (error) {
@@ -371,59 +359,66 @@ const Checkout = () => {
           response: error.response?.data,
           status: error.response?.status,
         });
+      }
+    };
 
-        if (error.response?.status === 404) {
-          toast.error("Không tìm thấy đơn hàng. Vui lòng thử lại.");
-          localStorage.removeItem("momoOrderId");
-          localStorage.removeItem("isReturningFromPayment");
-          return;
+    // Kiểm tra trạng thái mỗi 3 giây
+    const interval = setInterval(checkPaymentStatus, 3000);
+
+    return () => clearInterval(interval);
+  }, [navigate]);
+
+  // Thêm useEffect để kiểm tra khi quay lại từ trang thanh toán MoMo
+  useEffect(() => {
+    const checkReturnFromPayment = async () => {
+      const momoOrderId = localStorage.getItem("momoOrderId");
+      const isReturning = localStorage.getItem("isReturningFromPayment");
+
+      if (momoOrderId && isReturning === "true") {
+        try {
+          console.log("Checking order status for:", momoOrderId);
+          const response = await axios.get(
+            `http://localhost:4000/api/momo/status/${momoOrderId}`
+          );
+
+          if (response.data.success) {
+            const { paymentStatus, orderStatus } = response.data.data;
+
+            if (paymentStatus === "PAID" && orderStatus === "PROCESSING") {
+              toast.success("Thanh toán thành công!");
+              localStorage.removeItem("momoOrderId");
+              localStorage.removeItem("isReturningFromPayment");
+              navigate("/thank-you");
+            } else if (
+              paymentStatus === "FAILED" ||
+              orderStatus === "CANCELLED"
+            ) {
+              toast.error("Thanh toán thất bại. Vui lòng thử lại.");
+              localStorage.removeItem("momoOrderId");
+              localStorage.removeItem("isReturningFromPayment");
+            }
+          }
+        } catch (error) {
+          console.error(
+            "Lỗi khi kiểm tra trạng thái thanh toán sau khi quay lại:",
+            error
+          );
+          if (error.response?.status === 404) {
+            toast.error("Không tìm thấy đơn hàng. Vui lòng thử lại.");
+            localStorage.removeItem("momoOrderId");
+            localStorage.removeItem("isReturningFromPayment");
+          }
         }
-      } finally {
-        isChecking = false;
       }
     };
 
     // Kiểm tra ngay khi component mount
-    checkPaymentStatus();
-
-    // Kiểm tra mỗi 3 giây nếu chưa có kết quả
-    const interval = setInterval(() => {
-      if (checkCount < maxChecks) {
-        checkPaymentStatus();
-      } else {
-        clearInterval(interval);
-        toast.error("Đã hết thời gian chờ thanh toán. Vui lòng thử lại.");
-        localStorage.removeItem("momoOrderId");
-        localStorage.removeItem("isReturningFromPayment");
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
+    checkReturnFromPayment();
   }, [navigate]);
 
   // Xử lý thanh toán MoMo
   const handleMomoPayment = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Vui lòng đăng nhập để thanh toán");
-        navigate("/signin");
-        return;
-      }
-
-      // Kiểm tra thông tin bắt buộc
-      if (
-        !formData.fullName ||
-        !formData.phone ||
-        !formData.address ||
-        !formData.city ||
-        !formData.district ||
-        !formData.ward
-      ) {
-        toast.error("Vui lòng điền đầy đủ thông tin giao hàng");
-        return;
-      }
-
       const orderData = {
         items: cartItems.map((item) => ({
           productId: item.product._id,
@@ -439,23 +434,21 @@ const Checkout = () => {
           fullName: formData.fullName,
           phone: formData.phone,
           address: formData.address,
-          city: formData.cityName,
-          district: formData.districtName,
-          ward: formData.wardName,
+          city: formData.city,
+          district: formData.district,
+          ward: formData.ward,
         },
-        paymentMethod: "MOMO",
-        note: note || "",
+        note: formData.note,
       };
 
       console.log("Sending order data:", orderData);
 
       const response = await axios.post(
-        "http://localhost:4000/api/orders/create",
-        orderData,
+        "http://localhost:4000/api/momo/create",
+        { orderData },
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -463,8 +456,11 @@ const Checkout = () => {
       console.log("MoMo API response:", response.data);
 
       if (response.data.success) {
+        // Lưu momoOrderId vào localStorage
         localStorage.setItem("momoOrderId", response.data.data.momoOrderId);
         localStorage.setItem("isReturningFromPayment", "true");
+
+        // Chuyển hướng đến trang thanh toán MoMo
         window.location.href = response.data.data.payUrl;
       } else {
         toast.error(response.data.message || "Lỗi khi tạo thanh toán");

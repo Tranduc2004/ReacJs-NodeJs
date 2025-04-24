@@ -1,30 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { fetchDataFromApi, deleteData } from "../../utils/api";
+import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Button,
-  IconButton,
-  Box,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  DialogContentText,
-} from "@mui/material";
-import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Add as AddIcon,
-} from "@mui/icons-material";
+import "./styles.css";
+import Pagination from "@mui/material/Pagination";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import Button from "@mui/material/Button";
 import { useTheme } from "../../context/ThemeContext";
 
 const BrandList = () => {
@@ -37,6 +23,11 @@ const BrandList = () => {
     brandId: null,
   });
 
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  const [totalPages, setTotalPages] = useState(0);
+
   useEffect(() => {
     fetchBrands();
   }, []);
@@ -46,12 +37,24 @@ const BrandList = () => {
       setLoading(true);
       const data = await fetchDataFromApi("/api/brands");
       setBrands(data);
+      setTotalPages(Math.ceil(data.length / itemsPerPage));
       setLoading(false);
     } catch (err) {
       setError("Không thể tải danh sách thương hiệu");
       setLoading(false);
       console.error("Lỗi khi tải thương hiệu:", err);
     }
+  };
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+  };
+
+  // Get items for current page
+  const getCurrentItems = () => {
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return brands.slice(startIndex, endIndex);
   };
 
   const handleDeleteClick = (id) => {
@@ -84,248 +87,168 @@ const BrandList = () => {
     });
   };
 
-  // Styles for dark mode - sử dụng lại từ SliderList
-  const tableContainerStyle = {
-    backgroundColor: isDarkMode ? "#1a2035" : "#fff",
-    boxShadow: isDarkMode
-      ? "0 4px 20px 0 rgba(0, 0, 0, 0.5)"
-      : "0 4px 20px 0 rgba(0, 0, 0, 0.1)",
-  };
-
-  const tableHeadStyle = {
-    backgroundColor: isDarkMode ? "#131929" : "#f5f5f5",
-    "& .MuiTableCell-head": {
-      color: isDarkMode ? "#fff" : "#333",
-      fontWeight: "bold",
-    },
-  };
-
-  const tableCellStyle = {
-    color: isDarkMode ? "#fff" : "inherit",
-    borderBottomColor: isDarkMode
-      ? "rgba(255, 255, 255, 0.1)"
-      : "rgba(224, 224, 224, 1)",
-  };
-
-  const dialogStyle = {
-    "& .MuiDialog-paper": {
-      backgroundColor: isDarkMode ? "#1a2035" : "#fff",
-      color: isDarkMode ? "#fff" : "#000",
-    },
-  };
-
-  const dialogContentStyle = {
-    color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.6)",
-  };
+  // Calculate display numbers
+  const startItem = (page - 1) * itemsPerPage + 1;
+  const endItem = Math.min(page * itemsPerPage, brands.length);
 
   if (loading) {
     return (
-      <Typography sx={{ color: isDarkMode ? "#fff" : "#000" }}>
+      <div className="loading" style={{ color: isDarkMode ? "#fff" : "#000" }}>
         Đang tải...
-      </Typography>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ color: isDarkMode ? "#fff" : "#000" }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-        <Typography variant="h4" sx={{ color: isDarkMode ? "#fff" : "#000" }}>
-          Quản lý Thương hiệu
-          <div className="breadcrumbs">
-            <Link to="/" className="breadcrumb-link">
-              Trang chủ
-            </Link>
-            <span className="separator">~</span>
-            <Link to="/brands" className="breadcrumb-link">
-              Thương hiệu
-            </Link>
+    <>
+      <div className="header">
+        <h1>Quản lý Thương hiệu</h1>
+        <div className="breadcrumbs">
+          <Link to="/" className="breadcrumb-link">
+            Trang chủ
+          </Link>
+          <span className="separator">~</span>
+          <Link to="/brands" className="breadcrumb-link">
+            Thương hiệu
+          </Link>
+        </div>
+      </div>
+
+      <div className="category-table-container">
+        <div className="table-header-section">
+          <h3>Danh sách Thương hiệu</h3>
+        </div>
+
+        {error && (
+          <div className="error-container">
+            <p>{error}</p>
+            <Button
+              variant="outlined"
+              onClick={fetchBrands}
+              sx={{
+                color: isDarkMode ? "#ef9a9a" : "#c62828",
+                borderColor: isDarkMode ? "#ef9a9a" : "#c62828",
+                "&:hover": {
+                  borderColor: isDarkMode ? "#ff8a80" : "#d32f2f",
+                  backgroundColor: isDarkMode
+                    ? "rgba(239, 154, 154, 0.08)"
+                    : "rgba(211, 47, 47, 0.04)",
+                },
+              }}
+            >
+              Thử lại
+            </Button>
           </div>
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          sx={{
-            backgroundColor: "#00aaff",
-            "&:hover": {
-              backgroundColor: "#0088cc",
-            },
-          }}
-          component={Link}
-          to="/brands/brand-add"
-        >
-          Thêm Thương hiệu
-        </Button>
-      </Box>
+        )}
 
-      {error && (
-        <Box
-          sx={{
-            p: 2,
-            mb: 2,
-            backgroundColor: isDarkMode ? "rgba(198, 40, 40, 0.2)" : "#ffebee",
-            color: isDarkMode ? "#ef9a9a" : "#c62828",
-            borderRadius: 1,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Typography>{error}</Typography>
-          <Button
-            variant="outlined"
-            onClick={fetchBrands}
-            sx={{
-              color: isDarkMode ? "#ef9a9a" : "#c62828",
-              borderColor: isDarkMode ? "#ef9a9a" : "#c62828",
-              "&:hover": {
-                borderColor: isDarkMode ? "#ff8a80" : "#d32f2f",
-                backgroundColor: isDarkMode
-                  ? "rgba(239, 154, 154, 0.08)"
-                  : "rgba(211, 47, 47, 0.04)",
-              },
-            }}
-          >
-            Thử lại
-          </Button>
-        </Box>
-      )}
-
-      <TableContainer component={Paper} sx={tableContainerStyle}>
-        <Table>
-          <TableHead sx={tableHeadStyle}>
-            <TableRow>
-              <TableCell sx={tableCellStyle}>Logo</TableCell>
-              <TableCell sx={tableCellStyle}>Tên thương hiệu</TableCell>
-              <TableCell sx={tableCellStyle}>Website</TableCell>
-              <TableCell sx={tableCellStyle}>Trạng thái</TableCell>
-              <TableCell align="center" sx={tableCellStyle}>
-                Thao tác
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {brands.length > 0 ? (
-              brands.map((brand) => (
-                <TableRow
-                  key={brand._id}
-                  sx={{
-                    "&:hover": {
-                      backgroundColor: isDarkMode
-                        ? "rgba(255, 255, 255, 0.05)"
-                        : "rgba(0, 0, 0, 0.04)",
-                    },
-                  }}
-                >
-                  <TableCell sx={tableCellStyle}>
-                    <Box
-                      sx={{
-                        border: `1px solid ${
-                          isDarkMode
-                            ? "rgba(255, 255, 255, 0.1)"
-                            : "rgba(0, 0, 0, 0.1)"
-                        }`,
-                        borderRadius: "4px",
-                        overflow: "hidden",
-                        width: 80,
-                        height: 50,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <img
-                        src={brand.logo}
-                        alt={brand.name}
+        <div className="table-responsive">
+          <table className="category-table">
+            <thead>
+              <tr>
+                <th>
+                  <input type="checkbox" />
+                </th>
+                <th>UID</th>
+                <th>Logo</th>
+                <th>Tên thương hiệu</th>
+                <th>Website</th>
+                <th>Trạng thái</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {getCurrentItems().length > 0 ? (
+                getCurrentItems().map((brand, index) => (
+                  <tr key={brand._id || index}>
+                    <td>
+                      <input type="checkbox" />
+                    </td>
+                    <td>{brand._id}</td>
+                    <td>
+                      <div className="category-info">
+                        <img
+                          src={brand.logo}
+                          alt={brand.name}
+                          style={{
+                            maxWidth: "80px",
+                            maxHeight: "50px",
+                            objectFit: "contain",
+                          }}
+                        />
+                      </div>
+                    </td>
+                    <td>{brand.name}</td>
+                    <td>
+                      <a
+                        href={brand.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         style={{
-                          maxWidth: "100%",
-                          maxHeight: "100%",
-                          objectFit: "contain",
+                          color: isDarkMode ? "#90caf9" : "#1976d2",
+                          textDecoration: "none",
                         }}
-                      />
-                    </Box>
-                  </TableCell>
-                  <TableCell sx={tableCellStyle}>{brand.name}</TableCell>
-                  <TableCell sx={tableCellStyle}>
-                    <a
-                      href={brand.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        color: isDarkMode ? "#90caf9" : "#1976d2",
-                        textDecoration: "none",
-                      }}
-                    >
-                      {brand.website}
-                    </a>
-                  </TableCell>
-                  <TableCell sx={tableCellStyle}>
-                    <Box
-                      sx={{
-                        backgroundColor: isDarkMode
-                          ? brand.isActive
-                            ? "rgba(46, 125, 50, 0.2)"
-                            : "rgba(198, 40, 40, 0.2)"
-                          : brand.isActive
-                          ? "#e8f5e9"
-                          : "#ffebee",
-                        color: isDarkMode
-                          ? brand.isActive
-                            ? "#81c784"
-                            : "#ef9a9a"
-                          : brand.isActive
-                          ? "#2e7d32"
-                          : "#c62828",
-                        padding: "4px 8px",
-                        borderRadius: "4px",
-                        display: "inline-block",
-                      }}
-                    >
-                      {brand.isActive ? "Hoạt động" : "Không hoạt động"}
-                    </Box>
-                  </TableCell>
-                  <TableCell align="center" sx={tableCellStyle}>
-                    <IconButton
-                      sx={{
-                        color: isDarkMode ? "#90caf9" : "#1976d2",
-                        "&:hover": {
-                          backgroundColor: isDarkMode
-                            ? "rgba(144, 202, 249, 0.08)"
-                            : "rgba(25, 118, 210, 0.04)",
-                        },
-                      }}
-                      component={Link}
-                      to={`/brands/brand-edit/${brand._id}`}
-                      title="Chỉnh sửa"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      sx={{
-                        color: isDarkMode ? "#f48fb1" : "#d32f2f",
-                        "&:hover": {
-                          backgroundColor: isDarkMode
-                            ? "rgba(244, 143, 177, 0.08)"
-                            : "rgba(211, 47, 47, 0.04)",
-                        },
-                      }}
-                      onClick={() => handleDeleteClick(brand._id)}
-                      title="Xóa"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} align="center" sx={tableCellStyle}>
-                  Không có dữ liệu thương hiệu
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                      >
+                        {brand.website}
+                      </a>
+                    </td>
+                    <td>
+                      <div
+                        className={`status-badge ${
+                          brand.isActive ? "active" : "inactive"
+                        }`}
+                      >
+                        {brand.isActive ? "Hoạt động" : "Không hoạt động"}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="action-buttons">
+                        <button
+                          className="edit-btn"
+                          type="button"
+                          onClick={() => {
+                            window.location.href = `/brands/brand-edit/${brand._id}`;
+                          }}
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          className="delete-btn"
+                          type="button"
+                          onClick={() => handleDeleteClick(brand._id)}
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="no-data">
+                    Không có dữ liệu thương hiệu
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="table-footer">
+          <div className="showing-info">
+            {brands.length > 0
+              ? `showing ${startItem} to ${endItem} of ${brands.length} results`
+              : "No results to display"}
+          </div>
+          <div className="pagination">
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Dialog xác nhận xóa */}
       <Dialog
@@ -333,7 +256,11 @@ const BrandList = () => {
         onClose={handleDeleteCancel}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
-        sx={dialogStyle}
+        PaperProps={{
+          style: {
+            backgroundColor: isDarkMode ? "#1a2035" : "#fff",
+          },
+        }}
       >
         <DialogTitle
           id="alert-dialog-title"
@@ -344,7 +271,7 @@ const BrandList = () => {
         <DialogContent>
           <DialogContentText
             id="alert-dialog-description"
-            sx={dialogContentStyle}
+            sx={{ color: isDarkMode ? "#fff" : "#000" }}
           >
             Bạn có chắc chắn muốn xóa thương hiệu này? Hành động này không thể
             hoàn tác.
@@ -368,7 +295,7 @@ const BrandList = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

@@ -1,28 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { TbLayoutDashboard, TbFileDescription } from "react-icons/tb";
+import { Link } from "react-router-dom";
+import { TbLayoutDashboard } from "react-icons/tb";
 import { FaRegUser } from "react-icons/fa";
-import { BiPackage, BiMessageDetail } from "react-icons/bi";
+import { BiPackage } from "react-icons/bi";
 import { RiBillLine } from "react-icons/ri";
 import { BsCart3, BsChevronDown } from "react-icons/bs";
 import { BiSolidCategory } from "react-icons/bi";
-import {
-  IoNotificationsOutline,
-  IoSettingsOutline,
-  IoWarningOutline,
-  IoColorPaletteOutline,
-  IoStatsChartOutline,
-  IoDocumentTextOutline,
-} from "react-icons/io5";
-import { LuLayoutTemplate } from "react-icons/lu";
-import { FaRegUserCircle } from "react-icons/fa";
-import { PiTextTBold } from "react-icons/pi";
-import { VscError } from "react-icons/vsc";
-import { MdChangeCircle } from "react-icons/md";
+import { logoutAdmin } from "../../utils/api";
 import { useSidebar } from "../../context/SidebarContext";
 import { IoBag } from "react-icons/io5";
 import { MdBrandingWatermark } from "react-icons/md";
 import { getNewOrdersCount } from "../../utils/api";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const MenuItem = ({
   icon: Icon,
@@ -90,6 +80,8 @@ const MenuSection = ({ title, children }) => (
 const Sidebar = () => {
   const { isSidebarOpen } = useSidebar();
   const [newOrdersCount, setNewOrdersCount] = useState(0);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const navigate = useNavigate();
 
   const fetchNewOrdersCount = async () => {
     try {
@@ -106,11 +98,35 @@ const Sidebar = () => {
     const interval = setInterval(fetchNewOrdersCount, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
-
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
   const handleOrdersClick = () => {
     setNewOrdersCount(0); // Reset số đơn hàng mới khi click vào menu Orders
   };
+  const handleLogout = async () => {
+    try {
+      // Xóa token và thông tin admin từ localStorage
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_info");
 
+      // Gọi API logout
+      await logoutAdmin();
+
+      handleClose();
+      toast.success("Đăng xuất thành công");
+
+      // Chuyển hướng về trang login
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Ngay cả khi có lỗi, vẫn xóa thông tin và chuyển về login
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_info");
+      toast.warning("Đã đăng xuất nhưng có lỗi xảy ra");
+      navigate("/login");
+    }
+  };
   return (
     <div className={`sidebar ${isSidebarOpen ? "" : "collapsed"}`}>
       <MenuSection title="MAIN PAGES">
@@ -129,17 +145,19 @@ const Sidebar = () => {
           <SubMenuItem text="Brand List" prefix="brands" />
           <SubMenuItem text="Brand Add" prefix="brands" />
         </MenuItem>
-
+        <MenuItem icon={BiPackage} text="Sliders" isDropdown>
+          <SubMenuItem text="Slider List" prefix="sliders" />
+          <SubMenuItem text="Slider Add" prefix="sliders" />
+        </MenuItem>
         <MenuItem
           icon={FaRegUser}
           text="Users"
           badge={{ type: "hot", text: "HOT" }}
         />
-        <MenuItem icon={BiPackage} text="Sliders" isDropdown>
-          <SubMenuItem text="Slider List" prefix="sliders" />
-          <SubMenuItem text="Slider Add" prefix="sliders" />
+        <MenuItem icon={RiBillLine} text="Posts" isDropdown>
+          <SubMenuItem text="Posts List" prefix="posts" />
+          <SubMenuItem text="Posts Add" prefix="posts" />
         </MenuItem>
-        <MenuItem icon={RiBillLine} text="Posts" />
         <MenuItem
           icon={BsCart3}
           text="Orders"
@@ -150,43 +168,11 @@ const Sidebar = () => {
           }
           onClick={handleOrdersClick}
         />
-        <MenuItem
-          icon={BiMessageDetail}
-          text="Messages"
-          badge={{ type: "count", text: "3" }}
-        />
-        <MenuItem
-          icon={IoNotificationsOutline}
-          text="Notifications"
-          badge={{ type: "count", text: "9" }}
-        />
-        <MenuItem icon={IoSettingsOutline} text="Settings" />
-        <MenuItem icon={LuLayoutTemplate} text="Blank Page" />
       </MenuSection>
-
-      <MenuSection title="UI PAGES">
-        <MenuItem icon={IoWarningOutline} text="Alerts" />
-        <MenuItem icon={FaRegUserCircle} text="Avatars" />
-        <MenuItem icon={PiTextTBold} text="Headings" />
-        <MenuItem icon={IoSettingsOutline} text="Buttons" />
-        <MenuItem icon={IoColorPaletteOutline} text="Colors" />
-        <MenuItem icon={IoStatsChartOutline} text="Charts" />
-      </MenuSection>
-
-      <MenuSection title="OTHER PAGES">
-        <MenuItem icon={TbFileDescription} text="Overview" />
-        <MenuItem icon={VscError} text="Site Error" />
-        <MenuItem icon={IoDocumentTextOutline} text="Documentation" />
-        <MenuItem
-          icon={MdChangeCircle}
-          text="Change Log"
-          badge={{ type: "version", text: "v2.0" }}
-        />
-      </MenuSection>
-
+      <MenuItem icon={TbLayoutDashboard} text="Register" />
       <div className="sidebar-wrapper">
         <div className="sidebar-footer">
-          <button className="logout-btn">
+          <button className="logout-btn" onClick={handleLogout}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"

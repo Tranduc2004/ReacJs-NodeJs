@@ -1,192 +1,306 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FaRobot, FaTimes, FaPaperPlane, FaSpinner } from "react-icons/fa";
+import { FaRobot, FaTimes } from "react-icons/fa";
 import { toast } from "react-hot-toast";
-import axios from "axios";
-
-// Tạo instance axios với cấu hình mặc định
-const api = axios.create({
-  baseURL: "http://localhost:4000/api",
-  timeout: 30000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+import {
+  Box,
+  TextField,
+  IconButton,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
+import SendIcon from "@mui/icons-material/Send";
+import { sendMessage } from "../../services/api";
+import ProductItem from "../ProductItem";
 
 const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState("");
+  const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
+  // Focus input when chat opens
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // Tự động focus vào input khi mở chat
-  useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
+    if (isOpen) {
+      inputRef.current?.focus();
     }
   }, [isOpen]);
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!inputMessage.trim() || isLoading) return;
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-    const userMessage = inputMessage.trim();
-    setInputMessage("");
-    setMessages((prev) => [...prev, { text: userMessage, isUser: true }]);
+  const handleSend = async (e) => {
+    e.preventDefault();
+    const trimmed = newMessage.trim();
+    if (!trimmed) return;
+
+    // Add user message immediately
+    const userMessage = {
+      id: Date.now(),
+      sender: "user",
+      text: trimmed,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setNewMessage("");
     setIsLoading(true);
 
     try {
-      const response = await api.post("/chatbot/chat", {
-        message: userMessage,
-      });
+      const res = await sendMessage(trimmed);
 
-      if (response.data.success) {
-        setMessages((prev) => [
-          ...prev,
-          { text: response.data.message, isUser: false },
-        ]);
-      } else {
-        toast.error(response.data.message || "Có lỗi xảy ra, vui lòng thử lại");
+      // Validate response
+      if (!res || typeof res !== "object") {
+        throw new Error("Invalid server response");
       }
-    } catch (error) {
-      console.error("Lỗi khi gửi tin nhắn:", error);
 
-      if (error.code === "ECONNABORTED") {
-        toast.error("Kết nối bị timeout, vui lòng thử lại");
-      } else if (error.response) {
-        // Lỗi từ server
-        const errorMessage =
-          error.response.data?.message || "Server lỗi, vui lòng thử lại";
-        toast.error(errorMessage);
-        setMessages((prev) => [...prev, { text: errorMessage, isUser: false }]);
-      } else if (error.request) {
-        // Không nhận được response
-        toast.error("Không thể kết nối đến server, vui lòng thử lại");
-      } else {
-        // Lỗi khác
-        toast.error("Có lỗi xảy ra, vui lòng thử lại");
+      if (res.success === false) {
+        throw new Error(res.message || "Request failed");
       }
+
+      // Construct bot message
+      const botMessage = {
+        id: Date.now() + 1,
+        sender: "bot",
+        timestamp: new Date(),
+      };
+
+      // Handle product responses
+      if (res.isProduct) {
+        botMessage.text =
+          res.message || "Here are some products you might like:";
+
+        if (res.products?.length) {
+          botMessage.products = res.products.map((p) => ({
+            _id: p.id || p._id,
+            name: p.name,
+            price: p.price,
+            description: p.description,
+            images: [p.image || p.images?.[0]],
+            rating: p.rating || 0,
+            numReviews: p.numReviews || 0,
+            countInStock: p.countInStock || 1,
+          }));
+        } else if (res.product) {
+          botMessage.product = {
+            _id: res.product.id || res.product._id,
+            name: res.product.name,
+            price: res.product.price,
+            description: res.product.description,
+            images: [res.product.image || res.product.images?.[0]],
+            rating: res.product.rating || 0,
+            numReviews: res.product.numReviews || 0,
+            countInStock: res.product.countInStock || 1,
+          };
+        }
+      } else {
+        // Handle text responses
+        botMessage.text = res.message || "I couldn't understand your request.";
+      }
+
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (err) {
+      console.error("Chatbot error:", err);
+      const errorMsg = err.message || "An unknown error occurred";
+
+      toast.error(errorMsg);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: "bot",
+          text: errorMsg,
+          isError: true,
+          timestamp: new Date(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <>
-      {/* Chatbot Button */}
-      <button
-        className={`fixed bottom-8 right-8 bg-[#00aaff] text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 z-50 transform hover:scale-110 ${
-          isOpen ? "rotate-180" : ""
-        }`}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label={isOpen ? "Đóng chat" : "Mở chat"}
-      >
-        {isOpen ? <FaTimes size={24} /> : <FaRobot size={24} />}
-      </button>
+  const renderMessageContent = (msg) => {
+    return (
+      <>
+        {msg.text && (
+          <Typography
+            sx={{
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              mb: msg.products || msg.product ? 1 : 0,
+              color: msg.isError ? "error.main" : "inherit",
+            }}
+          >
+            {msg.text}
+          </Typography>
+        )}
 
-      {/* Chat Window */}
-      {isOpen && (
-        <div className="fixed bottom-24 right-8 w-96 h-[500px] bg-white rounded-lg shadow-xl flex flex-col z-50 transform transition-all duration-300">
-          {/* Chat Header */}
-          <div className="bg-[#00aaff] text-white p-4 rounded-t-lg flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <div className="relative">
-                <FaRobot className="text-2xl animate-bounce" />
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              </div>
-              <span className="font-semibold">Trợ lý ảo</span>
-            </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="hover:bg-[#0099ee] p-2 rounded-full transition-colors"
-              aria-label="Đóng chat"
-            >
-              <FaTimes />
-            </button>
-          </div>
+        {msg.product && (
+          <Box sx={{ mt: 1 }}>
+            <ProductItem product={msg.product} itemView="list" />
+          </Box>
+        )}
 
-          {/* Messages Area */}
-          <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
-            {messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-full text-gray-500 space-y-4">
-                <FaRobot className="text-6xl text-[#00aaff]/20" />
-                <p className="text-center">
-                  Chào mừng bạn đến với trợ lý ảo!
-                  <br />
-                  Tôi có thể giúp gì cho bạn?
-                </p>
-              </div>
-            )}
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`mb-4 ${
-                  message.isUser ? "text-right" : "text-left"
-                }`}
-              >
-                <div
-                  className={`inline-block p-3 rounded-lg max-w-[80%] ${
-                    message.isUser
-                      ? "bg-[#00aaff] text-white"
-                      : "bg-white text-gray-800 shadow-sm"
-                  }`}
-                >
-                  {message.text}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="text-left">
-                <div className="inline-block p-3 rounded-lg bg-white text-gray-800 shadow-sm">
-                  <div className="flex items-center space-x-2">
-                    <FaSpinner className="animate-spin text-[#00aaff]" />
-                    <span>Đang tìm câu trả lời...</span>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input Area */}
-          <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
-            <div className="flex items-center space-x-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Nhập tin nhắn..."
-                className="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00aaff] focus:border-transparent"
-                disabled={isLoading}
-                aria-label="Nhập tin nhắn"
+        {msg.products && (
+          <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 1 }}>
+            {msg.products.map((product, idx) => (
+              <ProductItem
+                key={`${msg.id}-${idx}`}
+                product={product}
+                itemView="list"
               />
-              <button
-                type="submit"
-                className={`p-3 rounded-lg transition-all duration-300 ${
-                  isLoading || !inputMessage.trim()
-                    ? "bg-gray-300 text-gray-500"
-                    : "bg-[#00aaff] text-white hover:bg-[#0099ee] hover:shadow-lg"
-                }`}
-                disabled={isLoading || !inputMessage.trim()}
-                aria-label="Gửi tin nhắn"
+            ))}
+          </Box>
+        )}
+      </>
+    );
+  };
+
+  return (
+    <Box sx={{ position: "fixed", bottom: 32, right: 32, zIndex: 50 }}>
+      <IconButton
+        onClick={() => setIsOpen(!isOpen)}
+        sx={{
+          bgcolor: "#00aaff",
+          color: "white",
+          p: 3,
+          "&:hover": {
+            bgcolor: "#0095e0",
+            transform: "scale(1.1)",
+          },
+          transition: "transform 0.2s",
+        }}
+      >
+        {isOpen ? <FaTimes size={22} /> : <FaRobot size={22} />}
+      </IconButton>
+
+      {isOpen && (
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 80,
+            right: 0,
+            width: 360,
+            height: 500,
+            bgcolor: "background.paper",
+            borderRadius: 1,
+            boxShadow: 24,
+            border: 1,
+            borderColor: "divider",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              bgcolor: "#00aaff",
+              color: "white",
+              px: 2,
+              py: 1.5,
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <FaRobot size={20} style={{ marginRight: 8 }} />
+            <Typography variant="subtitle1" fontWeight="medium">
+              Chat Assistant
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              flex: 1,
+              overflowY: "auto",
+              p: 2,
+              bgcolor: "grey.50",
+            }}
+          >
+            {messages.map((msg) => (
+              <Box
+                key={msg.id}
+                sx={{
+                  mb: 2,
+                  display: "flex",
+                  justifyContent:
+                    msg.sender === "user" ? "flex-end" : "flex-start",
+                }}
               >
-                <FaPaperPlane />
-              </button>
-            </div>
-          </form>
-        </div>
+                <Box
+                  sx={{
+                    borderRadius: 2,
+                    px: 2,
+                    py: 1,
+                    boxShadow: 1,
+                    maxWidth: "80%",
+                    bgcolor:
+                      msg.sender === "user"
+                        ? "#00aaff"
+                        : msg.isError
+                        ? "error.light"
+                        : "background.paper",
+                    color:
+                      msg.sender === "user" ? "common.white" : "text.primary",
+                    border: msg.sender === "bot" && !msg.isError ? 1 : 0,
+                    borderColor: "divider",
+                  }}
+                >
+                  {renderMessageContent(msg)}
+                </Box>
+              </Box>
+            ))}
+            <div ref={messagesEndRef} />
+          </Box>
+
+          <Box
+            component="form"
+            onSubmit={handleSend}
+            sx={{
+              p: 2,
+              borderTop: 1,
+              borderColor: "divider",
+              bgcolor: "background.paper",
+            }}
+          >
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <TextField
+                fullWidth
+                placeholder="Type a message..."
+                size="small"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                disabled={isLoading}
+                inputRef={inputRef}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                  },
+                }}
+              />
+              <IconButton
+                type="submit"
+                disabled={isLoading || !newMessage.trim()}
+                sx={{
+                  bgcolor: "#00aaff",
+                  color: "white",
+                  "&:hover": { bgcolor: "#0095e0" },
+                  "&.Mui-disabled": { bgcolor: "grey.300" },
+                  borderRadius: 2,
+                }}
+              >
+                {isLoading ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <SendIcon />
+                )}
+              </IconButton>
+            </Box>
+          </Box>
+        </Box>
       )}
-    </>
+    </Box>
   );
 };
 

@@ -18,7 +18,7 @@ const cartRoutes = require("./routes/cart");
 const sliderRoutes = require("./routes/sliders");
 const reviewRoutes = require("./routes/reviews");
 const chatbotRoutes = require("./routes/chatbotRoutes");
-const orderRoutes = require("./routes/order");
+const orderRoutes = require("./routes/orders");
 const postRoutes = require("./routes/postRoutes");
 
 // Kết nối MongoDB

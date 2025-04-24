@@ -103,7 +103,7 @@ function App() {
                       {/* Posts */}
                       <Route path="posts" element={<PostsList />} />
                       <Route path="posts/posts-list" element={<PostsList />} />
-                      <Route path="posts/post-add" element={<PostAdd />} />
+                      <Route path="posts/posts-add" element={<PostAdd />} />
                       <Route
                         path="posts/post-edit/:id"
                         element={<PostEdit />}

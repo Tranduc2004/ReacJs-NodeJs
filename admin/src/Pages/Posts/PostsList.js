@@ -1,36 +1,31 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Button,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-} from "@mui/material";
-import { Delete, Edit, Add } from "@mui/icons-material";
+import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import Pagination from "@mui/material/Pagination";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import Button from "@mui/material/Button";
 import { useTheme } from "../../context/ThemeContext";
 import { getData, deleteData } from "../../utils/api";
-import { toast } from "react-toastify";
 
 const PostsList = () => {
   const { isDarkMode } = useTheme();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({
     open: false,
     postId: null,
   });
+
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     fetchPosts();
@@ -41,13 +36,25 @@ const PostsList = () => {
       setLoading(true);
       const response = await getData("/api/posts");
       setPosts(response);
-      toast.success("Tải danh sách bài viết thành công");
+      setTotalPages(Math.ceil(response.length / itemsPerPage));
+      setLoading(false);
     } catch (error) {
+      setError("Không thể tải danh sách bài viết");
+      setLoading(false);
       console.error("Lỗi khi tải danh sách bài viết:", error);
       toast.error("Lỗi khi tải danh sách bài viết");
-    } finally {
-      setLoading(false);
     }
+  };
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+  };
+
+  // Get items for current page
+  const getCurrentItems = () => {
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return posts.slice(startIndex, endIndex);
   };
 
   const handleDeleteClick = (id) => {
@@ -76,100 +83,148 @@ const PostsList = () => {
     setDeleteDialog({ open: false, postId: null });
   };
 
+  // Calculate display numbers
+  const startItem = (page - 1) * itemsPerPage + 1;
+  const endItem = Math.min(page * itemsPerPage, posts.length);
+
+  if (loading) {
+    return (
+      <div className="loading" style={{ color: isDarkMode ? "#fff" : "#000" }}>
+        Đang tải...
+      </div>
+    );
+  }
+
   return (
-    <Box
-      sx={{
-        bgcolor: isDarkMode ? "#0f1824" : "#f5f5f5",
-        minHeight: "100vh",
-        width: "100%",
-        position: "relative",
-      }}
-    >
-      <Paper
-        elevation={0}
-        sx={{
-          borderRadius: 0,
-          bgcolor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#fff",
-          border: "none",
-          p: 4,
-          minHeight: "calc(100vh - 24px)",
-        }}
-      >
-        <div className="header">
-          <h1>Quản lý bài viết</h1>
-          <div className="breadcrumbs">
-            <Link to="/" className="breadcrumb-link">
-              Home
-            </Link>
-            <span className="separator">~</span>
-            <Link to="/posts" className="breadcrumb-link">
-              Bài viết
-            </Link>
-          </div>
+    <>
+      <div className="header">
+        <h1>Quản lý bài viết</h1>
+        <div className="breadcrumbs">
+          <Link to="/" className="breadcrumb-link">
+            Trang chủ
+          </Link>
+          <span className="separator">~</span>
+          <Link to="/posts" className="breadcrumb-link">
+            Bài viết
+          </Link>
+        </div>
+      </div>
+
+      <div className="category-table-container">
+        <div className="table-header-section">
+          <h3>Danh sách bài viết</h3>
         </div>
 
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-          <Typography variant="h6">Danh sách bài viết</Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<Add />}
-            component={Link}
-            to="/posts/post-add"
-            onClick={() => toast.info("Đang chuyển đến trang thêm bài viết")}
-          >
-            Thêm bài viết
-          </Button>
-        </Box>
+        {error && (
+          <div className="error-container">
+            <p>{error}</p>
+            <Button
+              variant="outlined"
+              onClick={fetchPosts}
+              sx={{
+                color: isDarkMode ? "#ef9a9a" : "#c62828",
+                borderColor: isDarkMode ? "#ef9a9a" : "#c62828",
+                "&:hover": {
+                  borderColor: isDarkMode ? "#ff8a80" : "#d32f2f",
+                  backgroundColor: isDarkMode
+                    ? "rgba(239, 154, 154, 0.08)"
+                    : "rgba(211, 47, 47, 0.04)",
+                },
+              }}
+            >
+              Thử lại
+            </Button>
+          </div>
+        )}
 
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Tiêu đề</TableCell>
-                <TableCell>Hình ảnh</TableCell>
-                <TableCell>Tags</TableCell>
-                <TableCell>Thao tác</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {posts.map((post) => (
-                <TableRow key={post._id}>
-                  <TableCell>{post.title}</TableCell>
-                  <TableCell>
-                    {post.image && (
-                      <img
-                        src={post.image}
-                        alt={post.title}
-                        style={{ width: 100, height: 100, objectFit: "cover" }}
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell>{post.tags.join(", ")}</TableCell>
-                  <TableCell>
-                    <IconButton
-                      color="primary"
-                      component={Link}
-                      to={`/posts/post-edit/${post._id}`}
-                      onClick={() =>
-                        toast.info("Đang chuyển đến trang chỉnh sửa bài viết")
-                      }
-                    >
-                      <Edit />
-                    </IconButton>
-                    <IconButton
-                      color="error"
-                      onClick={() => handleDeleteClick(post._id)}
-                    >
-                      <Delete />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+        <div className="table-responsive">
+          <table className="category-table">
+            <thead>
+              <tr>
+                <th>
+                  <input type="checkbox" />
+                </th>
+                <th>ID</th>
+                <th>Hình ảnh</th>
+                <th>Tiêu đề</th>
+                <th>Tags</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {getCurrentItems().length > 0 ? (
+                getCurrentItems().map((post, index) => (
+                  <tr key={post._id || index}>
+                    <td>
+                      <input type="checkbox" />
+                    </td>
+                    <td>{post._id}</td>
+                    <td>
+                      <div className="category-info">
+                        {post.image && (
+                          <img
+                            src={post.image}
+                            alt={post.title}
+                            style={{
+                              maxWidth: "80px",
+                              maxHeight: "50px",
+                              objectFit: "contain",
+                            }}
+                          />
+                        )}
+                      </div>
+                    </td>
+                    <td>{post.title}</td>
+                    <td>{post.tags.join(", ")}</td>
+                    <td>
+                      <div className="action-buttons">
+                        <button
+                          className="edit-btn"
+                          type="button"
+                          onClick={() => {
+                            window.location.href = `/posts/post-edit/${post._id}`;
+                          }}
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          className="delete-btn"
+                          type="button"
+                          onClick={() => handleDeleteClick(post._id)}
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="no-data">
+                    Không có dữ liệu bài viết
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="table-footer">
+          <div className="showing-info">
+            {posts.length > 0
+              ? `showing ${startItem} to ${endItem} of ${posts.length} results`
+              : "No results to display"}
+          </div>
+          <div className="pagination">
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Dialog xác nhận xóa */}
       <Dialog
@@ -216,7 +271,7 @@ const PostsList = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 
