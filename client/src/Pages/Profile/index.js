@@ -28,6 +28,7 @@ const Profile = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const [isEditing, setIsEditing] = useState(false);
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
 
   useEffect(() => {
     fetchUserProfile();
@@ -36,6 +37,20 @@ const Profile = () => {
   const fetchUserProfile = async () => {
     try {
       const token = localStorage.getItem("token");
+      const user = JSON.parse(localStorage.getItem("user"));
+
+      // Kiểm tra nếu là user Google (không có token nhưng có user data)
+      if (!token && user?.authProvider === "google") {
+        setIsGoogleUser(true);
+        setFormData({
+          name: user.name || "",
+          email: user.email || "",
+          phone: user.phone || "",
+        });
+        return;
+      }
+
+      // Kiểm tra cho trường hợp thông thường
       if (!token) {
         context.setIsLogin(false);
         navigate("/signin");
@@ -48,6 +63,11 @@ const Profile = () => {
         email: response.email,
         phone: response.phone,
       });
+
+      // Cập nhật thông tin authProvider nếu có
+      if (response.authProvider) {
+        setIsGoogleUser(response.authProvider === "google");
+      }
 
       context.setUser(response);
     } catch (err) {
@@ -68,14 +88,14 @@ const Profile = () => {
   const validateForm = () => {
     const errors = {};
 
-    // Kiểm tra tên
     if (!formData.name) {
       errors.name = "Tên không được để trống";
     }
 
-    // Kiểm tra số điện thoại
     if (!formData.phone) {
       errors.phone = "Số điện thoại không được để trống";
+    } else if (!/^\d{10,11}$/.test(formData.phone)) {
+      errors.phone = "Số điện thoại không hợp lệ";
     }
 
     setValidationErrors(errors);
@@ -88,7 +108,6 @@ const Profile = () => {
       [e.target.name]: e.target.value,
     });
 
-    // Xóa lỗi validation khi người dùng bắt đầu nhập lại
     if (validationErrors[e.target.name]) {
       setValidationErrors({
         ...validationErrors,
@@ -101,7 +120,6 @@ const Profile = () => {
     e.preventDefault();
     setError("");
 
-    // Kiểm tra validation trước khi gửi form
     if (!validateForm()) {
       return;
     }
@@ -109,6 +127,22 @@ const Profile = () => {
     setLoading(true);
 
     try {
+      // Xử lý riêng cho Google user
+      if (isGoogleUser) {
+        const updatedUser = {
+          ...JSON.parse(localStorage.getItem("user")),
+          name: formData.name,
+          phone: formData.phone,
+        };
+
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        context.setUser(updatedUser);
+        setShowSuccess(true);
+        setIsEditing(false);
+        return;
+      }
+
+      // Xử lý cho user thông thường
       const token = localStorage.getItem("token");
       if (!token) {
         context.setIsLogin(false);
@@ -117,7 +151,6 @@ const Profile = () => {
       }
 
       const response = await updateUserProfile(formData);
-      // Cập nhật thông tin user trong context và localStorage
       context.setUser(response);
       localStorage.setItem("user", JSON.stringify(response));
       setShowSuccess(true);
@@ -172,6 +205,7 @@ const Profile = () => {
                 variant="contained"
                 color="primary"
                 onClick={() => setIsEditing(true)}
+                disabled={loading}
               >
                 Chỉnh sửa
               </Button>
@@ -180,11 +214,18 @@ const Profile = () => {
 
           <Divider sx={{ mb: 4 }} />
 
+          {isGoogleUser && (
+            <Alert severity="info" sx={{ mb: 3 }}>
+              Bạn đang đăng nhập bằng tài khoản Google. Một số thông tin có thể
+              bị giới hạn chỉnh sửa.
+            </Alert>
+          )}
+
           <Box component="form" onSubmit={handleSubmit}>
             {error && (
-              <Typography color="error" sx={{ mb: 2 }}>
+              <Alert severity="error" sx={{ mb: 3 }}>
                 {error}
-              </Typography>
+              </Alert>
             )}
 
             <Grid container spacing={3}>
@@ -229,7 +270,7 @@ const Profile = () => {
                   variant="outlined"
                   error={!!validationErrors.phone}
                   helperText={validationErrors.phone}
-                  disabled={!isEditing}
+                  disabled={!isEditing || isGoogleUser} // Google users không thể đổi số điện thoại
                 />
               </Grid>
 
@@ -245,15 +286,19 @@ const Profile = () => {
                         setValidationErrors({});
                         fetchUserProfile();
                       }}
+                      disabled={loading}
                     >
                       Hủy
                     </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={() => navigate("/change-password")}
-                    >
-                      Đổi mật khẩu
-                    </Button>
+                    {!isGoogleUser && (
+                      <Button
+                        variant="outlined"
+                        onClick={() => navigate("/change-password")}
+                        disabled={loading}
+                      >
+                        Đổi mật khẩu
+                      </Button>
+                    )}
                     <Button
                       type="submit"
                       variant="contained"
@@ -272,12 +317,9 @@ const Profile = () => {
 
       <Snackbar
         open={showSuccess}
-        autoHideDuration={1500}
+        autoHideDuration={3000}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        onClose={() => {
-          setShowSuccess(false);
-          setIsEditing(false);
-        }}
+        onClose={() => setShowSuccess(false)}
       >
         <Alert severity="success" sx={{ width: "100%" }}>
           Cập nhật thông tin thành công!

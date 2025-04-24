@@ -24,13 +24,20 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    // Nếu là response từ API auth, giữ nguyên response
+    if (response.config.url.includes("/auth")) {
+      return response;
+    }
+    return response.data;
+  },
   (error) => {
     if (error.response?.status === 401) {
       // Chỉ xử lý logout khi không phải API cart và không phải đang ở trang đăng nhập
       if (
         !error.config.url.includes("/cart") &&
-        !window.location.pathname.includes("/signin")
+        !window.location.pathname.includes("/signin") &&
+        !window.location.pathname.includes("/googlecallback")
       ) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
@@ -44,7 +51,19 @@ api.interceptors.response.use(
 // Kiểm tra xác thực
 export const isAuthenticated = () => {
   const token = localStorage.getItem("token");
-  return !!token;
+  const user = localStorage.getItem("user");
+  return !!token && !!user;
+};
+
+// Lấy thông tin user từ localStorage
+export const getCurrentUser = () => {
+  try {
+    const userStr = localStorage.getItem("user");
+    return userStr ? JSON.parse(userStr) : null;
+  } catch (error) {
+    console.error("Lỗi khi lấy thông tin user:", error);
+    return null;
+  }
 };
 
 // API cho cart
@@ -200,18 +219,64 @@ const register = async (userData) => {
 
 const login = async (credentials) => {
   try {
+    console.log("Bắt đầu đăng nhập với credentials:", credentials);
     const response = await api.post("/auth/login", credentials);
-    if (response && response.token) {
-      localStorage.setItem("token", response.token);
-      // Lưu thông tin user không bao gồm token
-      const { token, ...userData } = response;
-      localStorage.setItem("user", JSON.stringify(userData));
-      // Cập nhật header Authorization cho các request sau
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    console.log("Response từ server:", response);
+
+    if (!response || !response.data) {
+      throw new Error("Không nhận được phản hồi từ server");
     }
-    return response;
+
+    const { token, ...userData } = response.data;
+
+    if (!token) {
+      throw new Error("Không tìm thấy token trong phản hồi");
+    }
+
+    // Lưu token vào localStorage
+    localStorage.setItem("token", token);
+    console.log("Đã lưu token vào localStorage");
+
+    // Lưu thông tin user vào localStorage
+    localStorage.setItem("user", JSON.stringify(userData));
+    console.log("Đã lưu thông tin user vào localStorage");
+
+    // Cập nhật header Authorization
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    console.log("Đã cập nhật header Authorization");
+
+    // Kiểm tra xem token và user data đã được lưu thành công chưa
+    const savedToken = localStorage.getItem("token");
+    const savedUser = localStorage.getItem("user");
+
+    if (!savedToken || !savedUser) {
+      throw new Error("Không thể lưu thông tin đăng nhập");
+    }
+
+    console.log("Đăng nhập thành công:", {
+      token: savedToken,
+      user: JSON.parse(savedUser),
+    });
+
+    // Cập nhật context
+    const event = new CustomEvent("authStateChanged", {
+      detail: {
+        isLoggedIn: true,
+        user: userData,
+      },
+    });
+    window.dispatchEvent(event);
+
+    // Thêm delay nhỏ để đảm bảo context được cập nhật
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    return response.data;
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("Lỗi khi đăng nhập:", error);
+    // Rollback nếu có lỗi
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    delete api.defaults.headers.common["Authorization"];
     throw error;
   }
 };
@@ -378,6 +443,39 @@ export const getWishlist = async () => {
   }
 };
 
+// Cache cho trạng thái yêu thích
+const wishlistStatusCache = new Map();
+
+export const checkWishlistStatus = async (productId) => {
+  if (!isAuthenticated()) {
+    return { isLiked: false };
+  }
+
+  // Kiểm tra cache
+  const cacheKey = `${productId}_${localStorage.getItem("token")}`;
+  if (wishlistStatusCache.has(cacheKey)) {
+    return wishlistStatusCache.get(cacheKey);
+  }
+
+  try {
+    const response = await api.get(`/products/${productId}/like`);
+    // Lưu vào cache với thời gian hết hạn 5 phút
+    wishlistStatusCache.set(cacheKey, response);
+    setTimeout(() => wishlistStatusCache.delete(cacheKey), 5 * 60 * 1000);
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra trạng thái yêu thích:", error);
+    return { isLiked: false };
+  }
+};
+
+// Hàm xóa cache khi thay đổi trạng thái yêu thích
+export const clearWishlistCache = (productId) => {
+  const cacheKey = `${productId}_${localStorage.getItem("token")}`;
+  wishlistStatusCache.delete(cacheKey);
+};
+
+// Cập nhật hàm addToWishlist và removeFromWishlist
 export const addToWishlist = async (productId) => {
   if (!isAuthenticated()) {
     throw new Error(
@@ -386,6 +484,7 @@ export const addToWishlist = async (productId) => {
   }
   try {
     const response = await api.post(`/products/${productId}/like`);
+    clearWishlistCache(productId);
     return response;
   } catch (error) {
     console.error("Lỗi khi thêm vào danh sách yêu thích:", error);
@@ -401,23 +500,11 @@ export const removeFromWishlist = async (productId) => {
   }
   try {
     const response = await api.delete(`/products/${productId}/like`);
+    clearWishlistCache(productId);
     return response;
   } catch (error) {
     console.error("Lỗi khi xóa khỏi danh sách yêu thích:", error);
     throw error;
-  }
-};
-
-export const checkWishlistStatus = async (productId) => {
-  if (!isAuthenticated()) {
-    return { isLiked: false };
-  }
-  try {
-    const response = await api.get(`/products/${productId}/like`);
-    return response;
-  } catch (error) {
-    console.error("Lỗi khi kiểm tra trạng thái yêu thích:", error);
-    return { isLiked: false };
   }
 };
 
@@ -598,6 +685,93 @@ export const cancelOrder = async (orderId) => {
     return response;
   } catch (error) {
     console.error("Lỗi khi hủy đơn hàng:", error);
+    throw error;
+  }
+};
+
+// API cho Google OAuth
+export const handleGoogleLogin = () => {
+  window.location.href = `${api.defaults.baseURL}/auth/google`;
+};
+
+export const handleGoogleCallback = async (token) => {
+  try {
+    console.log("Bắt đầu xử lý Google callback với token:", token);
+
+    if (!token) {
+      throw new Error("Không tìm thấy token");
+    }
+
+    // Cập nhật header Authorization
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    console.log("Đã cập nhật header Authorization");
+
+    // Hàm lấy thông tin user với retry
+    const getUserInfo = async (retryCount = 0) => {
+      try {
+        const userResponse = await api.get("/auth/me");
+        console.log("Thông tin user nhận được:", userResponse);
+
+        if (!userResponse.data) {
+          throw new Error("Không thể lấy thông tin người dùng");
+        }
+
+        return userResponse;
+      } catch (error) {
+        // Nếu lỗi 401 và chưa retry quá 3 lần
+        if (error.response?.status === 401 && retryCount < 3) {
+          console.log(`Retry lấy thông tin user lần ${retryCount + 1}`);
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          return getUserInfo(retryCount + 1);
+        }
+        throw error;
+      }
+    };
+
+    // Lấy thông tin user với retry mechanism
+    const userResponse = await getUserInfo();
+    const userData = userResponse.data;
+
+    // Lưu thông tin user vào localStorage
+    localStorage.setItem("user", JSON.stringify(userData));
+    console.log("Đã lưu thông tin user vào localStorage");
+
+    // Kiểm tra xem token và user data đã được lưu thành công chưa
+    const savedToken = localStorage.getItem("token");
+    const savedUser = localStorage.getItem("user");
+
+    if (!savedToken || !savedUser) {
+      throw new Error("Không thể lưu thông tin đăng nhập");
+    }
+
+    console.log("Đăng nhập Google thành công:", {
+      token: savedToken,
+      user: JSON.parse(savedUser),
+    });
+
+    // Cập nhật context
+    const event = new CustomEvent("authStateChanged", {
+      detail: {
+        isLoggedIn: true,
+        user: userData,
+      },
+    });
+    window.dispatchEvent(event);
+
+    // Thêm delay nhỏ để đảm bảo context được cập nhật
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    return {
+      success: true,
+      message: "Đăng nhập thành công",
+      data: userData,
+    };
+  } catch (error) {
+    console.error("Lỗi xử lý Google callback:", error);
+    // Rollback nếu có lỗi
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    delete api.defaults.headers.common["Authorization"];
     throw error;
   }
 };

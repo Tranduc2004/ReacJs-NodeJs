@@ -17,7 +17,7 @@ import ForgotPassword from "./Pages/ForgotPassword";
 import ResetPassword from "./Pages/ResetPassword";
 import { Toaster } from "react-hot-toast";
 import Search from "./Pages/Search";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider } from "./hooks/useAuth";
 import Wishlist from "./Pages/Wishlist";
 import ProductByCategory from "./Components/ProductByCategory";
 import Checkout from "./Pages/Checkout";
@@ -26,6 +26,7 @@ import OrderHistory from "./Pages/OrderHistory";
 import OrderDetail from "./Pages/OrderDetail";
 import Posts from "./Pages/Posts";
 import PostDetail from "./Pages/PostDetail";
+import GoogleCallback from "./Pages/GoogleCallback";
 
 const MyContext = createContext();
 
@@ -97,8 +98,8 @@ function App() {
   };
 
   return (
-    <MyContext.Provider value={values}>
-      <AuthProvider>
+    <AuthProvider>
+      <MyContext.Provider value={values}>
         <BrowserRouter>
           <Toaster position="top-right" />
           {shouldShowHeaderFooter(window.location.pathname) && <Header />}
@@ -141,11 +142,12 @@ function App() {
             <Route path="/orders/:orderId" element={<OrderDetail />} />
             <Route path="/posts" element={<Posts />} />
             <Route path="/posts/:id" element={<PostDetail />} />
+            <Route path="/auth/google/callback" element={<GoogleCallback />} />
           </Routes>
           {shouldShowHeaderFooter(window.location.pathname) && <Footer />}
         </BrowserRouter>
-      </AuthProvider>
-    </MyContext.Provider>
+      </MyContext.Provider>
+    </AuthProvider>
   );
 }
 

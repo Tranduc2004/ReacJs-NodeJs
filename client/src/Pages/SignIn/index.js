@@ -1,7 +1,7 @@
 import { useEffect, useContext, useState } from "react";
 import { MyContext } from "../../App";
 import { Link, useNavigate } from "react-router-dom";
-import { login } from "../../services/api";
+import { login, handleGoogleLogin } from "../../services/api";
 import {
   TextField,
   Button,
@@ -307,6 +307,7 @@ const SignIn = () => {
                 alignItems: "center",
                 justifyContent: "center",
               }}
+              onClick={handleGoogleLogin}
             >
               <GoogleIcon /> Đăng nhập với Google
             </Button>

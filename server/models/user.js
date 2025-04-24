@@ -27,8 +27,19 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: [true, "Vui lòng nhập số điện thoại"],
-      trim: true,
+      required: function () {
+        // Chỉ bắt buộc nếu không phải đăng nhập bằng Google
+        return !this.googleId;
+      },
+      validate: {
+        validator: function (v) {
+          // Bỏ qua validation nếu là đăng nhập Google và không có phone
+          if (this.googleId && !v) return true;
+          // Kiểm tra định dạng số điện thoại
+          return /^[0-9]{10}$/.test(v);
+        },
+        message: "Số điện thoại không hợp lệ",
+      },
     },
     role: {
       type: String,
@@ -45,6 +56,10 @@ const userSchema = new mongoose.Schema(
         ref: "Order",
       },
     ],
+    googleId: {
+      type: String,
+      sparse: true,
+    },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
   },

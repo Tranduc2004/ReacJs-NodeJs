@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import { IoBagOutline } from "react-icons/io5";
 import { CiUser } from "react-icons/ci";
@@ -13,20 +13,41 @@ import {
   MenuItem,
   Typography,
   Divider,
+  CircularProgress,
 } from "@mui/material";
-import { MyContext } from "../../../App";
 import { Link, useNavigate } from "react-router-dom";
-import { logout } from "../../../services/api";
+import { logout, isAuthenticated, getCurrentUser } from "../../../services/api";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { IoIosLogOut } from "react-icons/io";
 import { toast } from "react-hot-toast";
+import { useAuth } from "../../../hooks/useAuth";
 
 const UserControls = () => {
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const context = useContext(MyContext);
+  const { isLoggedIn, user, setIsLoggedIn, setUser, isLoading } = useAuth();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+
+  // Kiểm tra trạng thái đăng nhập khi component mount
+  useEffect(() => {
+    const checkAuth = () => {
+      const loggedIn = isAuthenticated();
+      const currentUser = getCurrentUser();
+      setIsLoggedIn(loggedIn);
+      setUser(currentUser);
+    };
+
+    checkAuth();
+
+    // Lắng nghe sự kiện storage để cập nhật khi có thay đổi
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [setIsLoggedIn, setUser]);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -38,12 +59,21 @@ const UserControls = () => {
 
   const handleLogout = () => {
     logout();
-    context.setIsLogin(false);
-    context.setUser(null);
+    setIsLoggedIn(false);
+    setUser(null);
     handleClose();
     toast.success("Đăng xuất thành công!");
     navigate("/");
   };
+
+  // Hiển thị loading khi đang kiểm tra trạng thái đăng nhập
+  if (isLoading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        <CircularProgress size={24} />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -52,7 +82,7 @@ const UserControls = () => {
           className="Control-user"
           style={{ display: "flex", alignItems: "center", gap: "16px" }}
         >
-          {context.isLogin !== true ? (
+          {!isLoggedIn ? (
             <Button
               component={Link}
               to="/signin"
@@ -102,7 +132,7 @@ const UserControls = () => {
                   className="blue-menu-greeting"
                 >
                   <Typography variant="body1">
-                    Xin chào, {context.user?.name || "Khách"}
+                    Xin chào, {user?.name || "Khách"}
                   </Typography>
                 </MenuItem>
                 <Divider className="blue-menu-divider" />
@@ -153,7 +183,7 @@ const UserControls = () => {
             </>
           )}
 
-          {context.isLogin && (
+          {isLoggedIn && (
             <Link to="/cart" style={{ textDecoration: "none" }}>
               <CircleCartButton className="blue-circle-button">
                 <IoBagOutline
@@ -177,7 +207,7 @@ const UserControls = () => {
             },
           }}
         >
-          {context.isLogin ? <CiUser /> : "Đăng nhập"}
+          {isLoggedIn ? <CiUser /> : "Đăng nhập"}
         </Button>
       )}
     </>

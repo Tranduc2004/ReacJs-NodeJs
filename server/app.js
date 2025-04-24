@@ -5,6 +5,9 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
 require("dotenv/config");
+const passport = require("passport");
+const session = require("express-session");
+require("./config/passport");
 
 // Import routes
 const categoryRoutes = require("./routes/categories");
@@ -20,6 +23,7 @@ const reviewRoutes = require("./routes/reviews");
 const chatbotRoutes = require("./routes/chatbotRoutes");
 const orderRoutes = require("./routes/orders");
 const postRoutes = require("./routes/postRoutes");
+const userRoutes = require("./routes/auth");
 
 // Kết nối MongoDB
 mongoose
@@ -27,16 +31,23 @@ mongoose
   .then(() => console.log("Kết nối MongoDB thành công"))
   .catch((err) => console.error("Lỗi kết nối MongoDB:", err));
 
+// Cấu hình session
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "your-secret-key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 24 * 60 * 60 * 1000, // 24 giờ
+    },
+  })
+);
+
 // Cấu hình CORS
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://localhost:4000",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    origin: process.env.CLIENT_URL,
     credentials: true,
   })
 );
@@ -44,6 +55,8 @@ app.use(
 //middleware
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Routes
 app.use("/api/categories", categoryRoutes);
@@ -59,6 +72,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/api/users", userRoutes);
 
 // Basic route để test
 app.get("/", (req, res) => {
@@ -83,6 +97,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server is running running http://localhost:${process.env.PORT}`);
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
+
+module.exports = app;

@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const transporter = require("../config/email");
 const crypto = require("crypto");
+const passport = require("passport");
 
 // Middleware xác thực token
 const auth = async (req, res, next) => {
@@ -386,5 +387,34 @@ router.post("/reset-password/:token", async (req, res) => {
     });
   }
 });
+
+// Google OAuth routes
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "/signin?error=google_auth_failed",
+  }),
+  async (req, res) => {
+    try {
+      // Tạo token JWT
+      const token = generateToken(req.user);
+      console.log("Generated token:", token);
+      console.log("User data:", req.user);
+
+      // Chuyển hướng về client với token
+      const redirectUrl = `${process.env.CLIENT_URL}/auth/google/callback?token=${token}`;
+      console.log("Redirecting to:", redirectUrl);
+      res.redirect(redirectUrl);
+    } catch (error) {
+      console.error("Lỗi xử lý callback Google:", error);
+      res.redirect(`${process.env.CLIENT_URL}/signin?error=google_auth_failed`);
+    }
+  }
+);
 
 module.exports = router;
