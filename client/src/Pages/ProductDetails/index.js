@@ -22,6 +22,7 @@ import {
   addToWishlist,
   removeFromWishlist,
   checkWishlistStatus,
+  isAuthenticated,
 } from "../../services/api";
 import {
   Box,
@@ -39,7 +40,6 @@ import {
   Grid,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import { useAuth } from "../../context/AuthContext"; // Update the import path as needed
 import { FaHeart } from "react-icons/fa";
 
 // Styled components
@@ -111,14 +111,12 @@ const SubmitButton = styled(Button)(({ theme }) => ({
 const ProductDetails = () => {
   const { id } = useParams();
   console.log("[ProductDetails] ID từ URL params:", id);
-  const { isAuthenticated } = useAuth(); // Use the auth context
   const [product, setProduct] = useState(null);
   const [brandName, setBrandName] = useState("");
   const [loading, setLoading] = useState(true);
   const [activeSize, setActiveSize] = useState(null);
   const [tabValue, setTabValue] = useState(0);
   const [review, setReview] = useState("");
-  const context = useContext(MyContext);
   const [rating, setRating] = useState(1);
   const [quantity, setQuantity] = useState(1);
   const navigate = useNavigate();
@@ -240,7 +238,10 @@ const ProductDetails = () => {
   };
 
   const handleSubmitReview = async () => {
-    if (!isAuthenticated) {
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+
+    if (!token || !user) {
       setAlert({
         open: true,
         message: "Bạn cần đăng nhập để gửi đánh giá",
@@ -283,9 +284,20 @@ const ProductDetails = () => {
       });
     } catch (error) {
       console.error("Lỗi khi gửi đánh giá:", error);
+      let errorMessage = "Không thể gửi đánh giá";
+
+      if (error.response?.status === 401) {
+        errorMessage = "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại";
+        // Xóa token và user khi hết hạn
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
       setAlert({
         open: true,
-        message: error.response?.data?.message || "Không thể gửi đánh giá",
+        message: errorMessage,
         severity: "error",
       });
     }
@@ -304,8 +316,8 @@ const ProductDetails = () => {
 
   const handleAddToCart = async () => {
     try {
-      // Kiểm tra đăng nhập từ context
-      if (!context.isLogin) {
+      // Kiểm tra đăng nhập từ AuthContext
+      if (!isAuthenticated()) {
         toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
         localStorage.setItem("redirectUrl", window.location.pathname);
         setTimeout(() => {
@@ -339,8 +351,8 @@ const ProductDetails = () => {
   const handleWishlistClick = async () => {
     if (isLoading || !product._id) return;
 
-    // Kiểm tra đăng nhập
-    if (!context.isLogin) {
+    // Kiểm tra đăng nhập từ AuthContext
+    if (!isAuthenticated()) {
       toast.error("Vui lòng đăng nhập để thêm sản phẩm vào yêu thích");
       localStorage.setItem("redirectUrl", window.location.pathname);
       setTimeout(() => {
@@ -666,7 +678,7 @@ const ProductDetails = () => {
                             Đánh giá sản phẩm
                           </Typography>
 
-                          {!isAuthenticated && (
+                          {!isAuthenticated() && (
                             <Alert severity="info" sx={{ mb: 3 }}>
                               Bạn cần đăng nhập để gửi đánh giá
                             </Alert>
@@ -679,7 +691,7 @@ const ProductDetails = () => {
                             value={review}
                             onChange={handleReviewChange}
                             variant="outlined"
-                            disabled={!isAuthenticated}
+                            disabled={!isAuthenticated()}
                           />
 
                           <Box
@@ -693,7 +705,7 @@ const ProductDetails = () => {
                             <Rating
                               value={rating}
                               onChange={handleRatingChange}
-                              disabled={!isAuthenticated}
+                              disabled={!isAuthenticated()}
                               sx={{
                                 "& .MuiRating-iconFilled": {
                                   fontSize: "1.8rem",
@@ -708,7 +720,7 @@ const ProductDetails = () => {
                             <SubmitButton
                               variant="contained"
                               onClick={handleSubmitReview}
-                              disabled={!isAuthenticated}
+                              disabled={!isAuthenticated()}
                             >
                               Gửi đánh giá
                             </SubmitButton>

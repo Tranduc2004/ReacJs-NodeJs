@@ -24,6 +24,7 @@ const chatbotRoutes = require("./routes/chatbotRoutes");
 const orderRoutes = require("./routes/orders");
 const postRoutes = require("./routes/postRoutes");
 const userRoutes = require("./routes/auth");
+const momoPaymentRoutes = require("./routes/momopayment");
 
 // Kết nối MongoDB
 mongoose
@@ -47,7 +48,11 @@ app.use(
 // Cấu hình CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: [
+      process.env.CLIENT_URL,
+      "http://localhost:3000",
+      "http://localhost:3001",
+    ],
     credentials: true,
   })
 );
@@ -63,7 +68,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/brands", brandRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/admin", adminUsersRoutes);
+app.use("/api/admin/users", adminUsersRoutes);
 app.use("/api/admin/orders", adminOrdersRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);
@@ -72,6 +77,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/api/momo", momoPaymentRoutes);
 app.use("/api/users", userRoutes);
 
 // Basic route để test

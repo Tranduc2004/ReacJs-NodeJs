@@ -226,7 +226,7 @@ const BestSellers = () => {
                     {products.slice(16).map((product) => (
                       <div
                         key={product._id}
-                        className="col-6 col-sm-6 col-md-4 col-lg-3"
+                        className="col-6 col-sm-6 col-md-3 col-lg-3 p-0"
                       >
                         <ProductItem product={product} />
                       </div>

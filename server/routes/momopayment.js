@@ -4,6 +4,7 @@ const axios = require("axios");
 const crypto = require("crypto");
 const Order = require("../models/Order");
 const Cart = require("../models/cart");
+const { authenticateJWT } = require("../middleware/auth");
 
 // Cấu hình MoMo Test
 const momoConfig = {
@@ -26,9 +27,10 @@ const generateSignature = (data) => {
 };
 
 // 📦 Tạo thanh toán MoMo
-router.post("/create", async (req, res) => {
+router.post("/create", authenticateJWT, async (req, res) => {
   try {
     const { orderData } = req.body;
+    console.log("Received order data:", orderData);
 
     // Kiểm tra dữ liệu đơn hàng
     if (
@@ -50,6 +52,8 @@ router.post("/create", async (req, res) => {
         product: item.productId,
         quantity: item.quantity,
         price: item.price,
+        name: item.name,
+        image: item.image,
       })),
       totalAmount: orderData.totalAmount,
       shippingAddress: orderData.shippingAddress,
@@ -60,6 +64,7 @@ router.post("/create", async (req, res) => {
     });
 
     await newOrder.save();
+    console.log("Created new order:", newOrder);
 
     // Chuẩn bị thông tin gửi đến MoMo
     const requestId = `REQ${Date.now()}`;
@@ -81,13 +86,16 @@ router.post("/create", async (req, res) => {
       lang: "vi",
       requestType: momoConfig.requestType,
       extraData,
+      accessKey: momoConfig.accessKey,
     };
 
     momoRequest.signature = generateSignature(momoRequest);
+    console.log("Sending request to MoMo:", momoRequest);
 
     // Gửi yêu cầu thanh toán đến MoMo
     const momoRes = await axios.post(momoConfig.endpoint, momoRequest);
     const momoData = momoRes.data;
+    console.log("MoMo response:", momoData);
 
     if (momoData.resultCode === 0) {
       newOrder.momoOrderId = momoOrderId;

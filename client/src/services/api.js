@@ -365,12 +365,14 @@ const logout = () => {
 
 // Lấy thông tin người dùng
 export const getUserProfile = async () => {
-  return api.get("/auth/me");
+  const response = await api.get("/auth/me");
+  return response.data;
 };
 
 // Cập nhật thông tin người dùng
 export const updateUserProfile = async (data) => {
-  return api.put("/auth/me", data);
+  const response = await api.put("/auth/me", data);
+  return response.data;
 };
 
 // Đổi mật khẩu
@@ -396,10 +398,27 @@ export const getReviewsByProduct = async (productId) => {
 // Thêm đánh giá mới
 export const addReview = async ({ productId, rating, comment }) => {
   try {
-    const response = await api.post("/reviews", { productId, rating, comment });
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Vui lòng đăng nhập để gửi đánh giá");
+    }
+
+    const response = await api.post("/reviews", {
+      productId,
+      rating,
+      comment,
+    });
+
+    if (response.success === false) {
+      throw new Error(response.message || "Không thể thêm đánh giá");
+    }
+
     return response.data;
   } catch (error) {
     console.error("Lỗi khi thêm đánh giá:", error);
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
     throw error;
   }
 };
@@ -702,6 +721,10 @@ export const handleGoogleCallback = async (token) => {
       throw new Error("Không tìm thấy token");
     }
 
+    // Lưu token vào localStorage
+    localStorage.setItem("token", token);
+    console.log("Đã lưu token vào localStorage");
+
     // Cập nhật header Authorization
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     console.log("Đã cập nhật header Authorization");
@@ -716,9 +739,21 @@ export const handleGoogleCallback = async (token) => {
           throw new Error("Không thể lấy thông tin người dùng");
         }
 
-        return userResponse;
+        // Đảm bảo email được lưu từ tài khoản Google
+        const userData = {
+          ...userResponse.data,
+          email:
+            userResponse.data.email ||
+            userResponse.data.googleEmail ||
+            userResponse.data.emails?.[0]?.value,
+          authProvider: "google",
+        };
+
+        // Log để debug
+        console.log("User data sau khi xử lý:", userData);
+
+        return userData;
       } catch (error) {
-        // Nếu lỗi 401 và chưa retry quá 3 lần
         if (error.response?.status === 401 && retryCount < 3) {
           console.log(`Retry lấy thông tin user lần ${retryCount + 1}`);
           await new Promise((resolve) => setTimeout(resolve, 500));
@@ -729,12 +764,11 @@ export const handleGoogleCallback = async (token) => {
     };
 
     // Lấy thông tin user với retry mechanism
-    const userResponse = await getUserInfo();
-    const userData = userResponse.data;
+    const userData = await getUserInfo();
 
     // Lưu thông tin user vào localStorage
     localStorage.setItem("user", JSON.stringify(userData));
-    console.log("Đã lưu thông tin user vào localStorage");
+    console.log("Đã lưu thông tin user vào localStorage:", userData);
 
     // Kiểm tra xem token và user data đã được lưu thành công chưa
     const savedToken = localStorage.getItem("token");

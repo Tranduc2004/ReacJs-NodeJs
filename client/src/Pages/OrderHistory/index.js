@@ -31,6 +31,7 @@ const OrderHistory = () => {
     try {
       const response = await getUserOrders();
       if (response.success) {
+        console.log("Dữ liệu đơn hàng:", response.data);
         setOrders(response.data);
       } else {
         toast.error("Không thể tải lịch sử đơn hàng");
@@ -45,32 +46,32 @@ const OrderHistory = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "pending":
-        return "warning";
-      case "processing":
-        return "info";
-      case "shipped":
-        return "primary";
-      case "delivered":
-        return "success";
-      case "cancelled":
-        return "error";
+      case "PENDING":
+        return { color: "#b26a00", backgroundColor: "#fff3cd" };
+      case "PROCESSING":
+        return { color: "#1976d2", backgroundColor: "#e3f2fd" };
+      case "SHIPPED":
+        return { color: "#6f42c1", backgroundColor: "#ede7f6" };
+      case "DELIVERED":
+        return { color: "#388e3c", backgroundColor: "#e8f5e9" };
+      case "CANCELLED":
+        return { color: "#d32f2f", backgroundColor: "#ffebee" };
       default:
-        return "default";
+        return { color: "#757575", backgroundColor: "#f5f5f5" };
     }
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case "pending":
+      case "PENDING":
         return "Chờ xác nhận";
-      case "processing":
+      case "PROCESSING":
         return "Đang xử lý";
-      case "shipped":
+      case "SHIPPED":
         return "Đang giao hàng";
-      case "delivered":
+      case "DELIVERED":
         return "Đã giao hàng";
-      case "cancelled":
+      case "CANCELLED":
         return "Đã hủy";
       default:
         return "Không xác định";
@@ -145,8 +146,8 @@ const OrderHistory = () => {
                   <TableCell>
                     <Chip
                       label={getStatusText(order.status)}
-                      color={getStatusColor(order.status)}
                       size="small"
+                      sx={{ fontWeight: 600, ...getStatusColor(order.status) }}
                     />
                   </TableCell>
                   <TableCell align="right">

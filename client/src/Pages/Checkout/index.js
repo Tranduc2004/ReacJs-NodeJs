@@ -423,9 +423,9 @@ const Checkout = () => {
         items: cartItems.map((item) => ({
           productId: item.product._id,
           quantity: item.quantity,
-          price: item.product.price,
+          price: item.price,
           name: item.product.name,
-          image: item.product.images[0],
+          image: item.product.images?.[0] || "",
           description: item.product.description,
         })),
         totalAmount: calculateTotal(),
@@ -434,22 +434,25 @@ const Checkout = () => {
           fullName: formData.fullName,
           phone: formData.phone,
           address: formData.address,
-          city: formData.city,
-          district: formData.district,
-          ward: formData.ward,
+          city: formData.cityName,
+          district: formData.districtName,
+          ward: formData.wardName,
         },
-        note: formData.note,
+        note: note,
+        paymentMethod: "MOMO",
       };
 
       console.log("Sending order data:", orderData);
 
       const response = await axios.post(
-        "http://localhost:4000/api/momo/create",
+        "/api/momo/create",
         { orderData },
         {
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
+          baseURL: "http://localhost:4000",
         }
       );
 

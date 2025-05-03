@@ -89,50 +89,33 @@ const Orders = () => {
   };
 
   const getStatusColor = (status) => {
-    if (isDarkMode) {
-      switch (status) {
-        case "pending":
-          return "warning";
-        case "processing":
-          return "info";
-        case "shipped":
-          return "primary";
-        case "delivered":
-          return "success";
-        case "cancelled":
-          return "error";
-        default:
-          return "default";
-      }
-    } else {
-      switch (status) {
-        case "pending":
-          return "warning";
-        case "processing":
-          return "info";
-        case "shipped":
-          return "primary";
-        case "delivered":
-          return "success";
-        case "cancelled":
-          return "error";
-        default:
-          return "default";
-      }
+    switch (status) {
+      case "PENDING":
+        return { color: "#b26a00", backgroundColor: "#fff3cd" }; // vàng
+      case "PROCESSING":
+        return { color: "#1976d2", backgroundColor: "#e3f2fd" }; // xanh dương
+      case "SHIPPED":
+        return { color: "#6f42c1", backgroundColor: "#ede7f6" }; // tím
+      case "DELIVERED":
+        return { color: "#388e3c", backgroundColor: "#e8f5e9" }; // xanh lá
+      case "CANCELLED":
+        return { color: "#d32f2f", backgroundColor: "#ffebee" }; // đỏ
+      default:
+        return { color: "#757575", backgroundColor: "#f5f5f5" }; // xám
     }
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case "pending":
+      case "PENDING":
         return "Chờ xác nhận";
-      case "processing":
+      case "PROCESSING":
         return "Đang xử lý";
-      case "shipped":
+      case "SHIPPED":
         return "Đang giao hàng";
-      case "delivered":
+      case "DELIVERED":
         return "Đã giao hàng";
-      case "cancelled":
+      case "CANCELLED":
         return "Đã hủy";
       default:
         return "Không xác định";
@@ -227,55 +210,18 @@ const Orders = () => {
                   {formatDate(order.createdAt)}
                 </TableCell>
                 <TableCell sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
-                  {order.totalAmount.toLocaleString("vi-VN")}đ
+                  {order.totalAmount
+                    ? order.totalAmount.toLocaleString("vi-VN")
+                    : "0"}
+                  đ
                 </TableCell>
                 <TableCell>
                   <Chip
                     label={getStatusText(order.status)}
-                    color={getStatusColor(order.status)}
                     size="small"
                     sx={{
-                      backgroundColor: isDarkMode
-                        ? order.status === "pending"
-                          ? "rgba(255, 193, 7, 0.2)"
-                          : order.status === "processing"
-                          ? "rgba(3, 169, 244, 0.2)"
-                          : order.status === "shipped"
-                          ? "rgba(33, 150, 243, 0.2)"
-                          : order.status === "delivered"
-                          ? "rgba(76, 175, 80, 0.2)"
-                          : order.status === "cancelled"
-                          ? "rgba(244, 67, 54, 0.2)"
-                          : "rgba(255, 255, 255, 0.1)"
-                        : undefined,
-                      color: isDarkMode
-                        ? order.status === "pending"
-                          ? "#ffc107"
-                          : order.status === "processing"
-                          ? "#03a9f4"
-                          : order.status === "shipped"
-                          ? "#2196f3"
-                          : order.status === "delivered"
-                          ? "#4caf50"
-                          : order.status === "cancelled"
-                          ? "#f44336"
-                          : "#fff"
-                        : undefined,
-                      "& .MuiChip-label": {
-                        color: isDarkMode
-                          ? order.status === "pending"
-                            ? "#ffc107"
-                            : order.status === "processing"
-                            ? "#03a9f4"
-                            : order.status === "shipped"
-                            ? "#2196f3"
-                            : order.status === "delivered"
-                            ? "#4caf50"
-                            : order.status === "cancelled"
-                            ? "#f44336"
-                            : "#fff"
-                          : undefined,
-                      },
+                      fontWeight: 600,
+                      ...getStatusColor(order.status),
                     }}
                   />
                 </TableCell>
@@ -364,10 +310,21 @@ const Orders = () => {
                   </Typography>
                   <Typography sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
                     Tổng tiền:{" "}
-                    {selectedOrder.totalAmount.toLocaleString("vi-VN")}đ
+                    {selectedOrder.totalAmount
+                      ? selectedOrder.totalAmount.toLocaleString("vi-VN")
+                      : "0"}
+                    đ
                   </Typography>
                   <Typography sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
-                    Trạng thái: {getStatusText(selectedOrder.status)}
+                    Trạng thái:{" "}
+                    <Chip
+                      label={getStatusText(selectedOrder.status)}
+                      size="small"
+                      sx={{
+                        fontWeight: 600,
+                        ...getStatusColor(selectedOrder.status),
+                      }}
+                    />
                   </Typography>
                 </Grid>
               </Grid>
@@ -441,15 +398,20 @@ const Orders = () => {
                           align="right"
                           sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
                         >
-                          {item.product?.price.toLocaleString("vi-VN")}đ
+                          {item.product?.price
+                            ? item.product.price.toLocaleString("vi-VN")
+                            : "0"}
+                          đ
                         </TableCell>
                         <TableCell
                           align="right"
                           sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
                         >
-                          {(item.product?.price * item.quantity).toLocaleString(
-                            "vi-VN"
-                          )}
+                          {item.product?.price && item.quantity
+                            ? (
+                                item.product.price * item.quantity
+                              ).toLocaleString("vi-VN")
+                            : "0"}
                           đ
                         </TableCell>
                       </TableRow>
@@ -510,11 +472,11 @@ const Orders = () => {
                 },
               }}
             >
-              <MenuItem value="pending">Chờ xác nhận</MenuItem>
-              <MenuItem value="processing">Đang xử lý</MenuItem>
-              <MenuItem value="shipped">Đang giao hàng</MenuItem>
-              <MenuItem value="delivered">Đã giao hàng</MenuItem>
-              <MenuItem value="cancelled">Đã hủy</MenuItem>
+              <MenuItem value="PENDING">Chờ xác nhận</MenuItem>
+              <MenuItem value="PROCESSING">Đang xử lý</MenuItem>
+              <MenuItem value="SHIPPED">Đang giao hàng</MenuItem>
+              <MenuItem value="DELIVERED">Đã giao hàng</MenuItem>
+              <MenuItem value="CANCELLED">Đã hủy</MenuItem>
             </Select>
           </FormControl>
           <TextField

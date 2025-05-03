@@ -9,57 +9,46 @@ import {
   Button,
   Container,
   Rating,
-  Card,
-  CardContent,
   Avatar,
   Chip,
+  Stack,
 } from "@mui/material";
 import {
   Home as HomeIcon,
   CheckCircle,
   LocalShipping,
   Payment,
+  ShoppingCart,
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
 
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  background: "linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%)",
-  borderRadius: "20px",
-  boxShadow: "0 10px 30px rgba(0, 170, 255, 0.1)",
-  padding: theme.spacing(4),
+const GradientPaper = styled(Paper)(({ theme }) => ({
+  background: "linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%)",
+  borderRadius: 24,
+  boxShadow: "0 8px 32px 0 rgba(0,170,255,0.10)",
+  padding: theme.spacing(5, 4),
   position: "relative",
   overflow: "hidden",
-  "&::before": {
-    content: '""',
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "4px",
-    background: "#00aaff",
-  },
-}));
-
-const StyledCard = styled(Card)(({ theme }) => ({
-  borderRadius: "15px",
-  boxShadow: "0 5px 15px rgba(0, 170, 255, 0.1)",
-  transition: "transform 0.3s ease",
-  height: "100%", // Đảm bảo các card có chiều cao bằng nhau
-  display: "flex",
-  flexDirection: "column",
-  "&:hover": {
-    transform: "translateY(-5px)",
-  },
 }));
 
 const StatusChip = styled(Chip)(({ theme }) => ({
-  backgroundColor: "#00aaff",
-  color: "white",
   fontWeight: "bold",
-  padding: theme.spacing(0.5, 1.5),
-  borderRadius: "16px",
-  fontSize: "0.9rem",
+  fontSize: "1rem",
+  padding: theme.spacing(0.5, 2),
+  borderRadius: 16,
+  background: "#00aaff",
+  color: "#fff",
+  letterSpacing: 1,
+  boxShadow: "0 2px 8px rgba(0,170,255,0.08)",
 }));
+
+const ProductAvatar = styled(Avatar)({
+  width: 64,
+  height: 64,
+  borderRadius: 12,
+  background: "#f5f5f5",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+});
 
 const ThankYou = () => {
   const location = useLocation();
@@ -67,35 +56,22 @@ const ThankYou = () => {
   const [order, setOrder] = useState(null);
 
   useEffect(() => {
-    // Lấy dữ liệu order từ state hoặc fetch nếu cần
     if (location.state?.order) {
-      console.log("Order from location state:", location.state.order);
       setOrder(location.state.order);
     } else {
-      // Tùy chọn: Fetch dữ liệu đơn hàng dựa trên ID từ URL nếu có
-      // const orderId = new URLSearchParams(location.search).get('orderId');
-      // if (orderId) { fetchOrder(orderId); } else { navigate('/'); }
-      console.warn(
-        "Order data not found in location state, redirecting to home."
-      );
       navigate("/");
     }
   }, [location, navigate]);
 
-  if (!order) {
-    return null; // Hoặc hiển thị loading indicator
-  }
-
-  console.log("Rendering ThankYou page with order:", order);
+  if (!order) return null;
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-    }).format(price || 0); // Thêm fallback cho giá trị null/undefined
+    }).format(price || 0);
   };
 
-  // Xác định trạng thái đơn hàng để hiển thị
   const getOrderStatusText = (status) => {
     switch (status?.toUpperCase()) {
       case "PENDING":
@@ -116,24 +92,26 @@ const ThankYou = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 6 } }}>
-      <StyledPaper>
+    <Container maxWidth="md" sx={{ py: { xs: 3, md: 6 } }}>
+      <GradientPaper>
         <Box textAlign="center" mb={4}>
           <Avatar
             sx={{
               bgcolor: "#00aaff",
-              width: { xs: 60, md: 80 },
-              height: { xs: 60, md: 80 },
+              width: { xs: 70, md: 90 },
+              height: { xs: 70, md: 90 },
               margin: "0 auto 20px",
+              boxShadow: "0 4px 16px rgba(0,170,255,0.15)",
             }}
           >
-            <CheckCircle sx={{ fontSize: { xs: 35, md: 50 } }} />
+            <CheckCircle sx={{ fontSize: { xs: 40, md: 60 } }} />
           </Avatar>
           <Typography
             variant="h4"
             color="#00aaff"
             gutterBottom
             fontWeight="bold"
+            sx={{ letterSpacing: 1 }}
           >
             Cảm ơn bạn đã đặt hàng!
           </Typography>
@@ -147,32 +125,40 @@ const ThankYou = () => {
             <StatusChip
               label={getOrderStatusText(order.status)}
               sx={{ mt: 2 }}
+              icon={<ShoppingCart />}
             />
           )}
         </Box>
 
-        <Grid container spacing={3}>
+        <Grid container spacing={4}>
           {/* Thông tin đơn hàng */}
           <Grid item xs={12} md={7}>
-            <StyledCard>
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Box display="flex" alignItems="center" mb={2}>
-                  <Payment sx={{ color: "#00aaff", mr: 1 }} />
-                  <Typography variant="h6" fontWeight="bold">
-                    Chi tiết đơn hàng
-                  </Typography>
-                </Box>
-                <Divider sx={{ mb: 2 }} />
+            <Box
+              sx={{
+                background: "#fff",
+                borderRadius: 3,
+                boxShadow: "0 2px 8px rgba(0,170,255,0.06)",
+                p: 3,
+                height: "100%",
+              }}
+            >
+              <Box display="flex" alignItems="center" mb={2}>
+                <Payment sx={{ color: "#00aaff", mr: 1 }} />
+                <Typography variant="h6" fontWeight="bold">
+                  Chi tiết đơn hàng
+                </Typography>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
+              <Stack spacing={2}>
                 {order.items && order.items.length > 0 ? (
                   order.items.map((item, index) => (
-                    <Box key={item.product?._id || index} mb={2}>
+                    <Box key={item.product?._id || index}>
                       <Grid container spacing={2} alignItems="center">
                         <Grid item xs={3} sm={2}>
-                          <Avatar
+                          <ProductAvatar
                             variant="rounded"
                             src={item.image || item.product?.image}
                             alt={item.name || item.product?.name}
-                            sx={{ width: 56, height: 56 }}
                           />
                         </Grid>
                         <Grid item xs={9} sm={10}>
@@ -227,86 +213,90 @@ const ThankYou = () => {
                 ) : (
                   <Typography>Không có sản phẩm nào trong đơn hàng.</Typography>
                 )}
-              </CardContent>
-              <Divider />
-              <CardContent>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    mb: 1,
-                  }}
-                >
-                  <Typography variant="body1" color="text.secondary">
-                    Phương thức thanh toán:
-                  </Typography>
-                  <Typography variant="body1" color="#00aaff" fontWeight="bold">
-                    {order.paymentMethod === "COD"
-                      ? "Thanh toán khi nhận hàng"
-                      : "Momo"}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Typography variant="h6" fontWeight="bold">
-                    Tổng tiền:
-                  </Typography>
-                  <Typography variant="h6" color="#00aaff" fontWeight="bold">
-                    {formatPrice(order.totalAmount)}
-                  </Typography>
-                </Box>
-              </CardContent>
-            </StyledCard>
+              </Stack>
+              <Divider sx={{ my: 2 }} />
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 1,
+                }}
+              >
+                <Typography variant="body1" color="text.secondary">
+                  Phương thức thanh toán:
+                </Typography>
+                <Typography variant="body1" color="#00aaff" fontWeight="bold">
+                  {order.paymentMethod === "COD"
+                    ? "Thanh toán khi nhận hàng"
+                    : "Momo"}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Typography variant="h6" fontWeight="bold">
+                  Tổng tiền:
+                </Typography>
+                <Typography variant="h6" color="#00aaff" fontWeight="bold">
+                  {formatPrice(order.totalAmount)}
+                </Typography>
+              </Box>
+            </Box>
           </Grid>
 
           {/* Thông tin giao hàng */}
           <Grid item xs={12} md={5}>
-            <StyledCard>
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Box display="flex" alignItems="center" mb={2}>
-                  <LocalShipping sx={{ color: "#00aaff", mr: 1 }} />
-                  <Typography variant="h6" fontWeight="bold">
-                    Thông tin giao hàng
+            <Box
+              sx={{
+                background: "#fff",
+                borderRadius: 3,
+                boxShadow: "0 2px 8px rgba(0,170,255,0.06)",
+                p: 3,
+                height: "100%",
+              }}
+            >
+              <Box display="flex" alignItems="center" mb={2}>
+                <LocalShipping sx={{ color: "#00aaff", mr: 1 }} />
+                <Typography variant="h6" fontWeight="bold">
+                  Thông tin giao hàng
+                </Typography>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
+              {order.shippingAddress ? (
+                <Box sx={{ "& > *": { mb: 1 } }}>
+                  <Typography variant="body1" fontWeight="medium">
+                    {order.shippingAddress.fullName}
                   </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {order.shippingAddress.phone}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {order.shippingAddress.address}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {order.shippingAddress.ward},{" "}
+                    {order.shippingAddress.district},{" "}
+                    {order.shippingAddress.city}
+                  </Typography>
+                  {order.note && (
+                    <>
+                      <Divider sx={{ my: 1.5 }} />
+                      <Typography variant="body2" color="text.secondary">
+                        <span style={{ fontWeight: "bold" }}>Ghi chú:</span>{" "}
+                        {order.note}
+                      </Typography>
+                    </>
+                  )}
                 </Box>
-                <Divider sx={{ mb: 2 }} />
-                {order.shippingAddress ? (
-                  <Box sx={{ "& > *": { mb: 1 } }}>
-                    <Typography variant="body1" fontWeight="medium">
-                      {order.shippingAddress.fullName}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {order.shippingAddress.phone}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {order.shippingAddress.address}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {order.shippingAddress.ward},{" "}
-                      {order.shippingAddress.district},{" "}
-                      {order.shippingAddress.city}
-                    </Typography>
-                    {order.note && (
-                      <>
-                        <Divider sx={{ my: 1.5 }} />
-                        <Typography variant="body2" color="text.secondary">
-                          <span style={{ fontWeight: "bold" }}>Ghi chú:</span>{" "}
-                          {order.note}
-                        </Typography>
-                      </>
-                    )}
-                  </Box>
-                ) : (
-                  <Typography>Không có thông tin giao hàng.</Typography>
-                )}
-              </CardContent>
-            </StyledCard>
+              ) : (
+                <Typography>Không có thông tin giao hàng.</Typography>
+              )}
+            </Box>
           </Grid>
         </Grid>
 
@@ -322,6 +312,7 @@ const ThankYou = () => {
               padding: "10px 30px",
               fontSize: "1rem",
               textTransform: "none",
+              boxShadow: "0 4px 16px rgba(0,170,255,0.10)",
             }}
             startIcon={<HomeIcon />}
             onClick={() => navigate("/")}
@@ -329,7 +320,7 @@ const ThankYou = () => {
             Tiếp tục mua sắm
           </Button>
         </Box>
-      </StyledPaper>
+      </GradientPaper>
     </Container>
   );
 };

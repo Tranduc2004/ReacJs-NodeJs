@@ -42,6 +42,7 @@ const GoogleCallback = () => {
         localStorage.setItem("token", token);
         console.log("Đã lưu token vào localStorage");
 
+        // Lấy thông tin user từ API và lưu vào localStorage
         const result = await handleGoogleCallback(token);
         console.log("Kết quả xử lý token:", result);
 
@@ -49,12 +50,17 @@ const GoogleCallback = () => {
           throw new Error(result.message || "Đăng nhập Google thất bại");
         }
 
+        // Lưu user vào localStorage (phòng trường hợp handleGoogleCallback chưa lưu)
+        if (result.data) {
+          localStorage.setItem("user", JSON.stringify(result.data));
+        }
+
         // Cập nhật trạng thái đăng nhập trong context
         setIsLoggedIn(true);
         setUser(result.data);
 
-        // Thêm delay nhỏ để đảm bảo state được cập nhật
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Thêm delay nhỏ để đảm bảo state và localStorage được cập nhật
+        await new Promise((resolve) => setTimeout(resolve, 200));
 
         toast.success("Đăng nhập thành công!");
         navigate("/", { replace: true });

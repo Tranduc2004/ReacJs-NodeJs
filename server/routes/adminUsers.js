@@ -5,7 +5,7 @@ const { authenticateJWT } = require("../middleware/auth");
 const Order = require("../models/Order");
 
 // Lấy danh sách users với phân trang và tìm kiếm
-router.get("/users", authenticateJWT, async (req, res) => {
+router.get("/", authenticateJWT, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -48,7 +48,7 @@ router.get("/users", authenticateJWT, async (req, res) => {
 });
 
 // Lấy thông tin chi tiết user
-router.get("/users/:id", authenticateJWT, async (req, res) => {
+router.get("/:id", authenticateJWT, async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
       .select("-password")
@@ -85,7 +85,7 @@ router.get("/users/:id", authenticateJWT, async (req, res) => {
 });
 
 // Lấy lịch sử đơn hàng của user
-router.get("/users/:id/orders", authenticateJWT, async (req, res) => {
+router.get("/:id/orders", authenticateJWT, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -110,7 +110,7 @@ router.get("/users/:id/orders", authenticateJWT, async (req, res) => {
 });
 
 // Tạo user mới
-router.post("/users", authenticateJWT, async (req, res) => {
+router.post("/", authenticateJWT, async (req, res) => {
   try {
     const { name, email, password, phone, role } = req.body;
 
@@ -144,7 +144,7 @@ router.post("/users", authenticateJWT, async (req, res) => {
 });
 
 // Cập nhật thông tin user
-router.put("/users/:id", authenticateJWT, async (req, res) => {
+router.put("/:id", authenticateJWT, async (req, res) => {
   try {
     const { name, email, phone, role, isActive } = req.body;
     const user = await User.findById(req.params.id);
@@ -185,7 +185,7 @@ router.put("/users/:id", authenticateJWT, async (req, res) => {
 });
 
 // Xóa user
-router.delete("/users/:id", authenticateJWT, async (req, res) => {
+router.delete("/:id", authenticateJWT, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -201,7 +201,7 @@ router.delete("/users/:id", authenticateJWT, async (req, res) => {
 });
 
 // Thay đổi trạng thái active của user
-router.put("/users/:id/toggle-status", authenticateJWT, async (req, res) => {
+router.put("/:id/toggle-status", authenticateJWT, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
