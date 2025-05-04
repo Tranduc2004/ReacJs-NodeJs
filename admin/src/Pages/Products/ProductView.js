@@ -15,6 +15,7 @@ import {
   Zoom,
   IconButton,
   Tooltip,
+  TextField,
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
@@ -30,8 +31,12 @@ import {
   Category as CategoryIcon,
   Business as BrandingIcon,
 } from "@mui/icons-material";
+import { useTheme } from "@mui/material/styles";
 import { useTheme as useCustomTheme } from "../../context/ThemeContext";
-import { viewData } from "../../utils/api";
+import { viewData, getData, postData } from "../../utils/api";
+import axios from "axios";
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 const ProductView = () => {
   const { isDarkMode } = useCustomTheme();
@@ -42,6 +47,12 @@ const ProductView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [replyContents, setReplyContents] = useState({});
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminComment, setAdminComment] = useState("");
+  const [adminRating, setAdminRating] = useState(5);
+  const [newComment, setNewComment] = useState("");
 
   // Fetch product data when component mounts or ID changes
   useEffect(() => {
@@ -70,6 +81,21 @@ const ProductView = () => {
     }
   }, [id]);
 
+  // Lấy bình luận khi load sản phẩm
+  useEffect(() => {
+    if (product?._id) {
+      getData(`/api/reviews/product/${product._id}`).then((res) => {
+        setReviews(res.data);
+      });
+      // Kiểm tra quyền admin
+      const adminInfo = JSON.parse(localStorage.getItem("admin_info") || "{}");
+      // Kiểm tra cả admin và superadmin
+      setIsAdmin(
+        adminInfo?.role === "admin" || adminInfo?.role === "superadmin"
+      );
+    }
+  }, [product]);
+
   // Handle back navigation
   const handleBack = () => {
     navigate("/products");
@@ -78,6 +104,87 @@ const ProductView = () => {
   // Toggle favorite status
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const res = await getData(`/api/reviews/product/${product._id}`);
+      setReviews(res.data);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    }
+  };
+
+  const handleReply = async (reviewId) => {
+    try {
+      if (!isAdmin) {
+        console.error("Bạn không có quyền phản hồi bình luận");
+        return;
+      }
+
+      const adminInfo = JSON.parse(localStorage.getItem("admin_info") || "{}");
+      if (
+        !adminInfo?.role ||
+        (adminInfo.role !== "admin" && adminInfo.role !== "superadmin")
+      ) {
+        alert("Bạn không có quyền phản hồi bình luận");
+        return;
+      }
+
+      const response = await postData(`/api/reviews/${reviewId}/reply`, {
+        content: replyContents[reviewId] || "",
+      });
+
+      if (response.success) {
+        setReplyContents((prev) => ({ ...prev, [reviewId]: "" }));
+        fetchReviews();
+      }
+    } catch (error) {
+      console.error("Error replying to review:", error);
+      alert(
+        "Không thể gửi phản hồi. Vui lòng kiểm tra lại quyền truy cập của bạn."
+      );
+    }
+  };
+
+  const handleAdminComment = async () => {
+    if (!isAdmin) {
+      setError("Bạn không có quyền thêm bình luận");
+      return;
+    }
+
+    if (!newComment.trim()) {
+      setError("Vui lòng nhập nội dung bình luận");
+      return;
+    }
+
+    try {
+      const adminInfo = JSON.parse(localStorage.getItem("admin_info") || "{}");
+      const response = await axios.post(
+        `${API_URL}/reviews`,
+        {
+          productId: product._id,
+          rating: 5, // Mặc định 5 sao cho bình luận admin
+          comment: newComment,
+          isAdminComment: true,
+          adminRole: adminInfo.role,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setNewComment("");
+        setError("");
+        // Cập nhật lại danh sách bình luận
+        fetchReviews();
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || "Không thể thêm bình luận");
+    }
   };
 
   // Show loading state
@@ -668,21 +775,33 @@ const ProductView = () => {
                         fontSize: "1.1rem",
                       }}
                     >
-                      {formatPrice(product.price)} đ
+                      {formatPrice(product.discountedPrice)} đ
                     </Typography>
-                    {product.originalPrice && (
-                      <Typography
-                        component="span"
-                        sx={{
-                          ml: 1,
-                          textDecoration: "line-through",
-                          color: isDarkMode
-                            ? "rgba(255, 255, 255, 0.5)"
-                            : "rgba(0, 0, 0, 0.4)",
-                        }}
-                      >
-                        {formatPrice(product.originalPrice)} đ
-                      </Typography>
+                    {product.discount > 0 && (
+                      <>
+                        <Typography
+                          component="span"
+                          sx={{
+                            ml: 1,
+                            textDecoration: "line-through",
+                            color: isDarkMode
+                              ? "rgba(255, 255, 255, 0.5)"
+                              : "rgba(0, 0, 0, 0.4)",
+                          }}
+                        >
+                          {formatPrice(product.price)} đ
+                        </Typography>
+                        <Chip
+                          label={`-${product.discount}%`}
+                          size="small"
+                          sx={{
+                            ml: 1,
+                            bgcolor: "#f44336",
+                            color: "#fff",
+                            fontWeight: 600,
+                          }}
+                        />
+                      </>
                     )}
                   </Box>
                 </Box>
@@ -1106,8 +1225,233 @@ const ProductView = () => {
         </Fade>
       )}
 
-      {/* Customer Reviews section would go here */}
-      {/* You can implement actual reviews from your database if available */}
+      {/* Customer Reviews section */}
+      <Box sx={{ mt: 4 }}>
+        <Typography
+          variant="h6"
+          sx={{
+            mb: 2,
+            color: isDarkMode ? "#fff" : "#1a1a1a",
+            fontWeight: 600,
+          }}
+        >
+          Bình luận của khách hàng
+        </Typography>
+        {isAdmin && (
+          <Paper
+            sx={{
+              p: 2,
+              mb: 3,
+              bgcolor: isDarkMode ? "rgba(255,255,255,0.04)" : "#fafafa",
+            }}
+          >
+            <Typography sx={{ fontWeight: 500, mb: 1 }}>
+              Thêm bình luận với tư cách{" "}
+              {JSON.parse(localStorage.getItem("admin_info") || "{}")?.role ===
+              "superadmin"
+                ? "Super Admin"
+                : "Quản trị viên"}
+              :
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+              <Rating
+                value={adminRating}
+                onChange={(_, value) => setAdminRating(value || 5)}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                value={adminComment}
+                onChange={(e) => setAdminComment(e.target.value)}
+                placeholder="Nhập nội dung bình luận..."
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "#fff",
+                    "& fieldset": {
+                      borderColor: isDarkMode
+                        ? "rgba(255,255,255,0.1)"
+                        : "#e0e0e0",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: isDarkMode
+                        ? "rgba(255,255,255,0.2)"
+                        : "#bdbdbd",
+                    },
+                  },
+                }}
+              />
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleAdminComment}
+                disabled={!adminComment.trim()}
+                sx={{
+                  bgcolor:
+                    JSON.parse(localStorage.getItem("admin_info") || "{}")
+                      ?.role === "superadmin"
+                      ? "#f44336"
+                      : "#1976d2",
+                  "&:hover": {
+                    bgcolor:
+                      JSON.parse(localStorage.getItem("admin_info") || "{}")
+                        ?.role === "superadmin"
+                        ? "#d32f2f"
+                        : "#1565c0",
+                  },
+                }}
+              >
+                Gửi
+              </Button>
+            </Box>
+          </Paper>
+        )}
+        {reviews.length === 0 && (
+          <Typography sx={{ color: isDarkMode ? "#aaa" : "#888" }}>
+            Chưa có bình luận nào cho sản phẩm này.
+          </Typography>
+        )}
+        {reviews.map((review) => (
+          <Paper
+            key={review._id}
+            sx={{
+              p: 2,
+              mb: 2,
+              bgcolor: isDarkMode ? "rgba(255,255,255,0.04)" : "#fafafa",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  color: isDarkMode ? "#90caf9" : "#1976d2",
+                }}
+              >
+                {review.user?.name || "Người dùng"}
+              </Typography>
+              <Rating
+                value={review.rating}
+                readOnly
+                size="small"
+                sx={{ ml: 1 }}
+              />
+              <Typography
+                sx={{
+                  ml: 2,
+                  color: isDarkMode ? "#aaa" : "#888",
+                  fontSize: 13,
+                }}
+              >
+                {new Date(review.date).toLocaleString("vi-VN")}
+              </Typography>
+            </Box>
+            <Typography sx={{ mb: 1 }}>{review.comment}</Typography>
+
+            {/* Hiển thị tất cả phản hồi admin */}
+            {Array.isArray(review.adminReplies) &&
+              review.adminReplies.length > 0 && (
+                <Box sx={{ ml: 2, mt: 1 }}>
+                  {review.adminReplies.map((reply, idx) => (
+                    <Box
+                      key={idx}
+                      sx={{
+                        mb: 1,
+                        p: 1.5,
+                        bgcolor: isDarkMode
+                          ? "rgba(33,150,243,0.08)"
+                          : "#e3f2fd",
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography sx={{ fontWeight: 500, color: "#1976d2" }}>
+                        Phản hồi từ quản trị viên
+                        {reply.admin && reply.admin.name
+                          ? ` (${reply.admin.name})`
+                          : ""}
+                        :
+                      </Typography>
+                      <Typography
+                        sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+                      >
+                        {reply.content}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: 12,
+                          color: isDarkMode ? "#aaa" : "#888",
+                        }}
+                      >
+                        {reply.createdAt
+                          ? new Date(reply.createdAt).toLocaleString("vi-VN")
+                          : ""}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+
+            {/* Form phản hồi cho mỗi bình luận - chỉ hiển thị cho admin */}
+            {isAdmin && (
+              <Box sx={{ mt: 2, ml: 2 }}>
+                <Typography
+                  sx={{
+                    fontWeight: 500,
+                    mb: 1,
+                    color: isDarkMode ? "#90caf9" : "#1976d2",
+                  }}
+                >
+                  Phản hồi bình luận:
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={replyContents[review._id] || ""}
+                    onChange={(e) =>
+                      setReplyContents({
+                        ...replyContents,
+                        [review._id]: e.target.value,
+                      })
+                    }
+                    placeholder="Nhập nội dung phản hồi..."
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        bgcolor: isDarkMode ? "rgba(255,255,255,0.05)" : "#fff",
+                        "& fieldset": {
+                          borderColor: isDarkMode
+                            ? "rgba(255,255,255,0.1)"
+                            : "#e0e0e0",
+                        },
+                        "&:hover fieldset": {
+                          borderColor: isDarkMode
+                            ? "rgba(255,255,255,0.2)"
+                            : "#bdbdbd",
+                        },
+                      },
+                    }}
+                  />
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => handleReply(review._id)}
+                    disabled={
+                      !replyContents[review._id] ||
+                      replyContents[review._id].trim() === ""
+                    }
+                    sx={{
+                      bgcolor: "#1976d2",
+                      "&:hover": {
+                        bgcolor: "#1565c0",
+                      },
+                    }}
+                  >
+                    Gửi
+                  </Button>
+                </Box>
+              </Box>
+            )}
+          </Paper>
+        ))}
+      </Box>
     </Box>
   );
 };

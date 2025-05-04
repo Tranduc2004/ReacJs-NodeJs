@@ -230,7 +230,12 @@ const ProductModal = ({ productId, closeProductModal }) => {
         <div className="col-md-7">
           <div className="d-flex align-items-center mb-3">
             {product.discount > 0 && (
-              <span className="oldPrice lg mr-2">{product.price}</span>
+              <span className="oldPrice lg mr-2">
+                {product.price.toLocaleString("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                })}
+              </span>
             )}
             <span className="netPrice text-danger lg">
               <span className="netPrice text-danger ml-2">

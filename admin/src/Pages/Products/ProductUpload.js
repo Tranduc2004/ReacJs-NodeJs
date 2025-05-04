@@ -49,6 +49,7 @@ const ProductUpload = () => {
     richDescription: "",
     brand: "",
     price: "",
+    discount: "",
     countInStock: "",
     category: "",
     isFeatured: false,
@@ -214,6 +215,7 @@ const ProductUpload = () => {
         richDescription: formData.richDescription.trim(),
         brand: formData.brand || undefined,
         price: parseFloat(formData.price),
+        discount: parseFloat(formData.discount),
         category: formData.category,
         countInStock: parseInt(formData.countInStock),
         isFeatured: formData.isFeatured,
@@ -238,6 +240,7 @@ const ProductUpload = () => {
           richDescription: "",
           brand: "",
           price: "",
+          discount: "",
           countInStock: "",
           category: "",
           isFeatured: false,
@@ -489,7 +492,7 @@ const ProductUpload = () => {
             </FormControl>
 
             <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
                   type="number"
@@ -518,7 +521,47 @@ const ProductUpload = () => {
                   required
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="DISCOUNT (%)"
+                  name="discount"
+                  value={formData.discount}
+                  onChange={handleChange}
+                  InputProps={{
+                    inputProps: {
+                      min: 0,
+                      max: 100,
+                    },
+                  }}
+                  helperText="Phần trăm giảm giá (0-100%)"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      bgcolor: isDarkMode ? "rgba(0, 0, 0, 0.2)" : "#f5f5f5",
+                      height: "56px",
+                      "& fieldset": {
+                        border: "none",
+                      },
+                    },
+                    "& .MuiInputLabel-root": {
+                      color: isDarkMode
+                        ? "rgba(255, 255, 255, 0.7)"
+                        : "rgba(0, 0, 0, 0.6)",
+                    },
+                    "& .MuiInputBase-input": {
+                      color: isDarkMode ? "#fff" : "#1a1a1a",
+                    },
+                    "& .MuiFormHelperText-root": {
+                      color: isDarkMode
+                        ? "rgba(255, 255, 255, 0.5)"
+                        : "rgba(0, 0, 0, 0.5)",
+                      marginLeft: 0,
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   fullWidth
                   type="number"

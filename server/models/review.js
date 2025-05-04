@@ -25,6 +25,22 @@ const reviewSchema = mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  isAdminComment: {
+    type: Boolean,
+    default: false,
+  },
+  adminRole: {
+    type: String,
+    enum: ["admin", "superadmin"],
+    default: null,
+  },
+  adminReplies: [
+    {
+      content: { type: String },
+      createdAt: { type: Date },
+      admin: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    },
+  ],
 });
 
 // Tạo index để đảm bảo mỗi user chỉ có thể review một sản phẩm một lần

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Order = require("../../models/Order");
 const jwt = require("jsonwebtoken");
+const User = require("../../models/user");
 
 // Middleware xác thực admin
 const authenticateAdmin = (req, res, next) => {
@@ -36,6 +37,7 @@ router.get("/", async (req, res) => {
     console.log("Bắt đầu lấy danh sách đơn hàng...");
     const orders = await Order.find()
       .populate("user", "name email")
+      .populate("items.product", "name price discount images")
       .sort({ createdAt: -1 });
     console.log("Số lượng đơn hàng:", orders.length);
     res.json({ success: true, data: orders });
@@ -120,7 +122,7 @@ router.get("/:id", async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate("user", "name email")
-      .populate("items.product", "name price image images");
+      .populate("items.product", "name price discount image images");
 
     if (!order) {
       return res.status(404).json({
@@ -137,6 +139,28 @@ router.get("/:id", async (req, res) => {
       message: "Lỗi server",
       error: error.message,
     });
+  }
+});
+
+// Thêm route lấy chi tiết user kèm lịch sử đơn hàng cho admin
+router.get("/user/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).lean();
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy user" });
+    }
+    // Lấy danh sách đơn hàng của user này
+    const orders = await Order.find({ user: user._id })
+      .populate("items.product", "name price discount images")
+      .sort({ createdAt: -1 });
+    user.orders = orders;
+    res.json({ success: true, data: user });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi server", error: error.message });
   }
 });
 

@@ -9,7 +9,7 @@ router.get("/", authenticateJWT, async (req, res) => {
   try {
     let cart = await Cart.findOne({ user: req.user._id }).populate({
       path: "items.product",
-      select: "name price images description",
+      select: "name price images description discount",
     });
 
     if (!cart) {

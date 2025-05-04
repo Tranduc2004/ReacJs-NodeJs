@@ -245,6 +245,7 @@ router.post("/", async (req, res) => {
       description,
       richDescription,
       price,
+      discount,
       countInStock,
       isFeatured,
       category,
@@ -290,6 +291,7 @@ router.post("/", async (req, res) => {
       description,
       richDescription: richDescription || "",
       price,
+      discount: discount || 0,
       countInStock,
       isFeatured: isFeatured || false,
       category,
@@ -322,6 +324,7 @@ router.put("/:id", async (req, res) => {
       description,
       richDescription,
       price,
+      discount,
       countInStock,
       isFeatured,
       category,
@@ -351,6 +354,7 @@ router.put("/:id", async (req, res) => {
     if (description) updateData.description = description.trim();
     if (richDescription) updateData.richDescription = richDescription.trim();
     if (price) updateData.price = Number(price);
+    if (discount !== undefined) updateData.discount = Number(discount);
     if (countInStock !== undefined)
       updateData.countInStock = Number(countInStock);
     if (isFeatured !== undefined) updateData.isFeatured = Boolean(isFeatured);

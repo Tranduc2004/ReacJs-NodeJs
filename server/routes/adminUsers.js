@@ -3,6 +3,52 @@ const router = express.Router();
 const User = require("../models/user");
 const { authenticateJWT } = require("../middleware/auth");
 const Order = require("../models/Order");
+const ExcelJS = require("exceljs");
+
+// Route xuất Excel danh sách user (phải đặt trước các route có :id)
+router.get("/export", authenticateJWT, async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Users");
+
+    worksheet.columns = [
+      { header: "Tên", key: "name", width: 20 },
+      { header: "Email", key: "email", width: 30 },
+      { header: "Số điện thoại", key: "phone", width: 15 },
+      { header: "Vai trò", key: "role", width: 10 },
+      { header: "Trạng thái", key: "isActive", width: 12 },
+      { header: "Ngày tạo", key: "createdAt", width: 18 },
+    ];
+
+    users.forEach((user) => {
+      worksheet.addRow({
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        role: user.role || "",
+        isActive: user.isActive ? "Hoạt động" : "Vô hiệu hóa",
+        createdAt: user.createdAt
+          ? new Date(user.createdAt).toLocaleString("vi-VN")
+          : "",
+      });
+    });
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader("Content-Disposition", "attachment; filename=users.xlsx");
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("Lỗi khi xuất Excel:", error);
+    res
+      .status(500)
+      .json({ message: "Lỗi server khi xuất Excel", error: error.message });
+  }
+});
 
 // Lấy danh sách users với phân trang và tìm kiếm
 router.get("/", authenticateJWT, async (req, res) => {

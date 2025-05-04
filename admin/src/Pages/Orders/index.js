@@ -22,6 +22,7 @@ import {
   MenuItem,
   TextField,
   Grid,
+  Pagination,
 } from "@mui/material";
 import { Visibility, Edit } from "@mui/icons-material";
 import { toast } from "react-hot-toast";
@@ -133,99 +134,100 @@ const Orders = () => {
     }).format(date);
   };
 
-  return (
-    <Box
-      sx={{
-        backgroundColor: isDarkMode ? "#0f1824" : "#f5f5f5",
-        minHeight: "100vh",
-        width: "100%",
-        position: "relative",
-        p: 3,
-      }}
-    >
-      <Typography
-        variant="h4"
-        gutterBottom
-        sx={{
-          color: isDarkMode ? "#fff" : "#1a1a1a",
-          mb: 3,
-        }}
-      >
-        Quản lý đơn hàng
-      </Typography>
+  // Hàm tính tổng tiền đã giảm cho đơn hàng
+  const getDiscountedTotal = (order) => {
+    if (!order.items || order.items.length === 0) return order.totalAmount;
+    let discountedTotal = 0;
+    order.items.forEach((item) => {
+      const price = item.price || item.product?.price || 0;
+      const discount =
+        typeof item.discount === "number"
+          ? item.discount
+          : item.product?.discount || 0;
+      const finalPrice = discount > 0 ? price * (1 - discount / 100) : price;
+      discountedTotal += finalPrice * item.quantity;
+    });
+    return Math.round(discountedTotal);
+  };
 
-      <TableContainer
-        component={Paper}
-        sx={{
-          backgroundColor: isDarkMode ? "rgba(255, 255, 255, 0.05)" : "#fff",
-          boxShadow: isDarkMode
-            ? "0 2px 10px rgba(0, 0, 0, 0.2)"
-            : "0 2px 10px rgba(0, 0, 0, 0.1)",
-        }}
-      >
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
-                Mã đơn hàng
-              </TableCell>
-              <TableCell sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
-                Khách hàng
-              </TableCell>
-              <TableCell sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
-                Ngày đặt
-              </TableCell>
-              <TableCell sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
-                Tổng tiền
-              </TableCell>
-              <TableCell sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
-                Trạng thái
-              </TableCell>
-              <TableCell sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
-                Thao tác
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+  return (
+    <div className="category-table-container">
+      <div className="table-header-section">
+        <h3>Quản lý đơn hàng</h3>
+      </div>
+      <div className="table-responsive">
+        <table className="category-table">
+          <thead>
+            <tr>
+              <th>Mã đơn hàng</th>
+              <th>Khách hàng</th>
+              <th>Ngày đặt</th>
+              <th>Tổng tiền</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
             {orders.map((order) => (
-              <TableRow key={order._id}>
-                <TableCell sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
-                  {order._id}
-                </TableCell>
-                <TableCell sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
+              <tr key={order._id}>
+                <td>{order._id}</td>
+                <td>
                   {order.user?.name || "Không có thông tin"}
                   <br />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: isDarkMode
-                        ? "rgba(255, 255, 255, 0.7)"
-                        : "rgba(0, 0, 0, 0.6)",
-                    }}
-                  >
+                  <span style={{ color: "#888", fontSize: 12 }}>
                     {order.user?.email}
-                  </Typography>
-                </TableCell>
-                <TableCell sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
-                  {formatDate(order.createdAt)}
-                </TableCell>
-                <TableCell sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
-                  {order.totalAmount
-                    ? order.totalAmount.toLocaleString("vi-VN")
-                    : "0"}
-                  đ
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={getStatusText(order.status)}
-                    size="small"
-                    sx={{
+                  </span>
+                </td>
+                <td>{formatDate(order.createdAt)}</td>
+                <td>
+                  {/* Hiển thị giá đã giảm nếu có sản phẩm giảm giá */}
+                  {(() => {
+                    const discounted = getDiscountedTotal(order);
+                    if (discounted < order.totalAmount) {
+                      return (
+                        <>
+                          <span
+                            style={{
+                              textDecoration: "line-through",
+                              color: "#888",
+                              marginRight: 4,
+                            }}
+                          >
+                            {order.totalAmount
+                              ? order.totalAmount.toLocaleString("vi-VN")
+                              : "0"}
+                            đ
+                          </span>
+                          <span style={{ color: "#ed174a", fontWeight: 600 }}>
+                            {discounted.toLocaleString("vi-VN")}đ
+                          </span>
+                        </>
+                      );
+                    } else {
+                      return (
+                        <span>
+                          {order.totalAmount
+                            ? order.totalAmount.toLocaleString("vi-VN")
+                            : "0"}
+                          đ
+                        </span>
+                      );
+                    }
+                  })()}
+                </td>
+                <td>
+                  <span
+                    style={{
                       fontWeight: 600,
+                      padding: "4px 8px",
+                      borderRadius: "4px",
                       ...getStatusColor(order.status),
                     }}
-                  />
-                </TableCell>
-                <TableCell>
+                  >
+                    {getStatusText(order.status)}
+                  </span>
+                </td>
+                <td>
                   <IconButton
                     onClick={() => {
                       setSelectedOrder(order);
@@ -233,6 +235,7 @@ const Orders = () => {
                     }}
                     sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
                     className="edit-btn"
+                    title="Xem chi tiết"
                   >
                     <Visibility />
                   </IconButton>
@@ -245,15 +248,25 @@ const Orders = () => {
                     }}
                     sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
                     className="delete-btn"
+                    title="Cập nhật trạng thái"
                   >
                     <Edit />
                   </IconButton>
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </tbody>
+        </table>
+      </div>
+      <div className="table-footer">
+        <div className="showing-info">
+          Hiển thị {orders.length > 0 ? 1 : 0}-{orders.length} trên{" "}
+          {orders.length} kết quả
+        </div>
+        <div className="pagination">
+          <Pagination count={1} page={1} onChange={() => {}} color="primary" />
+        </div>
+      </div>
 
       {/* Dialog xem chi tiết đơn hàng */}
       <Dialog
@@ -273,7 +286,7 @@ const Orders = () => {
           {selectedOrder && (
             <Box>
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid span={6}>
                   <Typography
                     variant="subtitle1"
                     gutterBottom
@@ -294,7 +307,7 @@ const Orders = () => {
                     {selectedOrder.shippingAddress.city}
                   </Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid span={6}>
                   <Typography
                     variant="subtitle1"
                     gutterBottom
@@ -315,17 +328,20 @@ const Orders = () => {
                       : "0"}
                     đ
                   </Typography>
-                  <Typography sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}>
+                  <Typography
+                    component="span"
+                    sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+                  >
                     Trạng thái:{" "}
-                    <Chip
-                      label={getStatusText(selectedOrder.status)}
-                      size="small"
-                      sx={{
-                        fontWeight: 600,
-                        ...getStatusColor(selectedOrder.status),
-                      }}
-                    />
                   </Typography>
+                  <Chip
+                    label={getStatusText(selectedOrder.status)}
+                    size="small"
+                    sx={{
+                      fontWeight: 600,
+                      ...getStatusColor(selectedOrder.status),
+                    }}
+                  />
                 </Grid>
               </Grid>
 
@@ -366,56 +382,106 @@ const Orders = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {selectedOrder.items.map((item) => (
-                      <TableRow key={item._id}>
-                        <TableCell
-                          sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
-                        >
-                          <Box display="flex" alignItems="center">
-                            {item.product?.images?.[0] && (
-                              <img
-                                src={item.product.images[0]}
-                                alt={item.product.name}
-                                style={{
-                                  width: 50,
-                                  height: 50,
-                                  marginRight: 10,
-                                  objectFit: "cover",
-                                  borderRadius: "4px",
-                                }}
-                              />
+                    {selectedOrder.items.map((item) => {
+                      const price = item.price || item.product?.price || 0;
+                      const discount =
+                        typeof item.discount === "number"
+                          ? item.discount
+                          : item.product?.discount || 0;
+                      const finalPrice =
+                        discount > 0 ? price * (1 - discount / 100) : price;
+                      return (
+                        <TableRow key={item._id}>
+                          <TableCell
+                            sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+                          >
+                            <Box display="flex" alignItems="center">
+                              {item.product?.images?.[0] && (
+                                <img
+                                  src={item.product.images[0]}
+                                  alt={item.product.name}
+                                  style={{
+                                    width: 50,
+                                    height: 50,
+                                    marginRight: 10,
+                                    objectFit: "cover",
+                                    borderRadius: "4px",
+                                  }}
+                                />
+                              )}
+                              {item.product?.name}
+                            </Box>
+                          </TableCell>
+                          <TableCell
+                            align="right"
+                            sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+                          >
+                            {item.quantity}
+                          </TableCell>
+                          <TableCell
+                            align="right"
+                            sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+                          >
+                            {discount > 0 ? (
+                              <>
+                                <span
+                                  style={{
+                                    textDecoration: "line-through",
+                                    color: "#888",
+                                    marginRight: 4,
+                                  }}
+                                >
+                                  {price.toLocaleString("vi-VN")}đ
+                                </span>
+                                <span
+                                  style={{ color: "#ed174a", fontWeight: 600 }}
+                                >
+                                  {finalPrice.toLocaleString("vi-VN")}đ
+                                </span>
+                              </>
+                            ) : (
+                              <span>{price.toLocaleString("vi-VN")}đ</span>
                             )}
-                            {item.product?.name}
-                          </Box>
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
-                        >
-                          {item.quantity}
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
-                        >
-                          {item.product?.price
-                            ? item.product.price.toLocaleString("vi-VN")
-                            : "0"}
-                          đ
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
-                        >
-                          {item.product?.price && item.quantity
-                            ? (
-                                item.product.price * item.quantity
-                              ).toLocaleString("vi-VN")
-                            : "0"}
-                          đ
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          </TableCell>
+                          <TableCell
+                            align="right"
+                            sx={{ color: isDarkMode ? "#fff" : "#1a1a1a" }}
+                          >
+                            {discount > 0 ? (
+                              <>
+                                <span
+                                  style={{
+                                    textDecoration: "line-through",
+                                    color: "#888",
+                                    marginRight: 4,
+                                  }}
+                                >
+                                  {(price * item.quantity).toLocaleString(
+                                    "vi-VN"
+                                  )}
+                                  đ
+                                </span>
+                                <span
+                                  style={{ color: "#ed174a", fontWeight: 600 }}
+                                >
+                                  {(finalPrice * item.quantity).toLocaleString(
+                                    "vi-VN"
+                                  )}
+                                  đ
+                                </span>
+                              </>
+                            ) : (
+                              <span>
+                                {(price * item.quantity).toLocaleString(
+                                  "vi-VN"
+                                )}
+                                đ
+                              </span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -532,7 +598,7 @@ const Orders = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 };
 

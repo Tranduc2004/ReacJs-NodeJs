@@ -1,19 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
-  Box,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
   TextField,
   Button,
-  IconButton,
-  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -78,7 +66,14 @@ const UserManagement = () => {
 
   const handleExportExcel = async () => {
     try {
-      await exportUsersExcelApi();
+      const blob = await exportUsersExcelApi();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "users.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
       toast.success("Xuất file Excel thành công");
     } catch (error) {
       console.error("Lỗi khi xuất file Excel:", error);

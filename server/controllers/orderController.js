@@ -120,7 +120,7 @@ exports.createOrderFromCart = async (req, res) => {
         name: item.product.name,
         quantity: item.quantity,
         price: item.product.price,
-        // Lấy ảnh đầu tiên từ mảng 'images' của product nếu có
+        discount: item.product.discount || 0,
         image:
           item.product.images && item.product.images.length > 0
             ? item.product.images[0]
@@ -141,10 +141,10 @@ exports.createOrderFromCart = async (req, res) => {
       newOrder.paymentStatus = "PENDING"; // Vẫn là pending cho COD đến khi nhận hàng
       await newOrder.save();
 
-      // Populate thông tin sản phẩm trước khi gửi về client (THÊM 'images')
+      // Populate thông tin sản phẩm trước khi gửi về client (THÊM 'images' và 'discount')
       const populatedOrder = await Order.findById(newOrder._id).populate(
         "items.product",
-        "name price rating numReviews images" // Lấy mảng 'images'
+        "name price rating numReviews images discount"
       );
 
       // Xóa giỏ hàng
@@ -153,10 +153,20 @@ exports.createOrderFromCart = async (req, res) => {
         { $set: { items: [] } }
       );
 
+      // Đảm bảo trả về discount trong từng item
+      const orderData = populatedOrder.toObject();
+      orderData.items = orderData.items.map((item) => ({
+        ...item,
+        discount:
+          typeof item.discount === "number"
+            ? item.discount
+            : item.product?.discount || 0,
+      }));
+
       return res.status(200).json({
         success: true,
         message: "Tạo đơn hàng thành công",
-        data: populatedOrder,
+        data: orderData,
       });
     }
 
@@ -222,7 +232,7 @@ exports.createOrderFromCart = async (req, res) => {
 exports.getUserOrders = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user.id })
-      .populate("items.product", "name image")
+      .populate("items.product", "name image discount")
       .sort({ createdAt: -1 });
 
     res.json({
@@ -248,7 +258,7 @@ exports.getOrderDetail = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate("user", "name email")
-      .populate("items.product", "name price image images");
+      .populate("items.product", "name price image images discount");
 
     if (!order) {
       return res.status(404).json({
@@ -350,10 +360,10 @@ exports.checkOrderStatus = async (req, res) => {
   try {
     const { momoOrderId } = req.params;
 
-    // Populate thông tin sản phẩm (THÊM 'images')
+    // Populate thông tin sản phẩm (THÊM 'images' và 'discount')
     const order = await Order.findOne({ momoOrderId: momoOrderId }).populate(
       "items.product",
-      "name price rating numReviews images" // Lấy mảng 'images'
+      "name price rating numReviews images discount"
     );
 
     if (!order) {
@@ -365,7 +375,7 @@ exports.checkOrderStatus = async (req, res) => {
     // Lấy thông tin từ pendingOrders nếu có
     const pendingOrderInfo = pendingOrders.get(momoOrderId);
 
-    // Tạo response data, đảm bảo items chứa product với images
+    // Tạo response data, đảm bảo items chứa product với images và discount
     const responseData = {
       orderId: order._id,
       status: order.status,
@@ -378,6 +388,7 @@ exports.checkOrderStatus = async (req, res) => {
               price: item.product.price,
               rating: item.product.rating,
               numReviews: item.product.numReviews,
+              discount: item.product.discount,
               // Lấy ảnh đầu tiên từ mảng images của product đã populate
               image:
                 item.product.images && item.product.images.length > 0
@@ -389,6 +400,7 @@ exports.checkOrderStatus = async (req, res) => {
         name: item.name, // name đã lưu trong order item
         quantity: item.quantity,
         price: item.price, // price đã lưu trong order item
+        discount: typeof item.discount === "number" ? item.discount : undefined, // discount đã lưu trong order item (nếu có)
         // image: item.image // image đã lưu trong order item (ảnh đầu tiên)
       })),
       totalAmount: order.totalAmount,

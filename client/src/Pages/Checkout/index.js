@@ -201,10 +201,13 @@ const Checkout = () => {
 
   // Calculate total
   const calculateTotal = () => {
-    return cartItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+    return cartItems.reduce((total, item) => {
+      if (!item || !item.product) return total;
+      const discount = item.product.discount || 0;
+      const price = item.product.price || item.price;
+      const discountedPrice = price * (1 - discount / 100);
+      return total + discountedPrice * item.quantity;
+    }, 0);
   };
 
   // Handle form submission
@@ -818,11 +821,51 @@ const Checkout = () => {
                       Số lượng: {item.quantity}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Giá: {item.price.toLocaleString("vi-VN")}đ
+                      Giá:{" "}
+                      {item.product.discount > 0 ? (
+                        <>
+                          <span
+                            style={{
+                              textDecoration: "line-through",
+                              color: "#888",
+                              marginRight: 4,
+                            }}
+                          >
+                            {item.product.price.toLocaleString("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            })}
+                          </span>
+                          <span style={{ color: "#ed174a", fontWeight: 600 }}>
+                            {(
+                              item.product.price *
+                              (1 - item.product.discount / 100)
+                            ).toLocaleString("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            })}
+                          </span>
+                        </>
+                      ) : (
+                        <span>
+                          {item.product.price.toLocaleString("vi-VN", {
+                            style: "currency",
+                            currency: "VND",
+                          })}
+                        </span>
+                      )}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Thành tiền:{" "}
-                      {(item.price * item.quantity).toLocaleString("vi-VN")}đ
+                      {(item.product.discount > 0
+                        ? item.product.price *
+                          (1 - item.product.discount / 100) *
+                          item.quantity
+                        : item.product.price * item.quantity
+                      ).toLocaleString("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      })}
                     </Typography>
                   </Grid>
                 </Grid>
@@ -834,7 +877,10 @@ const Checkout = () => {
             >
               <Typography variant="h6">Tổng cộng:</Typography>
               <Typography variant="h6" color="red">
-                {calculateTotal().toLocaleString("vi-VN")}đ
+                {calculateTotal().toLocaleString("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                })}
               </Typography>
             </Box>
           </Paper>

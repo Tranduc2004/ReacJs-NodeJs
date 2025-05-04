@@ -89,6 +89,22 @@ const OrderHistory = () => {
     }).format(date);
   };
 
+  // Hàm tính tổng tiền đã giảm cho đơn hàng
+  const getDiscountedTotal = (order) => {
+    if (!order.items || order.items.length === 0) return order.totalAmount;
+    let discountedTotal = 0;
+    order.items.forEach((item) => {
+      const price = item.price || item.product?.price || 0;
+      const discount =
+        typeof item.discount === "number"
+          ? item.discount
+          : item.product?.discount || 0;
+      const finalPrice = discount > 0 ? price * (1 - discount / 100) : price;
+      discountedTotal += finalPrice * item.quantity;
+    });
+    return Math.round(discountedTotal);
+  };
+
   if (loading) {
     return (
       <Container sx={{ py: 4, display: "flex", justifyContent: "center" }}>
@@ -136,7 +152,34 @@ const OrderHistory = () => {
                   <TableCell>{order._id}</TableCell>
                   <TableCell>{formatDate(order.createdAt)}</TableCell>
                   <TableCell>
-                    {order.totalAmount.toLocaleString("vi-VN")}đ
+                    {/* Hiển thị giá đã giảm nếu có sản phẩm giảm giá */}
+                    {(() => {
+                      const discounted = getDiscountedTotal(order);
+                      if (discounted < order.totalAmount) {
+                        return (
+                          <>
+                            <span
+                              style={{
+                                textDecoration: "line-through",
+                                color: "#888",
+                                marginRight: 4,
+                              }}
+                            >
+                              {order.totalAmount.toLocaleString("vi-VN")}đ
+                            </span>
+                            <span style={{ color: "#ed174a", fontWeight: 600 }}>
+                              {discounted.toLocaleString("vi-VN")}đ
+                            </span>
+                          </>
+                        );
+                      } else {
+                        return (
+                          <span>
+                            {order.totalAmount.toLocaleString("vi-VN")}đ
+                          </span>
+                        );
+                      }
+                    })()}
                   </TableCell>
                   <TableCell>
                     {order.paymentMethod === "COD"

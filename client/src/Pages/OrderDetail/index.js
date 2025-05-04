@@ -188,20 +188,17 @@ const OrderDetail = () => {
                 productImage = item.image;
               }
 
-              // Log để debug
-              console.log("Image selection process:", {
-                itemId: item._id,
-                productImages: item.product?.images,
-                productImage: item.product?.image,
-                itemImages: item.images,
-                itemImage: item.image,
-                finalSelectedImage: productImage,
-              });
-
               // Nếu không có ảnh, sử dụng ảnh mặc định
               const defaultImage =
                 "https://res.cloudinary.com/dy81ccuzq/image/upload/v1/products/no-image.png";
               const imageUrl = productImage || defaultImage;
+
+              // Thêm logic hiển thị giá giảm
+              const discount =
+                typeof item.discount === "number"
+                  ? item.discount
+                  : item.product?.discount || 0;
+              const price = item.price || item.product?.price || 0;
 
               return (
                 <Box key={item._id} sx={{ mb: 2 }}>
@@ -249,11 +246,52 @@ const OrderDetail = () => {
                         Số lượng: {item.quantity}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Giá: {item.price.toLocaleString("vi-VN")}đ
+                        Giá:{" "}
+                        {discount > 0 ? (
+                          <>
+                            <span
+                              style={{
+                                textDecoration: "line-through",
+                                color: "#888",
+                                marginRight: 4,
+                              }}
+                            >
+                              {price.toLocaleString("vi-VN", {
+                                style: "currency",
+                                currency: "VND",
+                              })}
+                            </span>
+                            <span style={{ color: "#ed174a", fontWeight: 600 }}>
+                              {(price * (1 - discount / 100)).toLocaleString(
+                                "vi-VN",
+                                { style: "currency", currency: "VND" }
+                              )}
+                            </span>
+                          </>
+                        ) : (
+                          <span>
+                            {price.toLocaleString("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            })}
+                          </span>
+                        )}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Thành tiền:{" "}
-                        {(item.price * item.quantity).toLocaleString("vi-VN")}đ
+                        {discount > 0
+                          ? (
+                              price *
+                              (1 - discount / 100) *
+                              item.quantity
+                            ).toLocaleString("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            })
+                          : (price * item.quantity).toLocaleString("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            })}
                       </Typography>
                     </Grid>
                   </Grid>

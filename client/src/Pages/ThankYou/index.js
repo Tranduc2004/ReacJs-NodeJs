@@ -151,65 +151,99 @@ const ThankYou = () => {
               <Divider sx={{ mb: 2 }} />
               <Stack spacing={2}>
                 {order.items && order.items.length > 0 ? (
-                  order.items.map((item, index) => (
-                    <Box key={item.product?._id || index}>
-                      <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={3} sm={2}>
-                          <ProductAvatar
-                            variant="rounded"
-                            src={item.image || item.product?.image}
-                            alt={item.name || item.product?.name}
-                          />
-                        </Grid>
-                        <Grid item xs={9} sm={10}>
-                          <Typography variant="body1" fontWeight="medium">
-                            {item.name || item.product?.name || "Sản phẩm"}
-                          </Typography>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 0.5,
-                              mb: 0.5,
-                              flexWrap: "wrap",
-                            }}
-                          >
-                            <Rating
-                              value={item.product?.rating || 0}
-                              precision={0.5}
-                              readOnly
-                              size="small"
+                  order.items.map((item, index) => {
+                    const discount =
+                      typeof item.discount === "number"
+                        ? item.discount
+                        : item.product?.discount || 0;
+                    const price = item.price || item.product?.price || 0;
+                    return (
+                      <Box key={item.product?._id || index}>
+                        <Grid container spacing={2} alignItems="center">
+                          <Grid item xs={3} sm={2}>
+                            <ProductAvatar
+                              variant="rounded"
+                              src={item.image || item.product?.image}
+                              alt={item.name || item.product?.name}
                             />
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
+                          </Grid>
+                          <Grid item xs={9} sm={10}>
+                            <Typography variant="body1" fontWeight="medium">
+                              {item.name || item.product?.name || "Sản phẩm"}
+                            </Typography>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                                mb: 0.5,
+                                flexWrap: "wrap",
+                              }}
                             >
-                              ({item.product?.numReviews || 0})
-                            </Typography>
-                          </Box>
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            flexWrap="wrap"
-                          >
-                            <Typography variant="body2" color="text.secondary">
-                              SL: {item.quantity}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              color="#00aaff"
-                              fontWeight="bold"
+                              <Rating
+                                value={item.product?.rating || 0}
+                                precision={0.5}
+                                readOnly
+                                size="small"
+                              />
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                ({item.product?.numReviews || 0})
+                              </Typography>
+                            </Box>
+                            <Box
+                              display="flex"
+                              justifyContent="space-between"
+                              flexWrap="wrap"
                             >
-                              {formatPrice(item.price)}
-                            </Typography>
-                          </Box>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                SL: {item.quantity}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="#00aaff"
+                                fontWeight="bold"
+                              >
+                                {discount > 0 ? (
+                                  <>
+                                    <span
+                                      style={{
+                                        textDecoration: "line-through",
+                                        color: "#888",
+                                        marginRight: 4,
+                                      }}
+                                    >
+                                      {formatPrice(price)}
+                                    </span>
+                                    <span
+                                      style={{
+                                        color: "#ed174a",
+                                        fontWeight: 600,
+                                      }}
+                                    >
+                                      {formatPrice(
+                                        price * (1 - discount / 100)
+                                      )}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span>{formatPrice(price)}</span>
+                                )}
+                              </Typography>
+                            </Box>
+                          </Grid>
                         </Grid>
-                      </Grid>
-                      {index < order.items.length - 1 && (
-                        <Divider sx={{ my: 2 }} />
-                      )}
-                    </Box>
-                  ))
+                        {index < order.items.length - 1 && (
+                          <Divider sx={{ my: 2 }} />
+                        )}
+                      </Box>
+                    );
+                  })
                 ) : (
                   <Typography>Không có sản phẩm nào trong đơn hàng.</Typography>
                 )}

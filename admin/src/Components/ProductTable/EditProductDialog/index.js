@@ -38,6 +38,7 @@ const EditProductDialog = ({
     description: "",
     brand: "",
     price: "",
+    discount: "",
     category: "",
     countInStock: "",
     isFeatured: false,
@@ -100,6 +101,7 @@ const EditProductDialog = ({
         description: product.description || "",
         brand: product.brand?._id || product.brand || "",
         price: product.price?.toString() || "",
+        discount: product.discount?.toString() || "0",
         category: product.category?._id || "",
         countInStock: product.countInStock?.toString() || "",
         isFeatured: product.isFeatured || false,
@@ -208,6 +210,12 @@ const EditProductDialog = ({
       if (!productData.price || Number(productData.price) <= 0) {
         throw new Error("Giá sản phẩm phải lớn hơn 0");
       }
+      if (
+        Number(productData.discount) < 0 ||
+        Number(productData.discount) > 100
+      ) {
+        throw new Error("Giảm giá phải nằm trong khoảng 0-100%");
+      }
       if (!productData.countInStock || Number(productData.countInStock) < 0) {
         throw new Error("Số lượng trong kho không được âm");
       }
@@ -220,6 +228,7 @@ const EditProductDialog = ({
         name: productData.name.trim(),
         description: productData.description?.trim() || "",
         price: Number(productData.price),
+        discount: Number(productData.discount),
         countInStock: Number(productData.countInStock),
         category: productData.category,
         isFeatured: Boolean(productData.isFeatured),
@@ -411,6 +420,23 @@ const EditProductDialog = ({
                 fullWidth
                 variant="outlined"
                 InputProps={{ inputProps: { min: 0 } }}
+                sx={inputStyle}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                margin="dense"
+                id="discount"
+                name="discount"
+                label="Giảm Giá (%)"
+                type="number"
+                value={productData.discount}
+                onChange={handleInputChange}
+                fullWidth
+                variant="outlined"
+                InputProps={{ inputProps: { min: 0, max: 100 } }}
+                helperText="Phần trăm giảm giá (0-100%)"
                 sx={inputStyle}
               />
             </Grid>

@@ -245,6 +245,7 @@ const ProductTable = () => {
               <th>CATEGORY</th>
               <th>BRAND</th>
               <th>PRICE</th>
+              <th>DISCOUNT</th>
               <th>STOCK</th>
               <th>RATING</th>
               <th>FEATURED</th>
@@ -279,9 +280,30 @@ const ProductTable = () => {
                   <td>{product.category?.name || "Unknown"}</td>
                   <td>{product.brandName}</td>
                   <td>
-                    <span className="sale-price">
-                      ${product.price?.toLocaleString()}
-                    </span>
+                    <div className="price-container">
+                      <span className="sale-price">
+                        ${product.discountedPrice?.toLocaleString()}
+                      </span>
+                      {product.discount > 0 && (
+                        <>
+                          <span className="original-price">
+                            ${product.price?.toLocaleString()}
+                          </span>
+                          <span className="discount-badge">
+                            -{product.discount}%
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    {product.discount > 0 ? (
+                      <span className="discount-value">
+                        {product.discount}%
+                      </span>
+                    ) : (
+                      <span className="no-discount">-</span>
+                    )}
                   </td>
                   <td>{product.countInStock}</td>
                   <td>
@@ -323,7 +345,7 @@ const ProductTable = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="9" className="no-products">
+                <td colSpan="10" className="no-products">
                   No products found
                 </td>
               </tr>

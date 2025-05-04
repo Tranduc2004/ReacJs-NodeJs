@@ -46,10 +46,13 @@ const Cart = () => {
   };
 
   const calculateTotal = () => {
-    return cartItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+    return cartItems.reduce((total, item) => {
+      if (!item || !item.product) return total;
+      const discount = item.product.discount || 0;
+      const price = item.product.price || item.price;
+      const discountedPrice = price * (1 - discount / 100);
+      return total + discountedPrice * item.quantity;
+    }, 0);
   };
 
   if (loading) {
@@ -114,7 +117,42 @@ const Cart = () => {
                               </div>
                             </Link>
                           </td>
-                          <td>{item.price.toLocaleString("vi-VN")}đ</td>
+                          <td>
+                            {item.product.discount > 0 ? (
+                              <>
+                                <span
+                                  style={{
+                                    textDecoration: "line-through",
+                                    color: "#888",
+                                    marginRight: 4,
+                                  }}
+                                >
+                                  {item.product.price.toLocaleString("vi-VN", {
+                                    style: "currency",
+                                    currency: "VND",
+                                  })}
+                                </span>
+                                <span
+                                  style={{ color: "#ed174a", fontWeight: 600 }}
+                                >
+                                  {(
+                                    item.product.price *
+                                    (1 - item.product.discount / 100)
+                                  ).toLocaleString("vi-VN", {
+                                    style: "currency",
+                                    currency: "VND",
+                                  })}
+                                </span>
+                              </>
+                            ) : (
+                              <span>
+                                {item.product.price.toLocaleString("vi-VN", {
+                                  style: "currency",
+                                  currency: "VND",
+                                })}
+                              </span>
+                            )}
+                          </td>
                           <td>
                             <QuantityBox
                               value={item.quantity}
@@ -127,10 +165,15 @@ const Cart = () => {
                             />
                           </td>
                           <td>
-                            {(item.price * item.quantity).toLocaleString(
-                              "vi-VN"
-                            )}
-                            đ
+                            {(item.product.discount > 0
+                              ? item.product.price *
+                                (1 - item.product.discount / 100) *
+                                item.quantity
+                              : item.product.price * item.quantity
+                            ).toLocaleString("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            })}
                           </td>
                           <td>
                             <span
@@ -156,7 +199,10 @@ const Cart = () => {
                 <div className="d-flex justify-content-between mb-3">
                   <span>Tổng thu:</span>
                   <b className="text-red">
-                    {calculateTotal().toLocaleString("vi-VN")}đ
+                    {calculateTotal().toLocaleString("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    })}
                   </b>
                 </div>
 
@@ -173,7 +219,10 @@ const Cart = () => {
                 <div className="d-flex justify-content-between mb-3">
                   <span>Total:</span>
                   <b className="text-red">
-                    {calculateTotal().toLocaleString("vi-VN")}đ
+                    {calculateTotal().toLocaleString("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    })}
                   </b>
                 </div>
 

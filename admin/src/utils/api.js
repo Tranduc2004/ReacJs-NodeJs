@@ -233,10 +233,12 @@ export const fetchUserDetailApi = async (userId) => {
   }
 };
 
-// Thêm API lấy lịch sử đơn hàng của user
+// Lấy lịch sử đơn hàng của user (dùng cho UserDetail)
 export const fetchUserOrdersApi = async (userId) => {
   try {
-    const response = await apiClient.get(`/api/admin/users/${userId}/orders`);
+    const response = await apiClient.get(
+      `/api/admin/orders/user/${userId}/orders`
+    );
     return response.data;
   } catch (error) {
     console.error("Error fetching user orders:", error);

@@ -50,12 +50,6 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    orders: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Order",
-      },
-    ],
     googleId: {
       type: String,
       sparse: true,
@@ -99,6 +93,18 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
     throw error;
   }
 };
+
+// Virtual populate cho đơn hàng
+userSchema.virtual("orders", {
+  ref: "Order",
+  localField: "_id",
+  foreignField: "user",
+  justOne: false,
+});
+
+// Đảm bảo virtuals được trả về khi dùng toObject/toJSON
+userSchema.set("toObject", { virtuals: true });
+userSchema.set("toJSON", { virtuals: true });
 
 const User = mongoose.model("User", userSchema);
 

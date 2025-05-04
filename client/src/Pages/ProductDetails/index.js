@@ -379,6 +379,48 @@ const ProductDetails = () => {
     }
   };
 
+  const handleCompareClick = () => {
+    // Kiểm tra đăng nhập
+    if (!isAuthenticated()) {
+      toast.error("Vui lòng đăng nhập để thêm sản phẩm vào danh sách so sánh");
+      localStorage.setItem("redirectUrl", window.location.pathname);
+      setTimeout(() => {
+        navigate("/signin");
+      }, 2000);
+      return;
+    }
+
+    const compareItems = JSON.parse(
+      localStorage.getItem("compareItems") || "[]"
+    );
+
+    // Kiểm tra xem sản phẩm đã có trong danh sách so sánh chưa
+    if (compareItems.includes(product._id)) {
+      toast.error("Sản phẩm đã có trong danh sách so sánh");
+      return;
+    }
+
+    // Giới hạn số lượng sản phẩm so sánh là 3
+    if (compareItems.length >= 3) {
+      toast.error("Bạn chỉ có thể so sánh tối đa 3 sản phẩm");
+      return;
+    }
+
+    // Thêm sản phẩm vào danh sách so sánh
+    compareItems.push(product._id);
+    localStorage.setItem("compareItems", JSON.stringify(compareItems));
+    toast.success("Đã thêm sản phẩm vào danh sách so sánh");
+  };
+
+  // Sắp xếp review: admin/superadmin lên đầu
+  const sortedReviews = [...reviews].sort((a, b) => {
+    if ((b.isAdminComment || b.adminRole) && !(a.isAdminComment || a.adminRole))
+      return 1;
+    if ((a.isAdminComment || a.adminRole) && !(b.isAdminComment || b.adminRole))
+      return -1;
+    return 0;
+  });
+
   return (
     <Container maxWidth="xl" className="product-details-container">
       {loading ? (
@@ -430,10 +472,18 @@ const ProductDetails = () => {
                   </ul>
                   <div className="d-flex info mb-3">
                     {product?.discount > 0 && (
-                      <span className="oldPrice">${product?.price}</span>
+                      <span className="oldPrice">
+                        {product?.price?.toLocaleString("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        })}
+                      </span>
                     )}
                     <span className="netPrice text-danger ml-2">
-                      ${discountedPrice}
+                      {discountedPrice?.toLocaleString("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      })}
                     </span>
                   </div>
                   <span
@@ -564,6 +614,7 @@ const ProductDetails = () => {
                             color: "white",
                           },
                         }}
+                        onClick={handleCompareClick}
                       >
                         <MdCompareArrows />
                       </Button>
@@ -754,47 +805,123 @@ const ProductDetails = () => {
                         </Typography>
                       )}
 
-                      {reviews.map((reviewItem, index) => (
-                        <ReviewItem key={reviewItem._id || index}>
-                          <Typography
-                            variant="h6"
-                            sx={{ fontWeight: "medium", mb: 0.5 }}
-                          >
-                            {reviewItem.user?.name || "Anonymous"}
-                          </Typography>
-                          <Typography
-                            variant="body1"
-                            color="text.secondary"
-                            sx={{ mb: 1.5 }}
-                          >
-                            {formatReviewDate(
-                              reviewItem.date || reviewItem.createdAt
-                            )}
-                          </Typography>
-                          <Rating
-                            value={reviewItem.rating}
-                            readOnly
-                            precision={0.5}
+                      {sortedReviews.map((review) => {
+                        const isAdminReview =
+                          review.isAdminComment || review.adminRole;
+                        console.log("Review item:", review);
+                        console.log("Is admin review:", isAdminReview);
+
+                        return (
+                          <Box
+                            key={review._id}
                             sx={{
                               mb: 2,
-                              "& .MuiRating-iconFilled": {
-                                fontSize: "1.5rem",
-                                color: "#ffc107",
-                              },
-                              "& .MuiRating-iconEmpty": { fontSize: "1.5rem" },
+                              p: 2,
+                              borderRadius: 1,
+                              bgcolor: isAdminReview
+                                ? "rgba(25, 118, 210, 0.08)"
+                                : "background.paper",
+                              border: isAdminReview
+                                ? "1px solid #1976d2"
+                                : "1px solid #e0e0e0",
                             }}
-                          />
-                          {reviewItem.comment && (
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                mb: 1,
+                              }}
+                            >
+                              <Typography
+                                variant="subtitle1"
+                                sx={{ fontWeight: "bold" }}
+                              >
+                                {review.user?.name || "Người dùng"}
+                              </Typography>
+                              {isAdminReview && (
+                                <Box
+                                  sx={{
+                                    ml: 1,
+                                    px: 1,
+                                    py: 0.5,
+                                    borderRadius: 1,
+                                    bgcolor:
+                                      review.adminRole === "superadmin"
+                                        ? "#d32f2f"
+                                        : "#1976d2",
+                                    color: "white",
+                                    fontSize: "0.75rem",
+                                  }}
+                                >
+                                  {review.adminRole === "superadmin"
+                                    ? "Super Admin"
+                                    : "Quản trị viên"}
+                                </Box>
+                              )}
+                              <Rating
+                                value={review.rating}
+                                readOnly
+                                sx={{ ml: 1 }}
+                              />
+                            </Box>
                             <Typography
                               variant="body1"
-                              fontSize="1.1rem"
-                              lineHeight={1.6}
+                              sx={{
+                                color: isAdminReview
+                                  ? "#1976d2"
+                                  : "text.primary",
+                                fontWeight: isAdminReview ? "bold" : "normal",
+                              }}
                             >
-                              {reviewItem.comment}
+                              {review.comment && review.comment.trim() ? (
+                                review.comment
+                              ) : (
+                                <span style={{ color: "red" }}>
+                                  Không có nội dung bình luận
+                                </span>
+                              )}
                             </Typography>
-                          )}
-                        </ReviewItem>
-                      ))}
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {new Date(review.date).toLocaleDateString()}
+                            </Typography>
+
+                            {review.adminReplies?.map((reply) => (
+                              <Box
+                                key={reply._id}
+                                sx={{
+                                  mt: 1,
+                                  ml: 2,
+                                  pl: 2,
+                                  borderLeft: "2px solid #1976d2",
+                                }}
+                              >
+                                <Typography variant="subtitle2" color="primary">
+                                  {reply.adminRole === "superadmin"
+                                    ? "Super Admin"
+                                    : "Quản trị viên"}
+                                </Typography>
+                                <Typography variant="body2">
+                                  {reply.content || reply.comment}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  {reply.createdAt
+                                    ? new Date(
+                                        reply.createdAt
+                                      ).toLocaleDateString()
+                                    : ""}
+                                </Typography>
+                              </Box>
+                            ))}
+                          </Box>
+                        );
+                      })}
                     </Box>
                   )}
                 </ContentBox>

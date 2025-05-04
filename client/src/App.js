@@ -27,6 +27,7 @@ import OrderDetail from "./Pages/OrderDetail";
 import Posts from "./Pages/Posts";
 import PostDetail from "./Pages/PostDetail";
 import GoogleCallback from "./Pages/GoogleCallback";
+import Compare from "./Pages/Compare";
 
 const MyContext = createContext();
 
@@ -143,6 +144,7 @@ function App() {
             <Route path="/posts" element={<Posts />} />
             <Route path="/posts/:id" element={<PostDetail />} />
             <Route path="/auth/google/callback" element={<GoogleCallback />} />
+            <Route path="/compare" element={<Compare />} />
           </Routes>
           {shouldShowHeaderFooter(window.location.pathname) && <Footer />}
         </BrowserRouter>

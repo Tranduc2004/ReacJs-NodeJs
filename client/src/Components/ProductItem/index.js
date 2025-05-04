@@ -145,10 +145,6 @@ const ProductItem = memo(({ product, itemView }) => {
                 "https://klbtheme.com/bacola/wp-content/uploads/2021/04/product-image-62-346x310.jpg";
             }}
           />
-          {product.discount > 0 && (
-            <span className="badge badge-primary">-{product.discount}%</span>
-          )}
-
           <div className="actions">
             <Button
               className="b1"
@@ -178,6 +174,18 @@ const ProductItem = memo(({ product, itemView }) => {
           style={{ textDecoration: "none", color: "inherit" }}
         >
           <div className="info">
+            <div className="productitem-top-row">
+              <span
+                className={`d-block badge ${
+                  isInStock ? "bg-success" : "bg-danger"
+                }`}
+              >
+                {isInStock ? "Còn hàng" : "Hết hàng"}
+              </span>
+              {product.discount > 0 && (
+                <span className="badge-discount">-{product.discount}%</span>
+              )}
+            </div>
             <h4 className="productName">{product.name}</h4>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
               <Rating
@@ -194,14 +202,15 @@ const ProductItem = memo(({ product, itemView }) => {
                 ({product.numReviews || 0} đánh giá)
               </Typography>
             </Box>
-            <span
-              className={`d-block badge ${
-                isInStock ? "bg-success" : "bg-danger"
-              }`}
-            >
-              {isInStock ? "Còn hàng" : "Hết hàng"}
-            </span>
-            <div className="d-flex">
+            <div className="d-flex align-items-center gap-2">
+              {product.discount > 0 && (
+                <span className="oldPrice">
+                  {product.price.toLocaleString("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                  })}
+                </span>
+              )}
               <span className="netPrice text-danger ml-2">
                 {discountedPrice.toLocaleString("vi-VN", {
                   style: "currency",

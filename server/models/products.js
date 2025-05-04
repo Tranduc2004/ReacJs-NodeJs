@@ -32,6 +32,18 @@ const productSchema = new Schema({
     type: Number,
     required: true,
   },
+  discount: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100,
+  },
+  discountedPrice: {
+    type: Number,
+    default: function () {
+      return this.price * (1 - this.discount / 100);
+    },
+  },
   category: {
     type: Schema.Types.ObjectId,
     ref: "Category",
