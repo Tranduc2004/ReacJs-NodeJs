@@ -67,6 +67,11 @@ const CategoryAdd = () => {
       // Create preview URL
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
+      // Cập nhật formData.image với tên file
+      setFormData((prev) => ({
+        ...prev,
+        image: file.name,
+      }));
     }
   };
 
@@ -222,7 +227,7 @@ const CategoryAdd = () => {
 
             <TextField
               fullWidth
-              label="Category Name"
+              label="Tên danh mục"
               name="name"
               value={formData.name}
               onChange={changeInput}
@@ -288,7 +293,7 @@ const CategoryAdd = () => {
             {imageInputType === "url" ? (
               <TextField
                 fullWidth
-                label="Image URL"
+                label="URL ảnh"
                 name="image"
                 value={formData.image}
                 onChange={changeInput}
@@ -389,10 +394,11 @@ const CategoryAdd = () => {
 
             <TextField
               fullWidth
-              label="Color"
+              label="Mã màu"
               name="color"
               value={formData.color}
               onChange={changeInput}
+              placeholder="Ví dụ: #FF0000"
               sx={{
                 mb: 3,
                 "& .MuiOutlinedInput-root": {

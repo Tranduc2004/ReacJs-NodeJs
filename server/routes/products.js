@@ -65,7 +65,6 @@ router.get(`/`, async (req, res) => {
 router.get("/likes", authenticateJWT, async (req, res) => {
   try {
     const userId = req.user._id;
-    console.log("User ID:", userId); // Debug log
 
     if (!userId) {
       return res.status(401).json({
@@ -101,7 +100,6 @@ router.get("/likes", authenticateJWT, async (req, res) => {
 // GET sản phẩm theo ID
 router.get("/:id", async (req, res) => {
   try {
-    console.log("ID nhận được từ client:", req.params.id);
     const product = await Product.findById(req.params.id)
       .populate("category")
       .populate("brand");
@@ -122,110 +120,68 @@ router.get("/:id", async (req, res) => {
 router.get("/:id/suggestions", async (req, res) => {
   try {
     const productId = req.params.id;
-    console.log(
-      "[GET /products/:id/suggestions] Đang xử lý request với productId:",
-      productId
-    );
 
-    // Kiểm tra xem productId có hợp lệ không
     if (!productId) {
-      console.log("[GET /products/:id/suggestions] ID sản phẩm trống");
       return res.status(400).json({
         success: false,
         message: "ID sản phẩm không hợp lệ",
       });
     }
 
-    // Kiểm tra độ dài ID thay vì dùng mongoose.Types.ObjectId.isValid
     if (productId.length !== 24) {
-      console.log(
-        "[GET /products/:id/suggestions] ID sản phẩm không đúng định dạng:",
-        productId
-      );
       return res.status(400).json({
         success: false,
         message: "ID sản phẩm không hợp lệ",
       });
     }
 
-    // Tìm sản phẩm và populate category và brand
     const product = await Product.findById(productId)
       .populate("category")
       .populate("brand");
-    console.log("[GET /products/:id/suggestions] Sản phẩm tìm được:", product);
 
     if (!product) {
-      console.log(
-        "[GET /products/:id/suggestions] Không tìm thấy sản phẩm với ID:",
-        productId
-      );
       return res.status(404).json({
         success: false,
         message: "Không tìm thấy sản phẩm với ID này",
       });
     }
 
-    // Xây dựng query dựa trên dữ liệu có sẵn
     let query = {
-      _id: { $ne: productId }, // Loại trừ sản phẩm hiện tại
+      _id: { $ne: productId },
     };
 
     const orConditions = [];
 
-    // Thêm điều kiện category nếu có
     if (product.category) {
       orConditions.push({ category: product.category._id });
     }
 
-    // Thêm điều kiện brand nếu có
     if (product.brand) {
       orConditions.push({ brand: product.brand._id });
     }
 
-    // Nếu có ít nhất một điều kiện, thêm vào query
     if (orConditions.length > 0) {
       query.$or = orConditions;
     }
 
-    console.log(
-      "[GET /products/:id/suggestions] Query tìm sản phẩm gợi ý:",
-      JSON.stringify(query, null, 2)
-    );
-
-    // Nếu không có điều kiện lọc, trả về mảng rỗng
     if (orConditions.length === 0) {
-      console.log(
-        "[GET /products/:id/suggestions] Không có điều kiện lọc, trả về mảng rỗng"
-      );
       return res.status(200).json({
         success: true,
         data: [],
       });
     }
 
-    // Lấy sản phẩm gợi ý
     const suggestedProducts = await Product.find(query)
       .limit(4)
       .populate("category")
       .populate("brand");
 
-    console.log(
-      "[GET /products/:id/suggestions] Số lượng sản phẩm gợi ý tìm được:",
-      suggestedProducts.length
-    );
-    console.log(
-      "[GET /products/:id/suggestions] Danh sách sản phẩm gợi ý:",
-      suggestedProducts
-    );
     res.status(200).json({
       success: true,
       data: suggestedProducts,
     });
   } catch (error) {
-    console.error(
-      "[GET /products/:id/suggestions] Lỗi khi lấy sản phẩm gợi ý:",
-      error
-    );
+    console.error("Lỗi khi lấy sản phẩm gợi ý:", error);
     res.status(500).json({
       success: false,
       message: "Lỗi server khi lấy sản phẩm gợi ý",
@@ -332,12 +288,6 @@ router.put("/:id", async (req, res) => {
       images,
     } = req.body;
 
-    console.log("Dữ liệu cập nhật:", {
-      productId,
-      ...req.body,
-    });
-
-    // Kiểm tra sản phẩm tồn tại
     const existingProduct = await Product.findById(productId);
     if (!existingProduct) {
       return res.status(404).json({
@@ -346,10 +296,8 @@ router.put("/:id", async (req, res) => {
       });
     }
 
-    // Tạo object chứa dữ liệu cập nhật
     const updateData = {};
 
-    // Cập nhật các trường cơ bản
     if (name) updateData.name = name.trim();
     if (description) updateData.description = description.trim();
     if (richDescription) updateData.richDescription = richDescription.trim();
@@ -359,7 +307,6 @@ router.put("/:id", async (req, res) => {
       updateData.countInStock = Number(countInStock);
     if (isFeatured !== undefined) updateData.isFeatured = Boolean(isFeatured);
 
-    // Xử lý category
     if (category) {
       const foundCategory = await Category.findById(category);
       if (!foundCategory) {
@@ -371,7 +318,6 @@ router.put("/:id", async (req, res) => {
       updateData.category = category;
     }
 
-    // Xử lý brand
     if (brand) {
       const foundBrand = await Brand.findById(brand);
       if (!foundBrand) {
@@ -385,7 +331,6 @@ router.put("/:id", async (req, res) => {
       updateData.brand = null;
     }
 
-    // Xử lý images
     if (images && Array.isArray(images)) {
       let imageUrls = [];
       for (const img of images) {
@@ -411,9 +356,6 @@ router.put("/:id", async (req, res) => {
       updateData.images = imageUrls;
     }
 
-    console.log("Dữ liệu sau khi xử lý:", updateData);
-
-    // Cập nhật sản phẩm
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
       { $set: updateData },
@@ -488,9 +430,7 @@ router.get("/get/featured/:count", async (req, res) => {
 router.get("/category/:categoryId", async (req, res) => {
   try {
     const categoryId = req.params.categoryId;
-    console.log("Đang tìm sản phẩm theo danh mục:", categoryId);
 
-    // Kiểm tra xem danh mục có tồn tại không
     const category = await Category.findById(categoryId);
     if (!category) {
       return res.status(404).json({
@@ -499,7 +439,6 @@ router.get("/category/:categoryId", async (req, res) => {
       });
     }
 
-    // Lấy danh sách sản phẩm thuộc danh mục
     const products = await Product.find({ category: categoryId })
       .populate("category")
       .populate("brand");

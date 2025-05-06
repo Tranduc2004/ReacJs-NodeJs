@@ -99,7 +99,14 @@ const HomeCat = () => {
                       <div className="img-wrapper">
                         <img src={category.image || cat9} alt={category.name} />
                       </div>
-                      <h6 style={{ opacity: "0.8" }}>{category.name}</h6>
+                      <h6
+                        style={{
+                          opacity: "0.8",
+                          fontSize: "15px",
+                        }}
+                      >
+                        {category.name}
+                      </h6>
                     </div>
                   </Link>
                 </SwiperSlide>

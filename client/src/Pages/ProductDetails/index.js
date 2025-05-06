@@ -3,7 +3,7 @@ import Rating from "@mui/material/Rating";
 import QuantityBox from "../../Components/QuantityBox";
 import Button from "@mui/material/Button";
 import { BsFillCartFill } from "react-icons/bs";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useMemo } from "react";
 import { FaRegHeart } from "react-icons/fa6";
 import { MdCompareArrows } from "react-icons/md";
 import Tooltip from "@mui/material/Tooltip";
@@ -110,7 +110,6 @@ const SubmitButton = styled(Button)(({ theme }) => ({
 
 const ProductDetails = () => {
   const { id } = useParams();
-  console.log("[ProductDetails] ID từ URL params:", id);
   const [product, setProduct] = useState(null);
   const [brandName, setBrandName] = useState("");
   const [loading, setLoading] = useState(true);
@@ -133,13 +132,43 @@ const ProductDetails = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Memoize handlers
+  const memoizedHandleTabChange = useMemo(
+    () => (event, newValue) => setTabValue(newValue),
+    []
+  );
+
+  const memoizedHandleReviewChange = useMemo(
+    () => (event) => setReview(event.target.value),
+    []
+  );
+
+  const memoizedHandleRatingChange = useMemo(
+    () => (event, newValue) => setRating(newValue),
+    []
+  );
+
+  // Memoize data
+  const memoizedRelatedProducts = useMemo(
+    () => relatedProducts || [],
+    [relatedProducts]
+  );
+  const memoizedProduct = useMemo(() => product, [product]);
+
   useEffect(() => {
+    let isMounted = true;
+    let isFetching = false;
+
     const fetchProductDetails = async () => {
+      if (!id || isFetching) return;
+
       try {
+        isFetching = true;
         setLoading(true);
-        console.log("[ProductDetails] Đang lấy thông tin sản phẩm với ID:", id);
         const productData = await getProductById(id);
-        console.log("[ProductDetails] Dữ liệu sản phẩm:", productData);
+
+        if (!isMounted) return;
+
         setProduct(productData);
 
         // Kiểm tra nếu brand đã được populate
@@ -150,67 +179,93 @@ const ProductDetails = () => {
         else if (productData.brand) {
           const brands = await getBrands();
           const brand = brands.find((b) => b._id === productData.brand);
-          if (brand) {
+          if (brand && isMounted) {
             setBrandName(brand.name);
           }
         }
 
-        // Lấy sản phẩm liên quan
-        if (productData && productData._id) {
-          console.log(
-            "[ProductDetails] Đang lấy sản phẩm liên quan cho sản phẩm:",
-            productData._id
-          );
+        // Lấy sản phẩm liên quan - chỉ gọi một lần khi có productData
+        if (productData?._id && !relatedProducts.length) {
           const related = await getSuggestedProducts(productData._id);
-          console.log("[ProductDetails] Sản phẩm liên quan:", related);
-          setRelatedProducts(related);
+          if (isMounted) {
+            setRelatedProducts(related);
+          }
         }
       } catch (err) {
-        console.error("[ProductDetails] Lỗi khi lấy thông tin sản phẩm:", err);
-        setError(err.message);
-        toast.error("Không thể tải thông tin sản phẩm");
-        setRelatedProducts([]);
+        if (isMounted) {
+          console.error(
+            "[ProductDetails] Lỗi khi lấy thông tin sản phẩm:",
+            err
+          );
+          setError(err.message);
+          toast.error("Không thể tải thông tin sản phẩm");
+          setRelatedProducts([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+          isFetching = false;
+        }
       }
     };
 
-    if (id) {
-      fetchProductDetails();
-    }
-  }, [id]);
+    fetchProductDetails();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, relatedProducts.length]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchReviews = async () => {
+      if (!id) return;
+
       try {
         const response = await getReviewsByProduct(id);
-        // Check the structure of the response to extract reviews correctly
         const reviewsData = response.data || response;
-        setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+        if (isMounted) {
+          setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+        }
       } catch (error) {
-        console.error("Lỗi khi lấy đánh giá:", error);
-        setReviews([]);
+        if (isMounted) {
+          console.error("Lỗi khi lấy đánh giá:", error);
+          setReviews([]);
+        }
       }
     };
 
-    if (id) {
-      fetchReviews();
-    }
+    fetchReviews();
+
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const checkLikeStatus = async () => {
       if (!product?._id) return;
 
       try {
         const response = await checkWishlistStatus(product._id);
-        setIsLiked(response.isLiked);
+        if (isMounted) {
+          setIsLiked(response.isLiked);
+        }
       } catch (error) {
-        console.error("Lỗi khi kiểm tra trạng thái yêu thích:", error);
+        if (isMounted) {
+          console.error("Lỗi khi kiểm tra trạng thái yêu thích:", error);
+        }
       }
     };
 
     checkLikeStatus();
+
+    return () => {
+      isMounted = false;
+    };
   }, [product?._id]);
 
   if (loading) {
@@ -223,18 +278,6 @@ const ProductDetails = () => {
 
   const isActive = (index) => {
     setActiveSize(index);
-  };
-
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-  };
-
-  const handleReviewChange = (event) => {
-    setReview(event.target.value);
-  };
-
-  const handleRatingChange = (event, newValue) => {
-    setRating(newValue);
   };
 
   const handleSubmitReview = async () => {
@@ -254,6 +297,19 @@ const ProductDetails = () => {
       setAlert({
         open: true,
         message: "Vui lòng nhập nội dung đánh giá",
+        severity: "warning",
+      });
+      return;
+    }
+
+    // Kiểm tra xem người dùng đã đánh giá chưa
+    const userReview = reviews.find(
+      (r) => r.user?._id === JSON.parse(user)._id
+    );
+    if (userReview) {
+      setAlert({
+        open: true,
+        message: "Bạn đã đánh giá sản phẩm này rồi",
         severity: "warning",
       });
       return;
@@ -552,6 +608,7 @@ const ProductDetails = () => {
                       sx={{
                         backgroundColor: isInStock ? "#00aaff" : "#cccccc",
                         color: "white",
+                        fontFamily: "Dosis, sans-serif",
                         "&:hover": {
                           backgroundColor: isInStock ? "#0088cc" : "#cccccc",
                         },
@@ -627,17 +684,42 @@ const ProductDetails = () => {
               <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto", p: 3 }}>
                 <StyledTabs
                   value={tabValue}
-                  onChange={handleTabChange}
+                  onChange={memoizedHandleTabChange}
                   variant="fullWidth"
                 >
-                  <Tab label="Mô tả" />
-                  <Tab label="Thông số" />
-                  <Tab label={`Đánh giá (${reviews.length || 0})`} />
+                  <Tab
+                    sx={{
+                      fontFamily: "Dosis, sans-serif",
+                      fontSize: "1.5rem",
+                      fontWeight: "bold",
+                    }}
+                    label="Mô tả"
+                  />
+                  <Tab
+                    sx={{
+                      fontFamily: "Dosis, sans-serif",
+                      fontSize: "1.5rem",
+                      fontWeight: "bold",
+                    }}
+                    label="Thông số"
+                  />
+                  <Tab
+                    sx={{
+                      fontFamily: "Dosis, sans-serif",
+                      fontSize: "1.5rem",
+                      fontWeight: "bold",
+                    }}
+                    label={`Đánh giá (${reviews.length || 0})`}
+                  />
                 </StyledTabs>
 
                 <ContentBox>
                   {tabValue === 0 && (
-                    <Typography fontSize="1.1rem" lineHeight={1.7}>
+                    <Typography
+                      fontSize="1.1rem"
+                      lineHeight={1.7}
+                      fontFamily="Dosis, sans-serif"
+                    >
                       {product?.description || "Không có mô tả."}
                     </Typography>
                   )}
@@ -646,6 +728,7 @@ const ProductDetails = () => {
                     <Table
                       sx={{
                         "& .MuiTableCell-root": { fontSize: "1.05rem", py: 2 },
+                        fontFamily: "Dosis, sans-serif",
                       }}
                     >
                       <TableBody>
@@ -661,11 +744,16 @@ const ProductDetails = () => {
                               fontWeight: "medium",
                               color: "#333",
                               width: "40%",
+                              fontFamily: "Dosis, sans-serif",
                             }}
                           >
                             Danh mục
                           </TableCell>
-                          <TableCell>
+                          <TableCell
+                            sx={{
+                              fontFamily: "Dosis, sans-serif",
+                            }}
+                          >
                             {product.category?.name || "Chưa có danh mục"}
                           </TableCell>
                         </TableRow>
@@ -681,11 +769,16 @@ const ProductDetails = () => {
                               fontWeight: "medium",
                               color: "#333",
                               width: "40%",
+                              fontFamily: "Dosis, sans-serif",
                             }}
                           >
                             Thương hiệu
                           </TableCell>
-                          <TableCell>
+                          <TableCell
+                            sx={{
+                              fontFamily: "Dosis, sans-serif",
+                            }}
+                          >
                             {brandName || "Chưa có thương hiệu"}
                           </TableCell>
                         </TableRow>
@@ -701,11 +794,15 @@ const ProductDetails = () => {
                               fontWeight: "medium",
                               color: "#333",
                               width: "40%",
+                              fontFamily: "Dosis, sans-serif",
                             }}
                           >
                             Tình trạng
                           </TableCell>
                           <TableCell
+                            sx={{
+                              fontFamily: "Dosis, sans-serif",
+                            }}
                             className={
                               isInStock ? "text-success" : "text-danger"
                             }
@@ -721,7 +818,7 @@ const ProductDetails = () => {
                     <Box>
                       {/* Add a review section - only show if user hasn't already reviewed */}
                       {!hasReviewed && (
-                        <Box sx={{ mb: 5 }}>
+                        <Box sx={{ mb: 5, fontFamily: "Dosis, sans-serif" }}>
                           <Typography
                             variant="h6"
                             sx={{ mb: 3, fontWeight: 500 }}
@@ -740,7 +837,7 @@ const ProductDetails = () => {
                             rows={6}
                             placeholder="Viết đánh giá"
                             value={review}
-                            onChange={handleReviewChange}
+                            onChange={memoizedHandleReviewChange}
                             variant="outlined"
                             disabled={!isAuthenticated()}
                           />
@@ -755,7 +852,7 @@ const ProductDetails = () => {
                           >
                             <Rating
                               value={rating}
-                              onChange={handleRatingChange}
+                              onChange={memoizedHandleRatingChange}
                               disabled={!isAuthenticated()}
                               sx={{
                                 "& .MuiRating-iconFilled": {
@@ -807,9 +904,9 @@ const ProductDetails = () => {
 
                       {sortedReviews.map((review) => {
                         const isAdminReview =
-                          review.isAdminComment || review.adminRole;
-                        console.log("Review item:", review);
-                        console.log("Is admin review:", isAdminReview);
+                          review.isAdminComment ||
+                          review.adminRole === "admin" ||
+                          review.adminRole === "superadmin";
 
                         return (
                           <Box
@@ -837,7 +934,7 @@ const ProductDetails = () => {
                                 variant="subtitle1"
                                 sx={{ fontWeight: "bold" }}
                               >
-                                {review.user?.name || "Người dùng"}
+                                {review.user?.name || "Khách hàng"}
                               </Typography>
                               {isAdminReview && (
                                 <Box
@@ -929,10 +1026,10 @@ const ProductDetails = () => {
 
               <br />
               {/* Sản phẩm gợi ý */}
-              {product && product._id && (
+              {memoizedProduct?._id && memoizedRelatedProducts?.length > 0 && (
                 <RelatedProducts
                   title="Sản phẩm tương tự"
-                  productId={product._id}
+                  initialProducts={memoizedRelatedProducts}
                 />
               )}
             </div>

@@ -5,12 +5,13 @@
 * {
   margin: 0;
   padding: 0;
+  font-family: "Dosis", "sans-serif";
 }
 
-@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Dosis:wght@200;300;400;500;600;700;800&display=swap");
 
 body {
-  font-family: "Lato", "sans-serif";
+  font-family: "Dosis", "sans-serif";
   color: rgba(0, 0, 0, 8);
   overflow-x: hidden;
   font-size: 16px;
@@ -85,6 +86,23 @@ button {
   border: 1px solid rgba(0, 0, 0, 0.1);
   cursor: pointer;
   position: relative;
+  transition: all 0.3s ease;
+}
+
+.productItem:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transform: translateY(-5px);
+}
+
+.productItem .add-to-cart-btn {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.productItem:hover .add-to-cart-btn {
+  opacity: 1;
+  visibility: visible;
 }
 
 .productItem .badge {
@@ -94,11 +112,12 @@ button {
   top: 10px;
   left: 15px;
   z-index: 100;
+  font-size: 12px;
 }
 .productItem .badge-discount {
   background-color: #00aaff;
   color: #fff;
-  font-size: 0.7rem;
+  font-size: 12px;
   padding: 2px 15px;
   border-radius: 12px;
   display: inline-block;

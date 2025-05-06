@@ -2,8 +2,8 @@ import { useState, useEffect, useContext, useCallback, memo } from "react";
 import { MyContext } from "../../App";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { CiHeart } from "react-icons/ci";
 import { IoIosHeart } from "react-icons/io";
+import { GoHeart } from "react-icons/go";
 import {
   addToWishlist,
   removeFromWishlist,
@@ -15,244 +15,276 @@ import { Link } from "react-router-dom";
 import { addToCart } from "../../services/api";
 import { Button, Rating, Box, Typography } from "@mui/material";
 
-const ProductItem = memo(({ product, itemView }) => {
-  const [isOpenProductModal, setisProductModal] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const context = useContext(MyContext);
-  const navigate = useNavigate();
+// Move these outside the component to prevent recreation on each render
+const defaultThumbnail =
+  "https://klbtheme.com/bacola/wp-content/uploads/2021/04/product-image-62-346x310.jpg";
 
-  console.log("ProductItem render với:", { product, itemView });
+const ProductItem = memo(
+  ({ product, itemView }) => {
+    const [isOpenProductModal, setIsProductModal] = useState(false);
+    const [isLiked, setIsLiked] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const context = useContext(MyContext);
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkLikeStatus = async () => {
-      if (!product?._id) return;
+    // Calculate these values outside of render to reduce computations
+    const productId = product?._id;
+    const isInStock = product?.countInStock > 0;
+    const discountedPrice = product?.price
+      ? product.price - (product.price * (product.discount || 0)) / 100
+      : 0;
+    const thumbnailImage =
+      product?.images?.length > 0 ? product.images[0] : defaultThumbnail;
 
-      try {
-        const response = await checkWishlistStatus(product._id);
-        setIsLiked(response.isLiked);
-      } catch (error) {
-        console.error("Lỗi khi kiểm tra trạng thái yêu thích:", error);
-      }
-    };
+    // Use useEffect with proper dependency array
+    useEffect(() => {
+      let isMounted = true;
 
-    checkLikeStatus();
-  }, [product?._id]);
+      const checkLikeStatus = async () => {
+        if (!productId) return;
 
-  const handleWishlistClick = useCallback(
-    async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      if (isLoading || !product._id) return;
-
-      if (!context.isLogin) {
-        toast.error("Vui lòng đăng nhập để thêm sản phẩm vào yêu thích");
-        localStorage.setItem("redirectUrl", window.location.pathname);
-        setTimeout(() => {
-          navigate("/signin");
-        }, 2000);
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        if (isLiked) {
-          await removeFromWishlist(product._id);
-          setIsLiked(false);
-          toast.success("Đã xóa khỏi danh sách yêu thích");
-        } else {
-          await addToWishlist(product._id);
-          setIsLiked(true);
-          toast.success("Đã thêm vào danh sách yêu thích");
+        try {
+          const response = await checkWishlistStatus(productId);
+          if (isMounted) {
+            setIsLiked(response.isLiked);
+          }
+        } catch (error) {
+          console.error("Lỗi khi kiểm tra trạng thái yêu thích:", error);
         }
-      } catch (error) {
-        toast.error("Có lỗi xảy ra, vui lòng thử lại");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [isLoading, product._id, context.isLogin, isLiked, navigate]
-  );
+      };
 
-  const viewProductDetails = useCallback(() => {
-    setisProductModal(true);
-  }, []);
+      checkLikeStatus();
 
-  const closeProductModal = useCallback(() => {
-    setisProductModal(false);
-  }, []);
+      // Cleanup function to prevent state updates on unmounted component
+      return () => {
+        isMounted = false;
+      };
+    }, [productId]); // Only depend on productId
 
-  if (!product) {
-    console.log("Không có product data");
-    return null;
-  }
+    const handleWishlistClick = useCallback(
+      async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
 
-  // Tính giá sau khi giảm giá
-  const discountedPrice =
-    product.price - (product.price * (product.discount || 0)) / 100;
+        if (isLoading || !productId) return;
 
-  // Lấy ảnh đại diện (ảnh đầu tiên từ mảng images)
-  const thumbnailImage =
-    product.images && product.images.length > 0
-      ? product.images[0]
-      : "https://klbtheme.com/bacola/wp-content/uploads/2021/04/product-image-62-346x310.jpg";
-  const isInStock = product?.countInStock > 0;
+        if (!context.isLogin) {
+          toast.error("Vui lòng đăng nhập để thêm sản phẩm vào yêu thích");
+          localStorage.setItem("redirectUrl", window.location.pathname);
+          setTimeout(() => {
+            navigate("/signin");
+          }, 2000);
+          return;
+        }
 
-  const handleAddToCart = async (e) => {
-    e.stopPropagation(); // Ngăn chặn event bubbling
-    try {
-      // Kiểm tra đăng nhập từ context
-      if (!context.isLogin) {
-        toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
-        localStorage.setItem("redirectUrl", window.location.pathname);
-        setTimeout(() => {
-          navigate("/signin");
-        }, 2000);
-        return;
-      }
+        setIsLoading(true);
+        try {
+          if (isLiked) {
+            await removeFromWishlist(productId);
+            setIsLiked(false);
+            toast.success("Đã xóa khỏi danh sách yêu thích");
+          } else {
+            await addToWishlist(productId);
+            setIsLiked(true);
+            toast.success("Đã thêm vào danh sách yêu thích");
+          }
+        } catch (error) {
+          toast.error("Có lỗi xảy ra, vui lòng thử lại");
+        } finally {
+          setIsLoading(false);
+        }
+      },
+      [isLoading, productId, context.isLogin, isLiked, navigate]
+    );
 
-      // Thêm vào giỏ hàng với số lượng mặc định là 1
-      const response = await addToCart(product._id, 1);
+    const viewProductDetails = useCallback(() => {
+      setIsProductModal(true);
+    }, []);
 
-      if (response) {
-        toast.success("Đã thêm sản phẩm vào giỏ hàng!");
-      }
-    } catch (error) {
-      console.error("Lỗi khi thêm vào giỏ hàng:", error);
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else {
-        toast.error("Có lỗi xảy ra khi thêm vào giỏ hàng");
-      }
+    const closeProductModal = useCallback(() => {
+      setIsProductModal(false);
+    }, []);
+
+    const handleAddToCart = useCallback(
+      async (e) => {
+        e.stopPropagation();
+
+        if (!context.isLogin) {
+          toast.error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
+          localStorage.setItem("redirectUrl", window.location.pathname);
+          setTimeout(() => {
+            navigate("/signin");
+          }, 2000);
+          return;
+        }
+
+        try {
+          const response = await addToCart(productId, 1);
+          if (response) {
+            toast.success("Đã thêm sản phẩm vào giỏ hàng!");
+          }
+        } catch (error) {
+          console.error("Lỗi khi thêm vào giỏ hàng:", error);
+          if (error.response?.data?.message) {
+            toast.error(error.response.data.message);
+          } else {
+            toast.error("Có lỗi xảy ra khi thêm vào giỏ hàng");
+          }
+        }
+      },
+      [productId, context.isLogin, navigate]
+    );
+
+    // Early return if no product
+    if (!product) {
+      return null;
     }
-  };
 
-  return (
-    <>
-      <div
-        className={`item productItem ${itemView}`}
-        onClick={viewProductDetails}
-      >
-        <div className="imgWrapper">
-          <img
-            alt={product.name}
-            src={thumbnailImage}
-            className="w-100"
-            onError={(e) => {
-              console.log("Lỗi load ảnh:", e);
-              e.target.src =
-                "https://klbtheme.com/bacola/wp-content/uploads/2021/04/product-image-62-346x310.jpg";
-            }}
-          />
-          <div className="actions">
-            <Button
-              className="b1"
-              onClick={(e) => {
-                e.preventDefault();
-                viewProductDetails();
-              }}
-            >
-              <AiOutlineFullscreen />
-            </Button>
-            <Button
-              className="b1"
-              onClick={handleWishlistClick}
-              disabled={isLoading}
-            >
-              {isLiked ? (
-                <IoIosHeart style={{ color: "red", fill: "red" }} />
-              ) : (
-                <CiHeart />
-              )}
-            </Button>
-          </div>
-        </div>
-        <Link
-          className="link-product"
-          to={`/product/${product._id}`}
-          style={{ textDecoration: "none", color: "inherit" }}
+    return (
+      <>
+        <div
+          className={`item productItem ${itemView}`}
+          onClick={viewProductDetails}
         >
-          <div className="info">
-            <div className="productitem-top-row">
-              <span
-                className={`d-block badge ${
-                  isInStock ? "bg-success" : "bg-danger"
-                }`}
+          <div className="imgWrapper">
+            <img
+              alt={product.name}
+              src={thumbnailImage}
+              className="w-100"
+              onError={(e) => {
+                e.target.src = defaultThumbnail;
+              }}
+            />
+            <div className="actions">
+              <Button
+                className="b1"
+                onClick={(e) => {
+                  e.preventDefault();
+                  viewProductDetails();
+                }}
               >
-                {isInStock ? "Còn hàng" : "Hết hàng"}
-              </span>
-              {product.discount > 0 && (
-                <span className="badge-discount">-{product.discount}%</span>
-              )}
+                <AiOutlineFullscreen />
+              </Button>
+              <Button
+                className="b1"
+                onClick={handleWishlistClick}
+                disabled={isLoading}
+              >
+                {isLiked ? (
+                  <IoIosHeart style={{ color: "red", fill: "red" }} />
+                ) : (
+                  <GoHeart />
+                )}
+              </Button>
             </div>
-            <h4 className="productName">{product.name}</h4>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <Rating
-                value={product.rating || 0}
-                precision={0.5}
-                readOnly
-                size="small"
-              />
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ fontSize: "0.8rem" }}
+          </div>
+          <Link
+            className="link-product"
+            to={`/product/${productId}`}
+            style={{ textDecoration: "none", color: "inherit" }}
+          >
+            <div className="info">
+              <div className="productitem-top-row">
+                <span
+                  className={`d-block badge ${
+                    isInStock ? "bg-success" : "bg-danger"
+                  }`}
+                >
+                  {isInStock ? "Còn hàng" : "Hết hàng"}
+                </span>
+                {product.discount > 0 && (
+                  <span className="badge-discount">-{product.discount}%</span>
+                )}
+              </div>
+              <h4
+                className="productName"
+                style={{ fontFamily: "Roboto, sans-serif" }}
               >
-                ({product.numReviews || 0} đánh giá)
-              </Typography>
-            </Box>
-            <div className="d-flex align-items-center gap-2">
-              {product.discount > 0 && (
-                <span className="oldPrice">
-                  {product.price.toLocaleString("vi-VN", {
+                {product.name}
+              </h4>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+              >
+                <Rating
+                  value={product.rating || 0}
+                  precision={0.5}
+                  readOnly
+                  size="small"
+                />
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontSize: "0.8rem" }}
+                >
+                  ({product.numReviews || 0} đánh giá)
+                </Typography>
+              </Box>
+              <div className="d-flex align-items-center gap-2">
+                {product.discount > 0 && (
+                  <span className="oldPrice">
+                    {product.price.toLocaleString("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    })}
+                  </span>
+                )}
+                <span className="netPrice text-danger ml-2">
+                  {discountedPrice.toLocaleString("vi-VN", {
                     style: "currency",
                     currency: "VND",
                   })}
                 </span>
-              )}
-              <span className="netPrice text-danger ml-2">
-                {discountedPrice.toLocaleString("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                })}
-              </span>
+              </div>
             </div>
+          </Link>
+          <div className="d-flex align-items-center justify-content-center mb-3">
+            <Button
+              className="add-to-cart-btn"
+              sx={{
+                backgroundColor: isInStock ? "transparent" : "#ffcccc",
+                border: isInStock ? "2px solid #00aaff" : "2px solid red",
+                color: isInStock ? "#00aaff" : "red",
+                fontWeight: "600",
+                textTransform: "none",
+                borderRadius: "20px",
+                "&:hover": {
+                  backgroundColor: isInStock ? "#00aaff" : "#ff4d4d",
+                  color: "white",
+                  borderColor: isInStock ? "#00aaff" : "red",
+                },
+                fontFamily: "Dosis, sans-serif",
+              }}
+              onClick={handleAddToCart}
+              disabled={!isInStock}
+            >
+              {isInStock ? "Thêm vào giỏ" : "Hết hàng"}
+            </Button>
           </div>
-        </Link>
-        <div className="d-flex align-items-center justify-content-center mb-3">
-          <Button
-            className="add-to-cart-btn"
-            sx={{
-              backgroundColor: isInStock ? "transparent" : "#ffcccc",
-              border: isInStock ? "2px solid #00aaff" : "2px solid red",
-              color: isInStock ? "#00aaff" : "red",
-              fontWeight: "500",
-              textTransform: "none",
-              borderRadius: "20px",
-              "&:hover": {
-                backgroundColor: isInStock ? "#00aaff" : "#ff4d4d",
-                color: "white",
-                borderColor: isInStock ? "#00aaff" : "red",
-              },
-            }}
-            onClick={handleAddToCart}
-            disabled={!isInStock}
-          >
-            {isInStock ? "Thêm vào giỏ" : "Hết hàng"}
-          </Button>
         </div>
-      </div>
 
-      {isOpenProductModal && (
-        <ProductModal
-          productId={product._id}
-          closeProductModal={closeProductModal}
-        />
-      )}
-    </>
-  );
-});
+        {isOpenProductModal && (
+          <ProductModal
+            productId={productId}
+            closeProductModal={closeProductModal}
+          />
+        )}
+      </>
+    );
+  },
+  (prevProps, nextProps) => {
+    // Custom comparison for memo to prevent unnecessary re-renders
+    // Return true if we should NOT re-render
+    return (
+      prevProps.product?._id === nextProps.product?._id &&
+      prevProps.itemView === nextProps.itemView &&
+      prevProps.product?.price === nextProps.product?.price &&
+      prevProps.product?.discount === nextProps.product?.discount &&
+      prevProps.product?.countInStock === nextProps.product?.countInStock &&
+      prevProps.product?.rating === nextProps.product?.rating &&
+      prevProps.product?.numReviews === nextProps.product?.numReviews
+    );
+  }
+);
 
 ProductItem.displayName = "ProductItem";
 

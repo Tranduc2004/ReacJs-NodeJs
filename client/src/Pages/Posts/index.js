@@ -9,14 +9,11 @@ import {
   Chip,
   Stack,
   Container,
-  IconButton,
   TextField,
   InputAdornment,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { api } from "../../services/api";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import PersonIcon from "@mui/icons-material/Person";
 import SearchIcon from "@mui/icons-material/Search";
 
 const Posts = () => {
@@ -31,7 +28,6 @@ const Posts = () => {
   const fetchPosts = async () => {
     try {
       const response = await api.get("/posts");
-      console.log("API Response:", response);
       if (Array.isArray(response)) {
         setPosts(response);
       } else {

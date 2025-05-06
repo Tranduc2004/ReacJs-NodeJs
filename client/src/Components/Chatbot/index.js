@@ -7,6 +7,8 @@ import {
   IconButton,
   Typography,
   CircularProgress,
+  Tooltip,
+  Paper,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import { sendMessage } from "../../services/api";
@@ -17,6 +19,7 @@ const Chatbot = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -121,6 +124,59 @@ const Chatbot = () => {
     }
   };
 
+  const handleSuggestionClick = (suggestion) => {
+    setNewMessage(suggestion);
+    setShowSuggestions(false);
+  };
+
+  const renderSuggestions = () => {
+    if (!showSuggestions || messages.length > 0) return null;
+
+    const suggestions = [
+      "Bạn có thể giúp tôi tìm sản phẩm không?",
+      "Có sản phẩm nào đang giảm giá không?",
+      "Tôi muốn xem các sản phẩm mới nhất",
+      "Làm sao để đặt hàng online?",
+    ];
+
+    return (
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 2,
+          bgcolor: "background.paper",
+          borderRadius: 2,
+          border: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          Bạn có thể hỏi tôi về:
+        </Typography>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          {suggestions.map((suggestion, index) => (
+            <Typography
+              key={index}
+              onClick={() => handleSuggestionClick(suggestion)}
+              sx={{
+                p: 1,
+                borderRadius: 1,
+                cursor: "pointer",
+                "&:hover": {
+                  bgcolor: "grey.100",
+                },
+                color: "primary.main",
+              }}
+            >
+              {suggestion}
+            </Typography>
+          ))}
+        </Box>
+      </Paper>
+    );
+  };
+
   const renderMessageContent = (msg) => {
     return (
       <>
@@ -160,21 +216,33 @@ const Chatbot = () => {
 
   return (
     <Box sx={{ position: "fixed", bottom: 32, right: 32, zIndex: 50 }}>
-      <IconButton
-        onClick={() => setIsOpen(!isOpen)}
-        sx={{
-          bgcolor: "#00aaff",
-          color: "white",
-          p: 3,
-          "&:hover": {
-            bgcolor: "#0095e0",
-            transform: "scale(1.1)",
-          },
-          transition: "transform 0.2s",
-        }}
-      >
-        {isOpen ? <FaTimes size={22} /> : <FaRobot size={22} />}
-      </IconButton>
+      <Tooltip title="Trợ lí ảo - Nhấn để chat" placement="left" arrow>
+        <IconButton
+          onClick={() => {
+            setIsOpen(!isOpen);
+            if (!isOpen) {
+              toast.success(
+                "Chào bạn! Tôi là trợ lí ảo, tôi có thể giúp gì cho bạn?",
+                {
+                  duration: 4000,
+                }
+              );
+            }
+          }}
+          sx={{
+            bgcolor: "#00aaff",
+            color: "white",
+            p: 3,
+            "&:hover": {
+              bgcolor: "#0095e0",
+              transform: "scale(1.1)",
+            },
+            transition: "transform 0.2s",
+          }}
+        >
+          {isOpen ? <FaTimes size={22} /> : <FaRobot size={22} />}
+        </IconButton>
+      </Tooltip>
 
       {isOpen && (
         <Box
@@ -204,9 +272,9 @@ const Chatbot = () => {
               alignItems: "center",
             }}
           >
-            <FaRobot size={20} style={{ marginRight: 8 }} />
-            <Typography variant="subtitle1" fontWeight="medium">
-              Chat Assistant
+            <FaRobot size={28} style={{ marginRight: 8 }} />
+            <Typography variant="subtitle1" fontWeight="medium" fontSize={18}>
+              Chat với trợ lí ảo
             </Typography>
           </Box>
 
@@ -218,6 +286,7 @@ const Chatbot = () => {
               bgcolor: "grey.50",
             }}
           >
+            {renderSuggestions()}
             {messages.map((msg) => (
               <Box
                 key={msg.id}
@@ -267,7 +336,7 @@ const Chatbot = () => {
             <Box sx={{ display: "flex", gap: 1 }}>
               <TextField
                 fullWidth
-                placeholder="Type a message..."
+                placeholder="Nhập tin nhắn..."
                 size="small"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}

@@ -42,7 +42,7 @@ const GoogleCallback = () => {
         localStorage.setItem("token", token);
         console.log("Đã lưu token vào localStorage");
 
-        // Lấy thông tin user từ API và lưu vào localStorage
+        // Gọi API xử lý token
         const result = await handleGoogleCallback(token);
         console.log("Kết quả xử lý token:", result);
 
@@ -50,22 +50,47 @@ const GoogleCallback = () => {
           throw new Error(result.message || "Đăng nhập Google thất bại");
         }
 
-        // Lưu user vào localStorage (phòng trường hợp handleGoogleCallback chưa lưu)
-        if (result.data) {
-          localStorage.setItem("user", JSON.stringify(result.data));
-        }
+        // Lưu user data vào localStorage
+        localStorage.setItem("user", JSON.stringify(result.data));
 
-        // Cập nhật trạng thái đăng nhập trong context
+        // Cập nhật header Authorization
+        const api = (await import("../../services/api")).api;
+        api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+        // Cập nhật context thông qua event trước
+        const event = new CustomEvent("authStateChanged", {
+          detail: {
+            isLoggedIn: true,
+            user: result.data,
+          },
+        });
+        window.dispatchEvent(event);
+
+        // Đợi event được xử lý
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Sau đó mới cập nhật state trong context
         setIsLoggedIn(true);
         setUser(result.data);
 
-        // Thêm delay nhỏ để đảm bảo state và localStorage được cập nhật
-        await new Promise((resolve) => setTimeout(resolve, 200));
+        // Đợi state được cập nhật
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
         toast.success("Đăng nhập thành công!");
+
+        // Chuyển hướng về trang chủ với replace
         navigate("/", { replace: true });
+
+        // Đợi một chút để đảm bảo navigation hoàn tất
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Reload trang để đảm bảo state được cập nhật
+        window.location.reload();
       } catch (err) {
         console.error("Lỗi xử lý Google callback:", err);
+        // Rollback nếu có lỗi
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
         setError(err.message);
         toast.error(err.message);
         navigate("/signin", {

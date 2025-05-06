@@ -258,6 +258,7 @@ const ProductModal = ({ productId, closeProductModal }) => {
               className="btn-lg btn-big btn-round ml-3"
               sx={{
                 backgroundColor: isInStock ? "#00aaff" : "#cccccc",
+                fontFamily: "Dosis, sans-serif",
                 color: "white",
                 "&:hover": {
                   backgroundColor: isInStock ? "#0088cc" : "#cccccc",

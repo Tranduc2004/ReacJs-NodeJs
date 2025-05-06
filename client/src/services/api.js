@@ -32,16 +32,27 @@ api.interceptors.response.use(
     return response.data;
   },
   (error) => {
+    // Chỉ xử lý lỗi 401 khi không phải đang ở trang đăng nhập hoặc callback
     if (error.response?.status === 401) {
-      // Chỉ xử lý logout khi không phải API cart và không phải đang ở trang đăng nhập
-      if (
-        !error.config.url.includes("/cart") &&
-        !window.location.pathname.includes("/signin") &&
-        !window.location.pathname.includes("/googlecallback")
-      ) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.href = "/signin";
+      const currentPath = window.location.pathname;
+      const isAuthPage =
+        currentPath.includes("/signin") ||
+        currentPath.includes("/googlecallback") ||
+        currentPath.includes("/register");
+
+      // Chỉ xử lý logout khi không phải ở trang auth
+      if (!isAuthPage) {
+        // Kiểm tra xem có phải lỗi token hết hạn không
+        if (error.response?.data?.message?.includes("token expired")) {
+          // Xóa token và user data
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          // Chuyển hướng về trang đăng nhập
+          window.location.href = "/signin";
+        } else {
+          // Nếu là lỗi khác, chỉ reject error
+          return Promise.reject(error);
+        }
       }
     }
     return Promise.reject(error);
@@ -50,9 +61,30 @@ api.interceptors.response.use(
 
 // Kiểm tra xác thực
 export const isAuthenticated = () => {
-  const token = localStorage.getItem("token");
-  const user = localStorage.getItem("user");
-  return !!token && !!user;
+  try {
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+
+    if (!token || !user) {
+      return false;
+    }
+
+    // Kiểm tra xem token có hợp lệ không
+    const tokenData = JSON.parse(atob(token.split(".")[1]));
+    const currentTime = Date.now() / 1000;
+
+    // Nếu token hết hạn, xóa token và user data
+    if (tokenData.exp < currentTime) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra xác thực:", error);
+    return false;
+  }
 };
 
 // Lấy thông tin user từ localStorage
@@ -541,34 +573,23 @@ export const getFavoriteProducts = async () => {
 // Lấy sản phẩm theo danh mục
 export const getProductsByCategory = async (categoryId) => {
   try {
-    console.log("1. Đang gọi API lấy sản phẩm theo danh mục:", categoryId);
     const response = await api.get(`/products/category/${categoryId}`);
-    console.log("2. Response từ server:", response);
-    console.log("3. Response data:", response.data);
 
-    // Kiểm tra response.data
     if (response.data) {
       // Nếu response.data là mảng, trả về trực tiếp
       if (Array.isArray(response.data)) {
-        console.log("4. Response.data là mảng, trả về trực tiếp");
         return response.data;
       }
 
       // Nếu response.data có cấu trúc {success, data}
       if (response.data.success && Array.isArray(response.data.data)) {
-        console.log("5. Response.data có cấu trúc {success, data}");
         return response.data.data;
       }
     }
 
-    console.log("6. Không có dữ liệu hợp lệ, trả về mảng rỗng");
     return [];
   } catch (error) {
-    console.error("7. Lỗi khi lấy sản phẩm:", error);
-    if (error.response) {
-      console.error("8. Status code:", error.response.status);
-      console.error("9. Error data:", error.response.data);
-    }
+    console.error("Lỗi khi lấy sản phẩm theo danh mục:", error);
     return [];
   }
 };
@@ -576,34 +597,14 @@ export const getProductsByCategory = async (categoryId) => {
 // API cho sản phẩm gợi ý
 export const getSuggestedProducts = async (productId) => {
   try {
-    console.log(
-      "[getSuggestedProducts] Đang gọi API với productId:",
-      productId
-    );
-    console.log(
-      "[getSuggestedProducts] URL request:",
-      `/products/${productId}/suggestions`
-    );
     const response = await api.get(`/products/${productId}/suggestions`);
-    console.log("[getSuggestedProducts] Response từ server:", response);
 
-    // Kiểm tra và xử lý response
     if (response && response.success && Array.isArray(response.data)) {
-      console.log(
-        "[getSuggestedProducts] Trả về danh sách sản phẩm:",
-        response.data
-      );
       return response.data;
-    } else {
-      console.log("[getSuggestedProducts] Không có dữ liệu hợp lệ từ server");
-      return [];
     }
+    return [];
   } catch (error) {
-    console.error("[getSuggestedProducts] Lỗi khi gọi API:", error);
-    if (error.response) {
-      console.error("[getSuggestedProducts] Status:", error.response.status);
-      console.error("[getSuggestedProducts] Data:", error.response.data);
-    }
+    console.error("[getSuggestedProducts] Lỗi:", error);
     return [];
   }
 };
@@ -611,16 +612,12 @@ export const getSuggestedProducts = async (productId) => {
 // API cho chatbot
 export const sendMessage = async (message) => {
   try {
-    console.log("Sending message:", message);
     const response = await api.post("/chatbot/chat", { message });
-    console.log("Raw response:", response);
 
-    // Kiểm tra response trực tiếp (không cần .data vì interceptor đã xử lý)
     if (!response) {
       throw new Error("Không nhận được phản hồi từ server");
     }
 
-    // Nếu response là string
     if (typeof response === "string") {
       return {
         success: true,
@@ -629,16 +626,12 @@ export const sendMessage = async (message) => {
       };
     }
 
-    // Đảm bảo response là object và có các trường cần thiết
-    const formattedResponse = {
+    return {
       success: true,
       ...response,
       isProduct: response.isProduct || false,
       message: response.message || response.text || "",
     };
-
-    console.log("Formatted response:", formattedResponse);
-    return formattedResponse;
   } catch (error) {
     console.error("Lỗi khi gửi tin nhắn:", error);
     throw new Error(
@@ -721,14 +714,6 @@ export const handleGoogleCallback = async (token) => {
       throw new Error("Không tìm thấy token");
     }
 
-    // Lưu token vào localStorage
-    localStorage.setItem("token", token);
-    console.log("Đã lưu token vào localStorage");
-
-    // Cập nhật header Authorization
-    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    console.log("Đã cập nhật header Authorization");
-
     // Hàm lấy thông tin user với retry
     const getUserInfo = async (retryCount = 0) => {
       try {
@@ -766,20 +751,19 @@ export const handleGoogleCallback = async (token) => {
     // Lấy thông tin user với retry mechanism
     const userData = await getUserInfo();
 
-    // Lưu thông tin user vào localStorage
+    // Lưu user data vào localStorage
     localStorage.setItem("user", JSON.stringify(userData));
-    console.log("Đã lưu thông tin user vào localStorage:", userData);
+    console.log("Đã lưu user data vào localStorage");
 
-    // Kiểm tra xem token và user data đã được lưu thành công chưa
-    const savedToken = localStorage.getItem("token");
+    // Kiểm tra xem user data đã được lưu thành công chưa
     const savedUser = localStorage.getItem("user");
 
-    if (!savedToken || !savedUser) {
+    if (!savedUser) {
       throw new Error("Không thể lưu thông tin đăng nhập");
     }
 
     console.log("Đăng nhập Google thành công:", {
-      token: savedToken,
+      token,
       user: JSON.parse(savedUser),
     });
 
@@ -791,9 +775,6 @@ export const handleGoogleCallback = async (token) => {
       },
     });
     window.dispatchEvent(event);
-
-    // Thêm delay nhỏ để đảm bảo context được cập nhật
-    await new Promise((resolve) => setTimeout(resolve, 100));
 
     return {
       success: true,

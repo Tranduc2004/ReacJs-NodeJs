@@ -17,14 +17,10 @@ const Wishlist = () => {
   useEffect(() => {
     const fetchWishlist = async () => {
       try {
-        console.log("Is authenticated:", isAuthenticated());
-        console.log("Token:", localStorage.getItem("token"));
-
         setLoading(true);
         const response = await getWishlist();
-        console.log("Wishlist response:", response);
 
-        if (response && response.success && Array.isArray(response.products)) {
+        if (response?.success && Array.isArray(response.products)) {
           setProducts(response.products);
         } else {
           setProducts([]);

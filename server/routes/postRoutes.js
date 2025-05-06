@@ -56,15 +56,26 @@ router.put("/:id", authenticateJWT, async (req, res) => {
     if (!post) {
       return res.status(404).json({ message: "Không tìm thấy bài viết" });
     }
-    if (post.author.toString() !== req.user._id.toString()) {
+
+    // Kiểm tra nếu user là admin/superadmin hoặc là tác giả của bài viết
+    if (
+      req.user.role === "admin" ||
+      req.user.role === "superadmin" ||
+      post.author.toString() === req.user._id.toString()
+    ) {
+      const updatedPost = await Post.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {
+          new: true,
+        }
+      );
+      res.json(updatedPost);
+    } else {
       return res
         .status(403)
         .json({ message: "Không có quyền chỉnh sửa bài viết này" });
     }
-    const updatedPost = await Post.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    res.json(updatedPost);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -78,14 +89,19 @@ router.delete("/:id", authenticateJWT, async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy bài viết" });
     }
 
-    if (post.author.toString() !== req.user._id.toString()) {
+    // Kiểm tra nếu user là admin/superadmin hoặc là tác giả của bài viết
+    if (
+      req.user.role === "admin" ||
+      req.user.role === "superadmin" ||
+      post.author.toString() === req.user._id.toString()
+    ) {
+      await Post.findByIdAndDelete(req.params.id);
+      res.json({ message: "Đã xóa bài viết thành công" });
+    } else {
       return res
         .status(403)
         .json({ message: "Không có quyền xóa bài viết này" });
     }
-
-    await Post.findByIdAndDelete(req.params.id);
-    res.json({ message: "Đã xóa bài viết thành công" });
   } catch (error) {
     console.error("Lỗi khi xóa bài viết:", error);
     res

@@ -29,7 +29,9 @@ const ProductZoom = ({ product }) => {
       {/* Large Image with Zoom */}
       <div className="productZoom position-relative">
         {product?.discount > 0 && (
-          <div className="badge badge-primary">-{product.discount}%</div>
+          <div className="badge badge-primary" style={{ fontSize: "14px" }}>
+            -{product.discount}%
+          </div>
         )}
         <div className={`fade-image ${isFading ? "fade-out" : "fade-in"}`}>
           <InnerImageZoom

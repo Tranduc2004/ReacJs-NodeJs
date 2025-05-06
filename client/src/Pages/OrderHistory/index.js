@@ -31,7 +31,6 @@ const OrderHistory = () => {
     try {
       const response = await getUserOrders();
       if (response.success) {
-        console.log("Dữ liệu đơn hàng:", response.data);
         setOrders(response.data);
       } else {
         toast.error("Không thể tải lịch sử đơn hàng");

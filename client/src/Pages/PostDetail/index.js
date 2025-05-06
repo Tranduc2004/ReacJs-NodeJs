@@ -36,6 +36,7 @@ const PostDetail = () => {
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isAuthenticated = !!localStorage.getItem("token");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchPost();
@@ -45,18 +46,12 @@ const PostDetail = () => {
   const fetchPost = async () => {
     try {
       const response = await api.get(`/posts/${id}`);
-      console.log("Post detail response:", response);
-      if (response) {
-        setPost(response);
-        // Giả lập việc tải các bài viết liên quan
-        fetchRelatedPosts(response.tags);
-      } else {
-        setPost(null);
-      }
+      setPost(response);
+      // Giả lập việc tải các bài viết liên quan
+      fetchRelatedPosts(response.tags);
     } catch (error) {
       console.error("Lỗi khi lấy chi tiết bài viết:", error);
-      toast.error("Không thể tải bài viết");
-      setPost(null);
+      setError("Không thể tải chi tiết bài viết");
     } finally {
       setLoading(false);
     }

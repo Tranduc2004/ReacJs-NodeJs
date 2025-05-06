@@ -55,7 +55,7 @@ const NavLinks = () => {
         >
           <a
             href={item.link}
-            className={`text-gray-700 flex items-center font-medium transition-all duration-300 hover:text-[#00aaff] px-3 py-2 rounded-md hover:bg-[#00aaff]/10 hover:no-underline ${
+            className={`text-gray-700 flex items-center font-semibold transition-all duration-300 hover:text-[#00aaff] px-3 py-2 rounded-md hover:bg-[#00aaff]/10 hover:no-underline ${
               item.name === "HOME" || item.name === "SHOP"
                 ? ""
                 : "hover:bg-[#00aaff]/10"
@@ -99,7 +99,7 @@ const NavLinks = () => {
                 >
                   <a
                     href={subItem.link}
-                    className="flex items-center justify-between px-4 py-2 text-gray-700 font-medium hover:bg-[#00aaff]/10 hover:text-[#00aaff] whitespace-nowrap hover:no-underline"
+                    className="flex items-center justify-between px-4 py-2 text-gray-700 font-semibold hover:bg-[#00aaff]/10 hover:text-[#00aaff] whitespace-nowrap hover:no-underline"
                   >
                     {subItem.name}
                     {subItem.subItems && (
@@ -124,7 +124,7 @@ const NavLinks = () => {
                         <a
                           key={nestedIndex}
                           href={nestedItem.link}
-                          className="block px-4 py-2 text-gray-700 font-medium hover:bg-[#00aaff]/10 hover:text-[#00aaff] whitespace-nowrap hover:no-underline"
+                          className="block px-4 py-2 text-gray-700 font-semibold hover:bg-[#00aaff]/10 hover:text-[#00aaff] whitespace-nowrap hover:no-underline"
                         >
                           {nestedItem.name}
                         </a>

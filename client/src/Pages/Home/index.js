@@ -11,62 +11,166 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import * as React from "react";
 import { CiMail } from "react-icons/ci";
-import { useState, useEffect } from "react";
-import { getProducts } from "../../services/api";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
+import { getProducts, getReviewsByProduct } from "../../services/api";
 import { Link } from "react-router-dom";
 import ProductItem from "../../Components/ProductItem";
 import Chatbot from "../../Components/Chatbot";
+import CustomerComment from "../../Components/CustomerComment/CustomerComment";
+import avtuser from "../../assets/images/avtuser.png";
 
 // Import Swiper styles
 import "swiper/css";
 import "swiper/css/pagination";
 
-const BestSellers = () => {
+// Tách Swiper settings ra ngoài component
+const swiperSettings = {
+  slidesPerView: 4,
+  spaceBetween: 8,
+  slidesPerGroup: 1,
+  pagination: { clickable: true },
+  navigation: true,
+  modules: [Navigation],
+  className: "mySwiper",
+  breakpoints: {
+    0: { slidesPerView: 2, spaceBetween: 10 },
+    768: { slidesPerView: 3, spaceBetween: 15 },
+    1024: { slidesPerView: 4, spaceBetween: 8 },
+  },
+};
+
+// Tách ProductSwiper thành component riêng
+const ProductSwiper = memo(({ products, title, description }) => {
+  const renderProducts = useMemo(() => {
+    if (!products.length) {
+      return <div className="text-center">Không có sản phẩm nào</div>;
+    }
+    return products.map((product) => (
+      <SwiperSlide key={product._id}>
+        <ProductItem product={product} />
+      </SwiperSlide>
+    ));
+  }, [products]);
+
+  return (
+    <>
+      <div className="d-flex align-items-center">
+        <div className="info w-75">
+          <h3 className="mb-0 hd">{title}</h3>
+          <p className="text-light1 text-sml mb-0">{description}</p>
+        </div>
+        <Link to="/listing" className="ml-auto">
+          <Button className="viewAllBtn ml-auto">
+            Xem tất cả&nbsp;
+            <FaArrowRight className="arrow" />
+          </Button>
+        </Link>
+      </div>
+      <div className="product_row w-100 mt-2">
+        <Swiper {...swiperSettings}>{renderProducts}</Swiper>
+      </div>
+    </>
+  );
+});
+
+// Tách AllProducts thành component riêng
+const AllProducts = memo(({ products }) => {
+  const renderProducts = useMemo(() => {
+    return products.map((product) => (
+      <div key={product._id} className="col-6 col-sm-6 col-md-3 col-lg-3 p-0">
+        <ProductItem product={product} />
+      </div>
+    ));
+  }, [products]);
+
+  return (
+    <section className="allProducts mt-5">
+      <div className="container">
+        <div className="section-header mb-4">
+          <h2 className="text-left hd">TẤT CẢ SẢN PHẨM</h2>
+          <p className="text-left text-light1">
+            Khám phá thêm nhiều sản phẩm hấp dẫn khác
+          </p>
+        </div>
+        <div className="row g-2">{renderProducts}</div>
+      </div>
+    </section>
+  );
+});
+
+const BestSellers = memo(() => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [customerComments, setCustomerComments] = useState([]);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const fetchProductsAndComments = async () => {
       try {
         const data = await getProducts();
-        console.log("Dữ liệu sản phẩm:", data);
-
-        // Kiểm tra data có phải là mảng không
-        if (Array.isArray(data)) {
-          setProducts(data);
-        } else {
-          console.error("Dữ liệu không phải là mảng:", data);
-          setProducts([]);
+        if (isMounted && !controller.signal.aborted) {
+          if (Array.isArray(data)) {
+            setProducts(data);
+            // Lấy review của sản phẩm đầu tiên nếu có
+            if (data.length > 0) {
+              const productId = data[0]._id;
+              try {
+                const reviews = await getReviewsByProduct(productId);
+                if (Array.isArray(reviews) && reviews.length > 0) {
+                  // Shuffle và lấy 2 bình luận ngẫu nhiên
+                  const shuffled = reviews.sort(() => 0.5 - Math.random());
+                  const selected = shuffled.slice(0, 2).map((review) => ({
+                    title: review.title || "Khách hàng nhận xét",
+                    content: review.comment,
+                    avatar: review.user?.avatar || avtuser,
+                    name: review.user?.name || "Khách hàng",
+                    role: review.user?.role || "Khách hàng",
+                  }));
+                  setCustomerComments(selected);
+                }
+              } catch (e) {
+                setCustomerComments([]);
+              }
+            }
+          } else {
+            setProducts([]);
+          }
+          setLoading(false);
         }
-        setLoading(false);
       } catch (err) {
-        console.error("Lỗi khi lấy sản phẩm:", err);
-        setError("Không thể tải sản phẩm. Vui lòng thử lại sau.");
-        setLoading(false);
+        if (isMounted && !controller.signal.aborted) {
+          setError("Không thể tải sản phẩm. Vui lòng thử lại sau.");
+          setLoading(false);
+        }
       }
     };
 
-    fetchProducts();
+    fetchProductsAndComments();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
   }, []);
 
-  if (loading) {
-    return <div>Đang tải...</div>;
-  }
+  // Memoize các danh sách sản phẩm
+  const productLists = useMemo(() => {
+    if (!Array.isArray(products))
+      return { bestSellers: [], featuredProducts: [], remainingProducts: [] };
 
-  if (error) {
-    return <div>{error}</div>;
-  }
+    return {
+      bestSellers: products.slice(0, 8),
+      featuredProducts: products.slice(8, 15),
+      remainingProducts: products.slice(16),
+    };
+  }, [products]);
 
-  // Kiểm tra products có phải là mảng không
-  if (!Array.isArray(products)) {
-    console.error("products không phải là mảng:", products);
-    return <div>Không có sản phẩm nào</div>;
-  }
-
-  // Lấy 8 sản phẩm đầu tiên để hiển thị
-  const bestSellers = products.slice(0, 8);
-  const featuredProducts = products.slice(8, 15);
+  if (loading) return <div>Đang tải...</div>;
+  if (error) return <div>{error}</div>;
+  if (!Array.isArray(products)) return <div>Không có sản phẩm nào</div>;
 
   return (
     <div className="home">
@@ -83,118 +187,35 @@ const BestSellers = () => {
                 <div className="banner mt-3">
                   <img alt="" src={banner2} className="cusror w-100" />
                 </div>
+                {/* Hiển thị bình luận khách hàng */}
+                <div className="mt-3 d-flex flex-column gap-3">
+                  <h3
+                    className="hd mt-9"
+                    style={{
+                      fontSize: "17px",
+                      fontFamily: "Dosis, sans-serif",
+                    }}
+                  >
+                    BÌNH LUẬN KHÁCH HÀNG
+                  </h3>
+                  {customerComments.map((c, idx) => (
+                    <CustomerComment key={idx} comment={c} />
+                  ))}
+                </div>
               </div>
             </div>
             <div className="col-md-9 productRow">
-              <div className="d-flex align-items-center">
-                <div className="info w-75">
-                  <h3 className="mb-0 hd">SẢN PHẨM NỔI BẬT</h3>
-                  <p className="text-light1 text-sml mb-0">
-                    Khám phá các sản phẩm bán chạy nhất của chúng tôi.
-                  </p>
-                </div>
-
-                <Link to="listing" className="ml-auto">
-                  <Button className="viewAllBtn ml-auto">
-                    Xem tất cả&nbsp;
-                    <FaArrowRight className="arrow" />
-                  </Button>
-                </Link>
-              </div>
-
-              <div className="product_row w-100 mt-2">
-                <Swiper
-                  slidesPerView={4}
-                  spaceBetween={8}
-                  slidesPerGroup={1}
-                  pagination={{ clickable: true }}
-                  navigation={true}
-                  modules={[Navigation]}
-                  className="mySwiper"
-                  breakpoints={{
-                    // Mobile (default): 2 sản phẩm
-                    0: {
-                      slidesPerView: 2,
-                      spaceBetween: 10,
-                    },
-                    // Tablet: 3 sản phẩm
-                    768: {
-                      slidesPerView: 3,
-                      spaceBetween: 15,
-                    },
-                    // Desktop: 4 sản phẩm
-                    1024: {
-                      slidesPerView: 4,
-                      spaceBetween: 8,
-                    },
-                  }}
-                >
-                  {bestSellers.length > 0 ? (
-                    bestSellers.map((product) => (
-                      <SwiperSlide key={product._id}>
-                        <ProductItem product={product} />
-                      </SwiperSlide>
-                    ))
-                  ) : (
-                    <div className="text-center">Không có sản phẩm nào</div>
-                  )}
-                </Swiper>
-              </div>
-
-              <div className="d-flex align-items-center mt-3">
-                <div className="info w-75">
-                  <h3 className="mb-0 hd">SẢN PHẨM MỚI</h3>
-                  <p className="text-light1 text-sml mb-0">
-                    Khám phá các sản phẩm mới nhất của chúng tôi.
-                  </p>
-                </div>
-
-                <Link to="/listing" className="ml-auto">
-                  <Button className="viewAllBtn ml-auto">
-                    Xem tất cả <FaArrowRight className="arrow" />
-                  </Button>
-                </Link>
-              </div>
-
-              <div className="product_row w-100 mt-2">
-                <Swiper
-                  slidesPerView={4}
-                  spaceBetween={8}
-                  slidesPerGroup={1}
-                  pagination={{ clickable: true }}
-                  navigation={true}
-                  modules={[Navigation]}
-                  className="mySwiper"
-                  breakpoints={{
-                    // Mobile (default): 2 sản phẩm
-                    0: {
-                      slidesPerView: 2,
-                      spaceBetween: 10,
-                    },
-                    // Tablet: 3 sản phẩm
-                    768: {
-                      slidesPerView: 3,
-                      spaceBetween: 15,
-                    },
-                    // Desktop: 4 sản phẩm
-                    1024: {
-                      slidesPerView: 4,
-                      spaceBetween: 8,
-                    },
-                  }}
-                >
-                  {featuredProducts.length > 0 ? (
-                    featuredProducts.map((product) => (
-                      <SwiperSlide key={product._id}>
-                        <ProductItem product={product} />
-                      </SwiperSlide>
-                    ))
-                  ) : (
-                    <div className="text-center">Không có sản phẩm nào</div>
-                  )}
-                </Swiper>
-              </div>
-
+              <ProductSwiper
+                products={productLists.bestSellers}
+                title="SẢN PHẨM NỔI BẬT"
+                description="Khám phá các sản phẩm bán chạy nhất của chúng tôi."
+              />
+              <br />
+              <ProductSwiper
+                products={productLists.featuredProducts}
+                title="SẢN PHẨM MỚI"
+                description="Khám phá các sản phẩm mới nhất của chúng tôi."
+              />
               <div className="d-flex mt-4 mb-5 bannerSec">
                 <div className="banner">
                   <img
@@ -212,43 +233,26 @@ const BestSellers = () => {
                   />
                 </div>
               </div>
-              {/* Phần hiển thị tất cả sản phẩm còn lại */}
-              <section className="allProducts mt-5">
-                <div className="container">
-                  <div className="section-header mb-4">
-                    <h2 className="text-left hd">TẤT CẢ SẢN PHẨM</h2>
-                    <p className="text-left text-light1">
-                      Khám phá thêm nhiều sản phẩm hấp dẫn khác
-                    </p>
-                  </div>
 
-                  <div className="row g-2">
-                    {products.slice(16).map((product) => (
-                      <div
-                        key={product._id}
-                        className="col-6 col-sm-6 col-md-3 col-lg-3 p-0"
-                      >
-                        <ProductItem product={product} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
+              <AllProducts products={productLists.remainingProducts} />
             </div>
           </div>
         </div>
       </section>
+
       <section className="newsLetterSection mt-3 d-flex align-items-center">
         <div className="container">
           <div className="row">
-            <div className="col-md-6 row1">
+            <div className="col-md-6 row1 text3">
               <p className="text-white mb-1">
-                $20 discount for your first order
+                Giảm giá $20 cho đơn hàng đầu tiên của bạn
               </p>
-              <h3 className="text-white">Join our newsletter and get...</h3>
+              <h3 className="text-white">
+                Tham gia bản tin của chúng tôi và nhận...
+              </h3>
               <p className="text-light1">
-                Join our email subscription now to get updates on
-                <br /> promotion and coupons.
+                Đăng ký nhận email ngay bây giờ để cập nhật về
+                <br /> khuyến mãi và mã giảm giá.
               </p>
 
               <form>
@@ -266,6 +270,8 @@ const BestSellers = () => {
       <Chatbot />
     </div>
   );
-};
+});
+
+BestSellers.displayName = "BestSellers";
 
 export default BestSellers;
