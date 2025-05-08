@@ -88,8 +88,7 @@ const ResetPassword = () => {
     } catch (err) {
       console.error("Lỗi khi đặt lại mật khẩu:", err);
       setError(
-        err.response?.data?.message ||
-          "Có lỗi xảy ra khi đặt lại mật khẩu. Vui lòng thử lại."
+        err.message || "Có lỗi xảy ra khi đặt lại mật khẩu. Vui lòng thử lại."
       );
     } finally {
       setLoading(false);

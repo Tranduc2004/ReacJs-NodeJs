@@ -32,7 +32,7 @@ const isAdmin = (req, res, next) => {
 
   // Kiểm tra role không phân biệt chữ hoa chữ thường
   const userRole = req.user.role.toLowerCase();
-  if (userRole !== "admin") {
+  if (userRole !== "admin" && userRole !== "superadmin") {
     return res.status(403).json({ message: "Không có quyền truy cập" });
   }
   next();

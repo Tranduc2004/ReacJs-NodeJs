@@ -32,8 +32,8 @@ api.interceptors.response.use(
     return response.data;
   },
   (error) => {
-    // Chỉ xử lý lỗi 401 khi không phải đang ở trang đăng nhập hoặc callback
-    if (error.response?.status === 401) {
+    // Xử lý lỗi xác thực
+    if (error.response?.status === 401 || error.response?.status === 403) {
       const currentPath = window.location.pathname;
       const isAuthPage =
         currentPath.includes("/signin") ||
@@ -50,8 +50,13 @@ api.interceptors.response.use(
           // Chuyển hướng về trang đăng nhập
           window.location.href = "/signin";
         } else {
-          // Nếu là lỗi khác, chỉ reject error
-          return Promise.reject(error);
+          // Nếu là lỗi 403, kiểm tra xem có phải do chưa đăng nhập không
+          if (
+            error.response?.status === 403 &&
+            !localStorage.getItem("token")
+          ) {
+            window.location.href = "/signin";
+          }
         }
       }
     }
@@ -202,9 +207,7 @@ const getCategories = () => api.get("/categories");
 
 const getCategoryById = async (id) => {
   try {
-    console.log(`Calling getCategoryById API for ID: ${id}...`);
     const response = await api.get(`/category/${id}`);
-    console.log("Category detail response:", response.data);
     return response.data;
   } catch (error) {
     console.error(`Lỗi khi lấy danh mục với ID ${id}:`, error);
@@ -226,9 +229,7 @@ const getSearchSuggestions = (query) => {
 const getBrands = () => api.get("/brands");
 const getBrandById = async (id) => {
   try {
-    console.log(`Calling getBrandById API for ID: ${id}...`);
     const response = await api.get(`/brands/${id}`);
-    console.log("Brand detail response:", response.data);
     return response.data;
   } catch (error) {
     console.error(`Lỗi khi lấy thương hiệu với ID ${id}:`, error);
@@ -251,9 +252,7 @@ const register = async (userData) => {
 
 const login = async (credentials) => {
   try {
-    console.log("Bắt đầu đăng nhập với credentials:", credentials);
     const response = await api.post("/auth/login", credentials);
-    console.log("Response từ server:", response);
 
     if (!response || !response.data) {
       throw new Error("Không nhận được phản hồi từ server");
@@ -267,15 +266,12 @@ const login = async (credentials) => {
 
     // Lưu token vào localStorage
     localStorage.setItem("token", token);
-    console.log("Đã lưu token vào localStorage");
 
     // Lưu thông tin user vào localStorage
     localStorage.setItem("user", JSON.stringify(userData));
-    console.log("Đã lưu thông tin user vào localStorage");
 
     // Cập nhật header Authorization
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    console.log("Đã cập nhật header Authorization");
 
     // Kiểm tra xem token và user data đã được lưu thành công chưa
     const savedToken = localStorage.getItem("token");
@@ -284,11 +280,6 @@ const login = async (credentials) => {
     if (!savedToken || !savedUser) {
       throw new Error("Không thể lưu thông tin đăng nhập");
     }
-
-    console.log("Đăng nhập thành công:", {
-      token: savedToken,
-      user: JSON.parse(savedUser),
-    });
 
     // Cập nhật context
     const event = new CustomEvent("authStateChanged", {
@@ -352,10 +343,6 @@ const forgotPassword = async (data) => {
 // API cho đặt lại mật khẩu
 const resetPassword = async (token, password) => {
   try {
-    console.log("Đang gửi yêu cầu đặt lại mật khẩu...");
-    console.log("Token:", token);
-    console.log("Password:", password);
-
     if (!token) {
       throw new Error("Token không hợp lệ");
     }
@@ -363,15 +350,14 @@ const resetPassword = async (token, password) => {
     const response = await api.post(`/auth/reset-password/${token}`, {
       password,
     });
-    console.log("Phản hồi từ server:", response);
 
     // Kiểm tra nếu response có success: true
-    if (response.success) {
-      return response;
+    if (response.data?.success) {
+      return response.data;
     }
 
     // Nếu không có success, trả về response gốc
-    return response;
+    return response.data;
   } catch (error) {
     console.error("Lỗi khi đặt lại mật khẩu:", error);
 
@@ -708,8 +694,6 @@ export const handleGoogleLogin = () => {
 
 export const handleGoogleCallback = async (token) => {
   try {
-    console.log("Bắt đầu xử lý Google callback với token:", token);
-
     if (!token) {
       throw new Error("Không tìm thấy token");
     }
@@ -718,7 +702,6 @@ export const handleGoogleCallback = async (token) => {
     const getUserInfo = async (retryCount = 0) => {
       try {
         const userResponse = await api.get("/auth/me");
-        console.log("Thông tin user nhận được:", userResponse);
 
         if (!userResponse.data) {
           throw new Error("Không thể lấy thông tin người dùng");
@@ -734,13 +717,9 @@ export const handleGoogleCallback = async (token) => {
           authProvider: "google",
         };
 
-        // Log để debug
-        console.log("User data sau khi xử lý:", userData);
-
         return userData;
       } catch (error) {
         if (error.response?.status === 401 && retryCount < 3) {
-          console.log(`Retry lấy thông tin user lần ${retryCount + 1}`);
           await new Promise((resolve) => setTimeout(resolve, 500));
           return getUserInfo(retryCount + 1);
         }
@@ -753,7 +732,6 @@ export const handleGoogleCallback = async (token) => {
 
     // Lưu user data vào localStorage
     localStorage.setItem("user", JSON.stringify(userData));
-    console.log("Đã lưu user data vào localStorage");
 
     // Kiểm tra xem user data đã được lưu thành công chưa
     const savedUser = localStorage.getItem("user");
@@ -761,11 +739,6 @@ export const handleGoogleCallback = async (token) => {
     if (!savedUser) {
       throw new Error("Không thể lưu thông tin đăng nhập");
     }
-
-    console.log("Đăng nhập Google thành công:", {
-      token,
-      user: JSON.parse(savedUser),
-    });
 
     // Cập nhật context
     const event = new CustomEvent("authStateChanged", {
@@ -788,6 +761,101 @@ export const handleGoogleCallback = async (token) => {
     localStorage.removeItem("user");
     delete api.defaults.headers.common["Authorization"];
     throw error;
+  }
+};
+
+// API cho voucher (mã giảm giá)
+export const getVouchers = async () => {
+  try {
+    const response = await api.get("/vouchers");
+    // Admin và backend trả về { success, data }
+    if (response && response.data) {
+      // Lấy thêm thông tin về voucher đã lưu và đã sử dụng
+      const savedVouchersResponse = await getSavedVouchers();
+      const savedVouchers = savedVouchersResponse.data || [];
+
+      // Map thông tin used vào danh sách voucher
+      const vouchersWithStatus = response.data.map((voucher) => {
+        const savedVoucher = savedVouchers.find((sv) => sv._id === voucher._id);
+        return {
+          ...voucher,
+          used: savedVoucher?.used || false,
+        };
+      });
+
+      return vouchersWithStatus;
+    }
+    return [];
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách voucher:", error);
+    return [];
+  }
+};
+
+// Lấy danh sách voucher đã lưu của user
+export const getSavedVouchers = async () => {
+  try {
+    if (!isAuthenticated()) {
+      return [];
+    }
+    const response = await api.get("/auth/vouchers/saved");
+    return response.data || [];
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách voucher đã lưu:", error);
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/signin";
+    }
+    return [];
+  }
+};
+
+// Lưu voucher vào kho của user
+export const saveVoucher = async (voucherId) => {
+  try {
+    const response = await api.post(`/auth/vouchers/save/${voucherId}`);
+    // Nếu response có success = true hoặc không có lỗi, coi như thành công
+    if (response.data?.success || !response.data?.message?.includes("đã lưu")) {
+      return response.data;
+    }
+    // Nếu voucher đã được lưu trước đó, vẫn coi là thành công
+    if (response.data?.message?.includes("đã lưu")) {
+      return {
+        success: true,
+        message: "Voucher đã được lưu trước đó",
+      };
+    }
+    throw new Error(response.data?.message || "Không thể lưu mã giảm giá");
+  } catch (error) {
+    console.error("Lỗi khi lưu voucher:", error);
+    // Nếu lỗi là do voucher đã được lưu, vẫn coi là thành công
+    if (error.response?.data?.message?.includes("đã lưu")) {
+      return {
+        success: true,
+        message: "Voucher đã được lưu trước đó",
+      };
+    }
+    throw error;
+  }
+};
+
+// Xóa voucher đã lưu
+export const removeSavedVoucher = async (voucherId) => {
+  try {
+    const response = await api.delete(`/auth/vouchers/save/${voucherId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi xóa voucher:", error);
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      throw new Error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+    }
+    throw (
+      error.response?.data?.message ||
+      "Không thể xóa mã giảm giá. Vui lòng thử lại sau!"
+    );
   }
 };
 

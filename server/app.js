@@ -25,6 +25,7 @@ const orderRoutes = require("./routes/orders");
 const postRoutes = require("./routes/postRoutes");
 const userRoutes = require("./routes/auth");
 const momoPaymentRoutes = require("./routes/momopayment");
+const voucherRoutes = require("./routes/voucherRoutes");
 
 // Kết nối MongoDB
 mongoose
@@ -79,6 +80,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/momo", momoPaymentRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/vouchers", voucherRoutes);
 
 // Basic route để test
 app.get("/", (req, res) => {

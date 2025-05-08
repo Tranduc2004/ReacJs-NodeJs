@@ -6,6 +6,8 @@ const { validationResult } = require("express-validator");
 const transporter = require("../config/email");
 const crypto = require("crypto");
 const passport = require("passport");
+const Voucher = require("../models/Voucher");
+const UserVoucher = require("../models/UserVoucher");
 
 // Middleware xác thực token
 const auth = async (req, res, next) => {
@@ -365,20 +367,13 @@ router.post("/reset-password/:token", async (req, res) => {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
 
-    try {
-      await user.save();
-      console.log("Đặt lại mật khẩu thành công cho user:", user._id);
-      res.json({
-        success: true,
-        message: "Đặt lại mật khẩu thành công",
-      });
-    } catch (saveError) {
-      console.error("Lỗi khi lưu mật khẩu mới:", saveError);
-      res.status(500).json({
-        success: false,
-        message: "Có lỗi xảy ra khi lưu mật khẩu mới",
-      });
-    }
+    await user.save();
+    console.log("Đặt lại mật khẩu thành công cho user:", user._id);
+
+    res.json({
+      success: true,
+      message: "Đặt lại mật khẩu thành công",
+    });
   } catch (error) {
     console.error("Lỗi khi đặt lại mật khẩu:", error);
     res.status(500).json({
@@ -416,5 +411,160 @@ router.get(
     }
   }
 );
+
+// Routes cho voucher
+
+// Lấy danh sách voucher đã lưu
+router.get("/vouchers/saved", auth, async (req, res) => {
+  try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({
+        success: false,
+        message: "Không tìm thấy thông tin người dùng",
+      });
+    }
+    const savedVouchers = await UserVoucher.find({
+      user: req.user._id,
+    }).populate({
+      path: "voucher",
+      select:
+        "name code discountType discountValue minOrderValue startDate endDate description applicableProducts applicableCategories",
+      populate: [
+        { path: "applicableProducts", select: "name price images" },
+        { path: "applicableCategories", select: "name" },
+      ],
+    });
+    const currentDate = new Date();
+    const validVouchers = savedVouchers
+      .filter((uv) => {
+        const voucher = uv.voucher;
+        return (
+          voucher &&
+          new Date(voucher.startDate) <= currentDate &&
+          new Date(voucher.endDate) >= currentDate
+        );
+      })
+      .map((uv) => ({
+        ...uv.voucher.toObject(),
+        used: uv.used,
+      }));
+    res.json({
+      success: true,
+      data: validVouchers,
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách voucher đã lưu:", error);
+    res.status(500).json({
+      success: false,
+      message: "Có lỗi xảy ra khi lấy danh sách voucher đã lưu",
+      error: error.message,
+    });
+  }
+});
+
+// Lưu voucher
+router.post("/vouchers/save/:voucherId", auth, async (req, res) => {
+  try {
+    const { voucherId } = req.params;
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({
+        success: false,
+        message: "Không tìm thấy thông tin người dùng",
+      });
+    }
+    const voucher = await Voucher.findById(voucherId);
+    if (!voucher) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy mã giảm giá",
+      });
+    }
+    const currentDate = new Date();
+    if (
+      new Date(voucher.startDate) > currentDate ||
+      new Date(voucher.endDate) < currentDate
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Mã giảm giá không còn hiệu lực",
+      });
+    }
+    // Kiểm tra voucher đã hết lượt sử dụng chưa
+    if (voucher.usedCount >= voucher.usageLimit) {
+      return res.status(400).json({
+        success: false,
+        message: "Voucher đã hết lượt sử dụng, không thể lưu vào kho nữa",
+      });
+    }
+    // Kiểm tra user đã từng dùng voucher này chưa
+    const existed = await UserVoucher.findOne({
+      user: req.user._id,
+      voucher: voucherId,
+    });
+    if (existed && existed.used) {
+      return res.status(400).json({
+        success: false,
+        message: "Voucher này đã được sử dụng, không thể lưu lại.",
+      });
+    }
+    // Kiểm tra đã lưu chưa
+    if (existed) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Bạn đã lưu mã giảm giá này" });
+    }
+    await UserVoucher.create({ user: req.user._id, voucher: voucherId });
+    res.json({ success: true, message: "Đã lưu mã giảm giá thành công" });
+  } catch (error) {
+    console.error("Lỗi khi lưu voucher:", error);
+    if (error.code === 11000) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Bạn đã lưu mã giảm giá này" });
+    }
+    res.status(500).json({
+      success: false,
+      message: "Có lỗi xảy ra khi lưu mã giảm giá",
+      error: error.message,
+    });
+  }
+});
+
+// Xóa voucher đã lưu
+router.delete("/vouchers/save/:voucherId", auth, async (req, res) => {
+  try {
+    const { voucherId } = req.params;
+    const userId = req.user._id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Không tìm thấy thông tin người dùng",
+      });
+    }
+    const savedVoucher = await UserVoucher.findOne({
+      user: userId,
+      voucher: voucherId,
+    });
+    if (!savedVoucher) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy mã giảm giá đã lưu" });
+    }
+    if (savedVoucher.used) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Không thể xóa voucher đã sử dụng" });
+    }
+    await UserVoucher.deleteOne({ _id: savedVoucher._id });
+    res.json({ success: true, message: "Đã xóa mã giảm giá khỏi kho" });
+  } catch (error) {
+    console.error("Lỗi khi xóa voucher:", error);
+    res.status(500).json({
+      success: false,
+      message: "Có lỗi xảy ra khi xóa mã giảm giá",
+      error: error.message,
+    });
+  }
+});
 
 module.exports = router;

@@ -28,7 +28,7 @@ import { Visibility, Edit } from "@mui/icons-material";
 import { toast } from "react-hot-toast";
 import { fetchAllOrdersApi, editData } from "../../utils/api";
 import { useTheme } from "../../context/ThemeContext";
-
+import { Link } from "react-router-dom";
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -150,8 +150,31 @@ const Orders = () => {
     return Math.round(discountedTotal);
   };
 
+  // Hàm tính giá cuối cùng sau khi áp dụng voucher
+  const getFinalAmount = (order) => {
+    const discountedTotal = getDiscountedTotal(order);
+    if (order.discountAmount && order.discountAmount > 0) {
+      return Math.round(discountedTotal - order.discountAmount);
+    }
+    return discountedTotal;
+  };
+
   return (
     <div className="category-table-container">
+      <div className="header">
+        <h1>Danh sách đơn hàng</h1>
+        <div className="breadcrumbs">
+          <Link to="/" className="breadcrumb-link">
+            Trang chủ
+          </Link>
+          <span className="separator">~</span>
+          <Link to="/orders" className="breadcrumb-link">
+            Đơn hàng
+          </Link>
+          <span className="separator">~</span>
+          <span>Danh sách đơn hàng</span>
+        </div>
+      </div>
       <div className="table-header-section">
         <h3>Quản lý đơn hàng</h3>
       </div>
@@ -183,9 +206,10 @@ const Orders = () => {
                   {/* Hiển thị giá đã giảm nếu có sản phẩm giảm giá */}
                   {(() => {
                     const discounted = getDiscountedTotal(order);
-                    if (discounted < order.totalAmount) {
-                      return (
-                        <>
+                    const finalAmount = getFinalAmount(order);
+                    return (
+                      <>
+                        {discounted < order.totalAmount && (
                           <span
                             style={{
                               textDecoration: "line-through",
@@ -198,21 +222,35 @@ const Orders = () => {
                               : "0"}
                             đ
                           </span>
+                        )}
+                        {order.discountAmount > 0 ? (
+                          <>
+                            <span
+                              style={{
+                                color: "#ed174a",
+                                fontWeight: 600,
+                                marginRight: 4,
+                              }}
+                            >
+                              {discounted.toLocaleString("vi-VN")}đ
+                            </span>
+                            <br />
+                            <span style={{ fontSize: "12px", color: "#666" }}>
+                              Giảm voucher: -
+                              {order.discountAmount.toLocaleString("vi-VN")}đ
+                            </span>
+                            <br />
+                            <span style={{ color: "#ed174a", fontWeight: 600 }}>
+                              Tổng: {finalAmount.toLocaleString("vi-VN")}đ
+                            </span>
+                          </>
+                        ) : (
                           <span style={{ color: "#ed174a", fontWeight: 600 }}>
                             {discounted.toLocaleString("vi-VN")}đ
                           </span>
-                        </>
-                      );
-                    } else {
-                      return (
-                        <span>
-                          {order.totalAmount
-                            ? order.totalAmount.toLocaleString("vi-VN")
-                            : "0"}
-                          đ
-                        </span>
-                      );
-                    }
+                        )}
+                      </>
+                    );
                   })()}
                 </td>
                 <td>

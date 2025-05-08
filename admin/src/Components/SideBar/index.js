@@ -149,6 +149,10 @@ const Sidebar = () => {
           <SubMenuItem text="Slider List" prefix="sliders" />
           <SubMenuItem text="Slider Add" prefix="sliders" />
         </MenuItem>
+        <MenuItem icon={MdBrandingWatermark} text="Voucher" isDropdown>
+          <SubMenuItem text="Voucher List" prefix="voucher" />
+          <SubMenuItem text="Voucher Add" prefix="voucher" />
+        </MenuItem>
         <MenuItem
           icon={FaRegUser}
           text="Users"

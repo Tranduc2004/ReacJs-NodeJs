@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -18,6 +19,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { fetchUserDetailApi } from "../../utils/api";
 import { toast } from "react-toastify";
 import { FaArrowLeft } from "react-icons/fa";
+import "./styles.css";
 
 const UserDetail = () => {
   const { id } = useParams();
@@ -28,18 +30,34 @@ const UserDetail = () => {
 
   useEffect(() => {
     const fetchUserDetail = async () => {
+      if (!id) {
+        toast.error("Không tìm thấy ID người dùng");
+        navigate("/users");
+        return;
+      }
       try {
         setLoading(true);
         const response = await fetchUserDetailApi(id);
-        setUser(response);
+        console.log("Response từ API:", response);
+
+        if (response) {
+          console.log("Dữ liệu user từ API:", response);
+          setUser(response);
+        } else {
+          console.log("Response không có dữ liệu");
+          setUser(null);
+        }
       } catch (error) {
+        console.error("Chi tiết lỗi:", error);
+        console.error("Response error:", error.response?.data);
         toast.error("Không thể lấy thông tin người dùng");
+        navigate("/users");
       } finally {
         setLoading(false);
       }
     };
     fetchUserDetail();
-  }, [id]);
+  }, [id, navigate]);
 
   if (loading) {
     return (
@@ -57,7 +75,6 @@ const UserDetail = () => {
     );
   }
 
-  // Thêm hàm đồng bộ trạng thái
   const getStatusColor = (status) => {
     switch (status) {
       case "PENDING":
@@ -74,6 +91,7 @@ const UserDetail = () => {
         return { color: "#757575", backgroundColor: "#f5f5f5" };
     }
   };
+
   const getStatusText = (status) => {
     switch (status) {
       case "PENDING":
@@ -92,169 +110,154 @@ const UserDetail = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Button
-          variant="outlined"
-          onClick={() => navigate("/users")}
-          startIcon={<FaArrowLeft />}
-          sx={{
-            color: "primary.main",
-            borderColor: "primary.main",
-            "&:hover": {
-              borderColor: "primary.dark",
-              backgroundColor: "action.hover",
-            },
-          }}
-        >
-          Quay lại
-        </Button>
-      </Box>
+    <div className="user-detail-container">
+      {/* Header */}
+      <div className="header">
+        <h1>Chi tiết người dùng</h1>
+        <div className="breadcrumbs">
+          <Link to="/" className="breadcrumb-link">
+            Trang chủ
+          </Link>
+          <span className="separator">~</span>
+          <Link to="/users" className="breadcrumb-link">
+            Người dùng
+          </Link>
+          <span className="separator">~</span>
+          <span>Chi tiết người dùng</span>
+        </div>
+      </div>
 
-      <Paper
+      <Button
+        variant="outlined"
+        onClick={() => navigate("/users")}
+        startIcon={<FaArrowLeft />}
         sx={{
-          p: 3,
           mb: 3,
-          backgroundColor: "background.paper",
-          color: "text.primary",
-          boxShadow: theme.shadows[1],
+          color: "primary.main",
+          borderColor: "primary.main",
+          "&:hover": {
+            borderColor: "primary.dark",
+            backgroundColor: "action.hover",
+          },
         }}
       >
-        <Typography variant="h5" gutterBottom sx={{ color: "text.primary" }}>
-          Thông tin người dùng
-        </Typography>
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle1" sx={{ color: "text.secondary" }}>
-              Tên
-            </Typography>
-            <Typography variant="body1" sx={{ color: "text.primary" }}>
-              {user.name}
-            </Typography>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle1" sx={{ color: "text.secondary" }}>
-              Email
-            </Typography>
-            <Typography variant="body1" sx={{ color: "text.primary" }}>
-              {user.email}
-            </Typography>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle1" sx={{ color: "text.secondary" }}>
-              Số điện thoại
-            </Typography>
-            <Typography variant="body1" sx={{ color: "text.primary" }}>
-              {user.phone || "Chưa cập nhật"}
-            </Typography>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle1" sx={{ color: "text.secondary" }}>
-              Vai trò
-            </Typography>
-            <Typography variant="body1" sx={{ color: "text.primary" }}>
-              {user.role}
-            </Typography>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle1" sx={{ color: "text.secondary" }}>
-              Trạng thái
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                color: user.isActive ? "success.main" : "error.main",
-                backgroundColor: user.isActive
-                  ? "success.lighter"
-                  : "error.lighter",
-                padding: "4px 8px",
-                borderRadius: "4px",
-                display: "inline-block",
-              }}
-            >
-              {user.isActive ? "Hoạt động" : "Vô hiệu hóa"}
-            </Typography>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="subtitle1" sx={{ color: "text.secondary" }}>
-              Ngày tạo
-            </Typography>
-            <Typography variant="body1" sx={{ color: "text.primary" }}>
-              {new Date(user.createdAt).toLocaleDateString()}
-            </Typography>
-          </Grid>
-        </Grid>
-      </Paper>
+        Quay lại
+      </Button>
 
-      <Paper
-        sx={{
-          p: 3,
-          backgroundColor: "background.paper",
-          color: "text.primary",
-          boxShadow: theme.shadows[1],
-        }}
-      >
-        <Typography variant="h5" gutterBottom sx={{ color: "text.primary" }}>
-          Lịch sử đơn hàng
-        </Typography>
+      <div className="user-info-card">
+        <h2>Thông tin người dùng</h2>
+        <div className="info-grid">
+          <div className="info-item">
+            <div className="info-label">Tên</div>
+            <div className="info-value">{user.name}</div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">Email</div>
+            <div className="info-value">{user.email}</div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">Số điện thoại</div>
+            <div className="info-value">{user.phone || "Chưa cập nhật"}</div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">Vai trò</div>
+            <div className="info-value">
+              <Chip
+                label={user.role === "admin" ? "Quản trị viên" : "Người dùng"}
+                size="small"
+                sx={{
+                  backgroundColor:
+                    user.role === "admin" ? "info.lighter" : "primary.lighter",
+                  color: user.role === "admin" ? "info.main" : "primary.main",
+                  fontWeight: 600,
+                }}
+              />
+            </div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">Trạng thái</div>
+            <div className="info-value">
+              <span
+                className={`status-badge ${
+                  user.isActive ? "status-active" : "status-inactive"
+                }`}
+              >
+                {user.isActive ? "Hoạt động" : "Vô hiệu hóa"}
+              </span>
+            </div>
+          </div>
+          <div className="info-item">
+            <div className="info-label">Ngày tạo</div>
+            <div className="info-value">
+              {new Date(user.createdAt).toLocaleDateString()}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="user-info-card">
+        <h2>Lịch sử đơn hàng</h2>
         <TableContainer>
-          <Table>
+          <Table className="orders-table">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ color: "text.secondary", fontWeight: "bold" }}>
-                  Mã đơn hàng
-                </TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: "bold" }}>
-                  Ngày đặt
-                </TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: "bold" }}>
-                  Tổng tiền
-                </TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: "bold" }}>
-                  Phương thức thanh toán
-                </TableCell>
-                <TableCell sx={{ color: "text.secondary", fontWeight: "bold" }}>
-                  Trạng thái
-                </TableCell>
+                <TableCell>Mã đơn hàng</TableCell>
+                <TableCell>Ngày đặt</TableCell>
+                <TableCell>Tổng tiền</TableCell>
+                <TableCell>Phương thức thanh toán</TableCell>
+                <TableCell>Trạng thái</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {user.orders && user.orders.length > 0 ? (
                 user.orders.map((order) => {
-                  // Tính tổng tiền đã giảm
-                  let discountedTotal = 0;
-                  if (order.items && order.items.length > 0) {
-                    order.items.forEach((item) => {
-                      const price = item.price || item.product?.price || 0;
-                      const discount =
-                        typeof item.discount === "number"
-                          ? item.discount
-                          : item.product?.discount || 0;
-                      const finalPrice =
-                        discount > 0 ? price * (1 - discount / 100) : price;
-                      discountedTotal += finalPrice * item.quantity;
-                    });
-                    discountedTotal = Math.round(discountedTotal);
-                  } else {
-                    discountedTotal = order.totalAmount;
+                  // Ưu tiên sử dụng finalAmount từ API nếu có
+                  let finalAmount = order.finalAmount;
+                  let discountedTotal = order.totalAmount;
+                  let hasDiscount = false;
+
+                  // Nếu không có finalAmount, tính toán lại
+                  if (typeof finalAmount !== "number") {
+                    // Tính tổng tiền sản phẩm đã giảm giá
+                    discountedTotal = 0;
+                    if (order.items && order.items.length > 0) {
+                      order.items.forEach((item) => {
+                        const price = item.price || item.product?.price || 0;
+                        const discount =
+                          typeof item.discount === "number"
+                            ? item.discount
+                            : item.product?.discount || 0;
+                        const finalPrice =
+                          discount > 0 ? price * (1 - discount / 100) : price;
+                        discountedTotal += finalPrice * item.quantity;
+                      });
+                      discountedTotal = Math.round(discountedTotal);
+                    } else {
+                      discountedTotal = order.totalAmount;
+                    }
+
+                    // Tính tổng cuối cùng sau khi áp voucher
+                    finalAmount = discountedTotal;
+                    if (order.discountAmount && order.discountAmount > 0) {
+                      finalAmount = Math.round(
+                        discountedTotal - order.discountAmount
+                      );
+                    }
                   }
+
+                  // Xác định có giảm giá không
+                  hasDiscount =
+                    discountedTotal < order.totalAmount ||
+                    (order.discountAmount && order.discountAmount > 0);
+
                   return (
-                    <TableRow
-                      key={order._id}
-                      sx={{
-                        "&:hover": {
-                          backgroundColor: "action.hover",
-                        },
-                      }}
-                    >
-                      <TableCell sx={{ color: "text.primary" }}>
-                        {order._id}
-                      </TableCell>
-                      <TableCell sx={{ color: "text.primary" }}>
+                    <TableRow key={order._id}>
+                      <TableCell>{order._id}</TableCell>
+                      <TableCell>
                         {new Date(order.createdAt).toLocaleDateString("vi-VN")}
                       </TableCell>
-                      <TableCell sx={{ color: "text.primary" }}>
-                        {discountedTotal < order.totalAmount ? (
+                      <TableCell>
+                        {hasDiscount ? (
                           <>
                             <span
                               style={{
@@ -268,6 +271,24 @@ const UserDetail = () => {
                             <span style={{ color: "#ed174a", fontWeight: 600 }}>
                               {discountedTotal.toLocaleString("vi-VN")}đ
                             </span>
+                            {order.discountAmount > 0 && (
+                              <>
+                                <br />
+                                <span
+                                  style={{ fontSize: "12px", color: "#666" }}
+                                >
+                                  Giảm voucher: -
+                                  {order.discountAmount.toLocaleString("vi-VN")}
+                                  đ
+                                </span>
+                                <br />
+                                <span
+                                  style={{ color: "#ed174a", fontWeight: 600 }}
+                                >
+                                  Tổng: {finalAmount.toLocaleString("vi-VN")}đ
+                                </span>
+                              </>
+                            )}
                           </>
                         ) : (
                           <span>
@@ -275,7 +296,7 @@ const UserDetail = () => {
                           </span>
                         )}
                       </TableCell>
-                      <TableCell sx={{ color: "text.primary" }}>
+                      <TableCell>
                         {order.paymentMethod === "COD"
                           ? "Thanh toán khi nhận hàng"
                           : "Momo"}
@@ -295,11 +316,7 @@ const UserDetail = () => {
                 })
               ) : (
                 <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    align="center"
-                    sx={{ color: "text.secondary" }}
-                  >
+                  <TableCell colSpan={5} align="center">
                     Chưa có đơn hàng nào
                   </TableCell>
                 </TableRow>
@@ -307,8 +324,8 @@ const UserDetail = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      </Paper>
-    </Box>
+      </div>
+    </div>
   );
 };
 

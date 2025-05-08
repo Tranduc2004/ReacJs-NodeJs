@@ -501,7 +501,7 @@ button {
 .newsLetterSection {
   width: 100%;
   height: auto;
-  background: #233a95;
+  background: #00aaff;
   padding: 100px 0px;
   position: relative;
   overflow: hidden;
@@ -561,12 +561,14 @@ button {
   padding-right: 200px;
   height: 45px;
 }
-
+.newsLetterSection .text-light1 {
+  color: #fff !important;
+}
 .newsLetterSection form button {
   position: absolute;
   top: 7px;
   right: 10px;
-  background: #233a95 !important;
+  background: #00aaff !important;
   font-size: 14px !important;
   padding: 13px 25px !important;
   color: #fff !important;

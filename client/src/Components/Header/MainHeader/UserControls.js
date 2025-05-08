@@ -147,6 +147,15 @@ const UserControls = () => {
                 </MenuItem>
                 <MenuItem
                   component={Link}
+                  to="/myvoucher"
+                  onClick={handleClose}
+                  className="blue-menu-item"
+                >
+                  <FaUserLarge />
+                  Mã giảm giá của tôi
+                </MenuItem>
+                <MenuItem
+                  component={Link}
                   to="/wishlist"
                   onClick={handleClose}
                   className="blue-menu-item"

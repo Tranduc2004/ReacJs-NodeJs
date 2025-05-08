@@ -28,6 +28,8 @@ import Posts from "./Pages/Posts";
 import PostDetail from "./Pages/PostDetail";
 import GoogleCallback from "./Pages/GoogleCallback";
 import Compare from "./Pages/Compare";
+import VoucherList from "./Pages/Voucher";
+import MyVoucher from "./Pages/MyVoucher";
 
 const MyContext = createContext();
 
@@ -145,6 +147,8 @@ function App() {
             <Route path="/posts/:id" element={<PostDetail />} />
             <Route path="/auth/google/callback" element={<GoogleCallback />} />
             <Route path="/compare" element={<Compare />} />
+            <Route path="/voucher" element={<VoucherList />} />
+            <Route path="/myvoucher" element={<MyVoucher />} />
           </Routes>
           {shouldShowHeaderFooter(window.location.pathname) && <Footer />}
         </BrowserRouter>

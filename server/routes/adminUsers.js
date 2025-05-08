@@ -1,12 +1,40 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
-const { authenticateJWT } = require("../middleware/auth");
+const Admin = require("../models/admin");
 const Order = require("../models/Order");
 const ExcelJS = require("exceljs");
+const jwt = require("jsonwebtoken");
+
+// Middleware xác thực admin
+const authenticateAdmin = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "Không tìm thấy token" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Kiểm tra xem token có phải của admin không
+    if (!decoded.isAdmin) {
+      return res.status(403).json({ message: "Không có quyền truy cập" });
+    }
+    req.admin = decoded;
+    next();
+  } catch (error) {
+    console.error("Lỗi xác thực token:", error);
+    return res
+      .status(401)
+      .json({ message: "Token không hợp lệ hoặc đã hết hạn" });
+  }
+};
+
+// Tất cả các route đều yêu cầu xác thực admin
+router.use(authenticateAdmin);
 
 // Route xuất Excel danh sách user (phải đặt trước các route có :id)
-router.get("/export", authenticateJWT, async (req, res) => {
+router.get("/export", async (req, res) => {
   try {
     const users = await User.find().select("-password");
     const workbook = new ExcelJS.Workbook();
@@ -51,11 +79,13 @@ router.get("/export", authenticateJWT, async (req, res) => {
 });
 
 // Lấy danh sách users với phân trang và tìm kiếm
-router.get("/", authenticateJWT, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search || "";
+    const status = req.query.status || "all";
+    const role = req.query.role || "all";
     const skip = (page - 1) * limit;
 
     // Tạo query tìm kiếm
@@ -66,6 +96,14 @@ router.get("/", authenticateJWT, async (req, res) => {
         { email: { $regex: search, $options: "i" } },
         { phone: { $regex: search, $options: "i" } },
       ];
+    }
+    if (role !== "all") {
+      query.role = role;
+    }
+    if (status === "active") {
+      query.isActive = true;
+    } else if (status === "inactive") {
+      query.isActive = false;
     }
 
     // Lấy tổng số users
@@ -94,13 +132,18 @@ router.get("/", authenticateJWT, async (req, res) => {
 });
 
 // Lấy thông tin chi tiết user
-router.get("/:id", authenticateJWT, async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
       .select("-password")
       .populate({
         path: "orders",
-        select: "_id totalAmount status createdAt paymentMethod",
+        select:
+          "_id totalAmount status createdAt paymentMethod discountAmount finalAmount items",
+        populate: {
+          path: "items.product",
+          select: "name price discount images",
+        },
         options: { sort: { createdAt: -1 } },
       });
 
@@ -114,9 +157,12 @@ router.get("/:id", authenticateJWT, async (req, res) => {
       orders: user.orders.map((order) => ({
         _id: order._id,
         totalAmount: order.totalAmount,
+        discountAmount: order.discountAmount || 0,
+        finalAmount: order.finalAmount,
         status: order.status,
         createdAt: order.createdAt,
         paymentMethod: order.paymentMethod,
+        items: order.items,
       })),
     };
 
@@ -131,7 +177,7 @@ router.get("/:id", authenticateJWT, async (req, res) => {
 });
 
 // Lấy lịch sử đơn hàng của user
-router.get("/:id/orders", authenticateJWT, async (req, res) => {
+router.get("/:id/orders", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -156,7 +202,7 @@ router.get("/:id/orders", authenticateJWT, async (req, res) => {
 });
 
 // Tạo user mới
-router.post("/", authenticateJWT, async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { name, email, password, phone, role } = req.body;
 
@@ -190,7 +236,7 @@ router.post("/", authenticateJWT, async (req, res) => {
 });
 
 // Cập nhật thông tin user
-router.put("/:id", authenticateJWT, async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
     const { name, email, phone, role, isActive } = req.body;
     const user = await User.findById(req.params.id);
@@ -230,16 +276,16 @@ router.put("/:id", authenticateJWT, async (req, res) => {
   }
 });
 
-// Xóa user
-router.delete("/:id", authenticateJWT, async (req, res) => {
+// Xóa user (xóa mềm: chỉ cập nhật isActive = false)
+router.delete("/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ message: "Không tìm thấy người dùng" });
     }
-
-    await user.remove();
-    res.json({ message: "Xóa người dùng thành công" });
+    user.isActive = false;
+    await user.save();
+    res.json({ message: "Đã vô hiệu hóa tài khoản thành công" });
   } catch (error) {
     console.error("Lỗi khi xóa user:", error);
     res.status(500).json({ message: "Lỗi server" });
@@ -247,7 +293,7 @@ router.delete("/:id", authenticateJWT, async (req, res) => {
 });
 
 // Thay đổi trạng thái active của user
-router.put("/:id/toggle-status", authenticateJWT, async (req, res) => {
+router.put("/:id/toggle-status", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -270,7 +316,7 @@ router.put("/:id/toggle-status", authenticateJWT, async (req, res) => {
 });
 
 // Lấy số đơn hàng mới (trong 24h)
-router.get("/orders/new-count", authenticateJWT, async (req, res) => {
+router.get("/orders/new-count", async (req, res) => {
   try {
     const oneDayAgo = new Date();
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
@@ -295,7 +341,7 @@ router.get("/orders/new-count", authenticateJWT, async (req, res) => {
 });
 
 // Lấy chi tiết đơn hàng
-router.get("/orders/:orderId", authenticateJWT, async (req, res) => {
+router.get("/orders/:orderId", async (req, res) => {
   try {
     const { orderId } = req.params;
 
@@ -329,7 +375,7 @@ router.get("/orders/:orderId", authenticateJWT, async (req, res) => {
 });
 
 // Lấy tất cả đơn hàng
-router.get("/orders", authenticateJWT, async (req, res) => {
+router.get("/orders", async (req, res) => {
   try {
     const orders = await Order.find()
       .populate("user", "name email")
@@ -351,7 +397,7 @@ router.get("/orders", authenticateJWT, async (req, res) => {
 });
 
 // Cập nhật trạng thái đơn hàng
-router.put("/orders/:orderId/status", authenticateJWT, async (req, res) => {
+router.put("/orders/:orderId/status", async (req, res) => {
   try {
     const { orderId } = req.params;
     const { status, note } = req.body;

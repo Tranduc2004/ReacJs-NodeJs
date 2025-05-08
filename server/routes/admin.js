@@ -17,7 +17,7 @@ const authenticateJWT = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.admin = decoded;
+    req.user = decoded;
     next();
   } catch (error) {
     res.status(401).json({ message: "Token không hợp lệ" });
@@ -161,7 +161,7 @@ router.post("/register", async (req, res) => {
 // Route kiểm tra thông tin admin hiện tại
 router.get("/me", authenticateJWT, async (req, res) => {
   try {
-    const admin = await Admin.findById(req.admin.id).select("-password");
+    const admin = await Admin.findById(req.user.id).select("-password");
     if (!admin) {
       return res.status(404).json({ message: "Không tìm thấy admin" });
     }
@@ -176,7 +176,7 @@ router.get("/me", authenticateJWT, async (req, res) => {
 router.post("/change-password", authenticateJWT, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const admin = await Admin.findById(req.admin.id);
+    const admin = await Admin.findById(req.user.id);
 
     // Kiểm tra mật khẩu hiện tại
     const isMatch = await admin.comparePassword(currentPassword);

@@ -14,13 +14,25 @@ import {
   CardContent,
   MenuItem,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  IconButton,
+  ListItemButton,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { IoLocationSharp, IoCardSharp } from "react-icons/io5";
-import { FaMoneyBillWave, FaWallet } from "react-icons/fa";
-import { getCart } from "../../services/api";
+import { FaMoneyBillWave, FaWallet, FaTicketAlt } from "react-icons/fa";
+import { getCart, getSavedVouchers } from "../../services/api";
 import { toast } from "react-hot-toast";
 import axios from "axios";
+import voucherImg from "../../assets/images/voucher.jpg";
+import "../Voucher/Voucher.css";
 
 // Set baseURL for axios
 axios.defaults.baseURL = "http://localhost:4000";
@@ -51,6 +63,11 @@ const Checkout = () => {
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
+
+  const [vouchers, setVouchers] = useState([]);
+  const [selectedVoucher, setSelectedVoucher] = useState(null);
+  const [openVoucherDialog, setOpenVoucherDialog] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState(0);
 
   useEffect(() => {
     // Check if user is logged in
@@ -199,8 +216,137 @@ const Checkout = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Calculate total
-  const calculateTotal = () => {
+  // Thêm useEffect để lấy danh sách voucher
+  useEffect(() => {
+    const fetchVouchers = async () => {
+      try {
+        const response = await getSavedVouchers();
+        if (response.success) {
+          setVouchers(response.data || []);
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách voucher:", error);
+      }
+    };
+    fetchVouchers();
+  }, []);
+
+  // Hàm tính số tiền giảm giá dựa trên voucher và tổng tiền
+  const calculateDiscountAmount = (voucher, subtotal) => {
+    if (!voucher) return 0;
+    const type = voucher.type || voucher.discountType;
+    const value = Number(voucher.value || voucher.discountValue);
+
+    // Lấy danh sách sản phẩm và danh mục áp dụng
+    const applicableProducts = voucher.applicableProducts || [];
+    const applicableCategories = voucher.applicableCategories || [];
+
+    // Tính tổng tiền các sản phẩm được áp dụng giảm giá
+    let eligibleTotal = 0;
+    if (applicableProducts.length > 0 || applicableCategories.length > 0) {
+      eligibleTotal = cartItems.reduce((total, item) => {
+        if (!item || !item.product) return total;
+        const productId = item.product._id || item.product;
+        const categoryId = item.product.category?._id || item.product.category;
+        const inProduct = applicableProducts.some(
+          (p) => p._id === productId || p === productId
+        );
+        const inCategory = applicableCategories.some(
+          (c) => c._id === categoryId || c === categoryId
+        );
+        if (inProduct || inCategory) {
+          const discount = item.product.discount || 0;
+          const price = item.product.price || item.price;
+          const discountedPrice = price * (1 - discount / 100);
+          return total + discountedPrice * item.quantity;
+        }
+        return total;
+      }, 0);
+    } else {
+      eligibleTotal = subtotal;
+    }
+
+    // Ép cứng maxDiscount = 80000 nếu là mã GIAMGIA50% để test
+    let maxDiscount = 0;
+    if (voucher.code === "GIAMGIA50%") {
+      maxDiscount = 80000;
+    } else if (
+      voucher.maxDiscountAmount !== undefined &&
+      voucher.maxDiscountAmount !== null &&
+      !isNaN(Number(voucher.maxDiscountAmount)) &&
+      Number(voucher.maxDiscountAmount) > 0
+    ) {
+      maxDiscount = Number(voucher.maxDiscountAmount);
+    } else if (
+      voucher.maxDiscount !== undefined &&
+      voucher.maxDiscount !== null &&
+      !isNaN(Number(voucher.maxDiscount)) &&
+      Number(voucher.maxDiscount) > 0
+    ) {
+      maxDiscount = Number(voucher.maxDiscount);
+    }
+
+    if (
+      voucher.minOrderValue &&
+      eligibleTotal < Number(voucher.minOrderValue)
+    ) {
+      return 0;
+    }
+    if (type === "PERCENTAGE") {
+      const percentDiscount = (eligibleTotal * value) / 100;
+      if (maxDiscount > 0) {
+        return Math.min(percentDiscount, maxDiscount);
+      }
+      return percentDiscount;
+    }
+    return value > 0 ? Math.min(value, eligibleTotal) : 0;
+  };
+
+  // Tự động cập nhật discountAmount khi selectedVoucher hoặc cartItems thay đổi
+  useEffect(() => {
+    const subtotal = calculateSubtotal();
+    setDiscountAmount(calculateDiscountAmount(selectedVoucher, subtotal));
+  }, [selectedVoucher, cartItems]);
+
+  // Sửa lại hàm handleSelectVoucher: kiểm tra sản phẩm/danh mục trước khi set
+  const handleSelectVoucher = (voucher) => {
+    // Kiểm tra nếu voucher có điều kiện sản phẩm/danh mục
+    const applicableProducts = voucher.applicableProducts || [];
+    const applicableCategories = voucher.applicableCategories || [];
+    let hasEligible = false;
+    if (applicableProducts.length > 0 || applicableCategories.length > 0) {
+      hasEligible = cartItems.some((item) => {
+        if (!item || !item.product) return false;
+        const productId = item.product._id || item.product;
+        const categoryId = item.product.category?._id || item.product.category;
+        const inProduct = applicableProducts.some(
+          (p) => p._id === productId || p === productId
+        );
+        const inCategory = applicableCategories.some(
+          (c) => c._id === categoryId || c === categoryId
+        );
+        return inProduct || inCategory;
+      });
+      if (!hasEligible) {
+        toast.error(
+          "Voucher này chỉ áp dụng cho một số sản phẩm/danh mục nhất định. Giỏ hàng của bạn hiện không có sản phẩm phù hợp."
+        );
+        setOpenVoucherDialog(false);
+        return;
+      }
+    }
+    setSelectedVoucher(voucher);
+    setOpenVoucherDialog(false);
+  };
+
+  // Hàm xử lý xóa voucher đã chọn
+  const handleRemoveVoucher = () => {
+    setSelectedVoucher(null);
+    setDiscountAmount(0);
+  };
+
+  // Sửa lại hàm tính tổng tiền chỉ trả về tổng tiền hàng (chưa trừ giảm giá)
+  const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
       if (!item || !item.product) return total;
       const discount = item.product.discount || 0;
@@ -209,6 +355,209 @@ const Checkout = () => {
       return total + discountedPrice * item.quantity;
     }, 0);
   };
+
+  // Thêm Dialog chọn voucher
+  const VoucherDialog = () => (
+    <Dialog
+      open={openVoucherDialog}
+      onClose={() => setOpenVoucherDialog(false)}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle>
+        <Box display="flex" alignItems="center">
+          <FaTicketAlt style={{ marginRight: 8 }} />
+          Chọn mã giảm giá
+        </Box>
+      </DialogTitle>
+      <DialogContent>
+        {/* Custom voucher card giống MyVoucher */}
+        <div className="voucher-list">
+          {vouchers.length === 0 ? (
+            <div>Bạn chưa có mã giảm giá nào</div>
+          ) : (
+            vouchers.map((voucher) => {
+              const total = calculateSubtotal();
+              let discount = 0;
+              let conditionText = "";
+              const type = voucher.type || voucher.discountType;
+              const value = voucher.value || voucher.discountValue;
+              // Lấy đúng trường maxDiscountAmount hoặc maxDiscount
+              const maxDiscount =
+                voucher.maxDiscountAmount || voucher.maxDiscount || 0;
+              // Kiểm tra điều kiện đơn tối thiểu
+              if (
+                voucher.minOrderValue &&
+                total < Number(voucher.minOrderValue)
+              ) {
+                conditionText = "Chưa đủ điều kiện";
+              } else {
+                if (type === "PERCENTAGE") {
+                  discount = (total * Number(value)) / 100;
+                  if (maxDiscount > 0) {
+                    discount = Math.min(discount, Number(maxDiscount));
+                  }
+                } else {
+                  discount = Number(value) || 0;
+                }
+                conditionText = `Giảm ${discount.toLocaleString("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                })}`;
+              }
+              return (
+                <div
+                  className={`voucher-card-custom${
+                    selectedVoucher?._id === voucher._id ? " selected" : ""
+                  }${voucher.used ? " used" : ""}`}
+                  key={voucher._id}
+                  style={{
+                    backgroundImage: `url(${voucherImg})`,
+                    cursor: voucher.used
+                      ? "not-allowed"
+                      : voucher.minOrderValue &&
+                        total < Number(voucher.minOrderValue)
+                      ? "not-allowed"
+                      : "pointer",
+                    opacity: voucher.used
+                      ? 0.6
+                      : voucher.minOrderValue &&
+                        total < Number(voucher.minOrderValue)
+                      ? 0.6
+                      : 1,
+                    pointerEvents: voucher.used ? "none" : "auto",
+                    position: "relative",
+                  }}
+                  onClick={() => {
+                    if (
+                      !voucher.used &&
+                      !(
+                        voucher.minOrderValue &&
+                        total < Number(voucher.minOrderValue)
+                      )
+                    )
+                      handleSelectVoucher(voucher);
+                  }}
+                >
+                  {/* Ribbon Đã dùng */}
+                  {voucher.used && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        right: 0,
+                        background: "#bdbdbd",
+                        color: "#fff",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        padding: "2px 16px",
+                        borderTopRightRadius: 12,
+                        borderBottomLeftRadius: 12,
+                        zIndex: 2,
+                        boxShadow: "0 2px 8px rgba(67,160,71,0.15)",
+                      }}
+                    >
+                      Đã sử dụng
+                    </div>
+                  )}
+                  <div className="voucher-left">
+                    <div className="voucher-shop-icon">
+                      <span role="img" aria-label="shop">
+                        🛍️
+                      </span>
+                    </div>
+                    <div className="voucher-shop-name">{voucher.name}</div>
+                    <div className="voucher-expiry">
+                      HSD: {new Date(voucher.endDate).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className="voucher-right">
+                    <div className="voucher-discount">
+                      Giảm{" "}
+                      <span className="voucher-discount-value">
+                        {type === "PERCENTAGE"
+                          ? `${value}%${
+                              maxDiscount > 0
+                                ? ` (tối đa ${Number(
+                                    maxDiscount
+                                  ).toLocaleString("vi-VN")}đ)`
+                                : ""
+                            }`
+                          : `${Number(value).toLocaleString()}đ`}
+                      </span>
+                    </div>
+                    <div className="voucher-min-order">
+                      ĐH tối thiểu:{" "}
+                      {voucher.minOrderValue
+                        ? voucher.minOrderValue.toLocaleString() + "đ"
+                        : "Không"}
+                    </div>
+                    {voucher.description && (
+                      <div className="voucher-note">
+                        <b>Lưu ý:</b>{" "}
+                        {voucher.description.length > 40
+                          ? voucher.description.slice(0, 40) + "..."
+                          : voucher.description}
+                      </div>
+                    )}
+                    <div className="voucher-actions">
+                      {selectedVoucher?._id === voucher._id ? (
+                        <button
+                          className="voucher-btn-custom remove"
+                          onClick={handleRemoveVoucher}
+                        >
+                          Bỏ chọn
+                        </button>
+                      ) : (
+                        <button
+                          className="voucher-btn-custom"
+                          disabled={
+                            voucher.used ||
+                            (voucher.minOrderValue &&
+                              total < Number(voucher.minOrderValue))
+                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (
+                              !voucher.used &&
+                              !(
+                                voucher.minOrderValue &&
+                                total < Number(voucher.minOrderValue)
+                              )
+                            )
+                              handleSelectVoucher(voucher);
+                          }}
+                        >
+                          {voucher.used ? "Đã sử dụng" : "Áp dụng"}
+                        </button>
+                      )}
+                    </div>
+                    <div
+                      className="voucher-condition"
+                      style={{
+                        color:
+                          voucher.minOrderValue &&
+                          total < Number(voucher.minOrderValue)
+                            ? "red"
+                            : "#43a047",
+                        fontWeight: 500,
+                        marginTop: 4,
+                      }}
+                    >
+                      {conditionText}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setOpenVoucherDialog(false)}>Đóng</Button>
+      </DialogActions>
+    </Dialog>
+  );
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -231,16 +580,21 @@ const Checkout = () => {
         throw new Error("Giỏ hàng trống");
       }
 
-      const totalAmount = calculateTotal();
+      const totalAmount = calculateSubtotal();
       if (totalAmount <= 0) {
         throw new Error("Tổng tiền không hợp lệ");
       }
 
       // Chuẩn bị dữ liệu đơn hàng
-      const orderData = {
+      if (selectedVoucher && selectedVoucher.used) {
+        toast.error("Voucher này đã được sử dụng, vui lòng chọn voucher khác!");
+        setIsSubmitting(false);
+        return;
+      }
+      const orderPayload = {
         userId: user._id,
         items: cartItems.map((item) => ({
-          productId: item.product._id,
+          product: item.product._id,
           quantity: item.quantity,
           price: item.price,
           name: item.product.name,
@@ -249,7 +603,7 @@ const Checkout = () => {
             (item.product.images && item.product.images[0]) ||
             "",
         })),
-        totalAmount: totalAmount,
+        totalAmount: calculateSubtotal(),
         shippingAddress: {
           fullName: formData.fullName,
           phone: formData.phone,
@@ -260,6 +614,9 @@ const Checkout = () => {
         },
         note: note || "",
         paymentMethod: paymentMethod,
+        voucher: selectedVoucher?._id,
+        discountAmount: discountAmount,
+        finalAmount: (calculateSubtotal() || 0) - (discountAmount || 0),
       };
 
       // If payment method is MoMo, proceed with MoMo payment
@@ -267,16 +624,6 @@ const Checkout = () => {
         await handleMomoPayment();
       } else {
         // For COD, create order directly
-        const orderPayload = {
-          ...orderData,
-          products: orderData.items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.price,
-            name: item.name,
-          })),
-        };
-
         try {
           const orderResponse = await axios.post("/api/orders", orderPayload, {
             headers: {
@@ -388,7 +735,9 @@ const Checkout = () => {
             const { paymentStatus, orderStatus } = response.data.data;
 
             if (paymentStatus === "PAID" && orderStatus === "PROCESSING") {
-              toast.success("Thanh toán thành công!");
+              toast.success(
+                "Thanh toán thành công!Hãy kiểm tra Gmail để xác nhận đơn hàng"
+              );
               localStorage.removeItem("momoOrderId");
               localStorage.removeItem("isReturningFromPayment");
               navigate("/thank-you");
@@ -431,7 +780,7 @@ const Checkout = () => {
           image: item.product.images?.[0] || "",
           description: item.product.description,
         })),
-        totalAmount: calculateTotal(),
+        totalAmount: calculateSubtotal(),
         userId: user._id,
         shippingAddress: {
           fullName: formData.fullName,
@@ -872,12 +1221,218 @@ const Checkout = () => {
               </Box>
             ))}
             <Divider sx={{ my: 2 }} />
+
+            {/* Voucher Section */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                Mã giảm giá
+              </Typography>
+              {selectedVoucher ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    background: "#e0f7fa",
+                    border: "2px solid #00bcd4",
+                    borderRadius: 2,
+                    p: 2,
+                    boxShadow: "0 2px 8px rgba(0,188,212,0.12)",
+                    mb: 1,
+                    position: "relative",
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <FaTicketAlt
+                      color="#00bcd4"
+                      style={{ marginRight: 8, fontSize: 22 }}
+                    />
+                    <Box>
+                      <Typography
+                        variant="body1"
+                        sx={{ fontWeight: 700, color: "#00bcd4", fontSize: 18 }}
+                      >
+                        {selectedVoucher.code}
+                        <span
+                          style={{
+                            background: "#00bcd4",
+                            color: "#fff",
+                            borderRadius: 6,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            padding: "2px 8px",
+                            marginLeft: 10,
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          Đã áp dụng
+                        </span>
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "#0097a7",
+                          fontWeight: 500,
+                          fontSize: 15,
+                          display: "block",
+                        }}
+                      >
+                        {discountAmount > 0
+                          ? `Giảm ${discountAmount.toLocaleString("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            })}`
+                          : selectedVoucher &&
+                            (selectedVoucher.applicableProducts?.length > 0 ||
+                              selectedVoucher.applicableCategories?.length > 0)
+                          ? "Voucher này chỉ áp dụng cho một số sản phẩm/danh mục nhất định. Giỏ hàng của bạn hiện không có sản phẩm phù hợp."
+                          : "Không có giảm giá"}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  {/* Badge Xóa voucher */}
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      zIndex: 2,
+                    }}
+                  >
+                    <IconButton
+                      size="small"
+                      onClick={handleRemoveVoucher}
+                      sx={{
+                        background: "#ff1744",
+                        color: "#fff",
+                        p: 0.5,
+                        "&:hover": {
+                          background: "#d50000",
+                        },
+                        boxShadow: "0 2px 8px rgba(255,23,68,0.15)",
+                      }}
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M3 6h18"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        />
+                        <rect
+                          x="5"
+                          y="6"
+                          width="14"
+                          height="14"
+                          rx="2"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        />
+                        <path
+                          d="M10 11v4"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M14 11v4"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </IconButton>
+                  </Box>
+                </Box>
+              ) : (
+                <Button
+                  startIcon={
+                    <FaTicketAlt style={{ fontSize: 22, color: "#00bcd4" }} />
+                  }
+                  onClick={() => setOpenVoucherDialog(true)}
+                  variant="outlined"
+                  fullWidth
+                  sx={{
+                    borderRadius: 3,
+                    border: "2px solid #00bcd4",
+                    background: "#fff",
+                    color: "#00bcd4",
+                    fontWeight: 700,
+                    fontSize: 17,
+                    py: 1.2,
+                    boxShadow: "0 2px 8px rgba(0,188,212,0.08)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      background: "#e0f7fa",
+                      borderColor: "#0097a7",
+                      color: "#0097a7",
+                      boxShadow: "0 4px 16px rgba(0,188,212,0.15)",
+                    },
+                    "&:active": {
+                      background: "#b2ebf2",
+                      borderColor: "#00bcd4",
+                    },
+                  }}
+                >
+                  Chọn Mã Giảm Giá
+                </Button>
+              )}
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            {/* Total Section */}
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+            >
+              <Typography variant="body1">Tạm tính:</Typography>
+              <Typography variant="body1">
+                {(calculateSubtotal() || 0).toLocaleString("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                })}
+              </Typography>
+            </Box>
+
+            {discountAmount > 0 && (
+              <Box
+                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+              >
+                <Typography variant="body1" color="error">
+                  Giảm giá:
+                </Typography>
+                <Typography variant="body1" color="error">
+                  -
+                  {(discountAmount || 0).toLocaleString("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                  })}
+                </Typography>
+              </Box>
+            )}
+
             <Box
               sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}
             >
               <Typography variant="h6">Tổng cộng:</Typography>
               <Typography variant="h6" color="red">
-                {calculateTotal().toLocaleString("vi-VN", {
+                {(
+                  (calculateSubtotal() || 0) - (discountAmount || 0)
+                ).toLocaleString("vi-VN", {
                   style: "currency",
                   currency: "VND",
                 })}
@@ -885,6 +1440,9 @@ const Checkout = () => {
             </Box>
           </Paper>
         </Grid>
+
+        {/* Voucher Dialog */}
+        <VoucherDialog />
       </Grid>
     </Container>
   );

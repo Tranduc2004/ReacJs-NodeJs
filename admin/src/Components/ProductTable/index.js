@@ -71,7 +71,6 @@ const ProductTable = () => {
     } catch (err) {
       setError("Failed to load data");
       setLoading(false);
-      console.error("Error loading data:", err);
     }
   };
 
@@ -84,7 +83,7 @@ const ProductTable = () => {
         const data = await fetchDataFromApi("/api/categories");
         setCategories(data);
       } catch (err) {
-        console.error("Error loading categories:", err);
+        // Đã bỏ console.error debug
       }
     };
 

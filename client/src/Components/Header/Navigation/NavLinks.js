@@ -41,7 +41,7 @@ const NavLinks = () => {
     { name: "BAKERY", link: "/bakery" },
     { name: "BEVERAGES", link: "/beverages" },
     { name: "Bài viết", link: "/posts" },
-    { name: "CONTACT", link: "/contact" },
+    { name: "Mã giảm giá", link: "/voucher" },
   ];
 
   return (

@@ -70,6 +70,18 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    voucher: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Voucher",
+    },
+    discountAmount: {
+      type: Number,
+      default: 0,
+    },
+    finalAmount: {
+      type: Number,
+      required: true,
+    },
     note: {
       type: String,
       default: "",

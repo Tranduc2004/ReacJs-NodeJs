@@ -17,7 +17,7 @@ import {
 const UserMenu = () => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
-  const adminInfo = JSON.parse(localStorage.getItem("admin_info") || "{}");
+  const adminInfo = JSON.parse(localStorage.getItem("adminInfo") || "{}");
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -29,10 +29,6 @@ const UserMenu = () => {
 
   const handleLogout = async () => {
     try {
-      // Xóa token và thông tin admin từ localStorage
-      localStorage.removeItem("admin_token");
-      localStorage.removeItem("admin_info");
-
       // Gọi API logout
       await logoutAdmin();
 
@@ -43,9 +39,6 @@ const UserMenu = () => {
       navigate("/login");
     } catch (error) {
       console.error("Logout error:", error);
-      // Ngay cả khi có lỗi, vẫn xóa thông tin và chuyển về login
-      localStorage.removeItem("admin_token");
-      localStorage.removeItem("admin_info");
       toast.warning("Đã đăng xuất nhưng có lỗi xảy ra");
       navigate("/login");
     }

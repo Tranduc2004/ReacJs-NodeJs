@@ -28,6 +28,9 @@ import Orders from "./Pages/Orders";
 import PostsList from "./Pages/Posts/PostsList";
 import PostAdd from "./Pages/Posts/PostAdd";
 import PostEdit from "./Pages/Posts/PostEdit";
+import VoucherList from "./Pages/Voucher/VoucherList";
+import VoucherAdd from "./Pages/Voucher/VoucherAdd";
+import VoucherEdit from "./Pages/Voucher/VoucherEdit";
 
 // Layout component bọc các components cần Header và Sidebar
 const Layout = ({ children }) => {
@@ -134,6 +137,20 @@ function App() {
                         }
                       />
                       <Route path="/orders" element={<Orders />} />
+                      {/* Voucher */}
+                      <Route path="/voucher" element={<VoucherList />} />
+                      <Route
+                        path="/voucher/voucher-list"
+                        element={<VoucherList />}
+                      />
+                      <Route
+                        path="/voucher/voucher-add"
+                        element={<VoucherAdd />}
+                      />
+                      <Route
+                        path="voucher/voucher-edit/:id"
+                        element={<VoucherEdit />}
+                      />
                     </Routes>
                   </Layout>
                 </PrivateRoute>
