@@ -28,13 +28,13 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       required: function () {
-        // Chỉ bắt buộc nếu không phải đăng nhập bằng Google
-        return !this.googleId;
+        // Chỉ bắt buộc nếu không phải đăng nhập bằng Google hoặc Facebook
+        return !this.googleId && !this.facebookId;
       },
       validate: {
         validator: function (v) {
-          // Bỏ qua validation nếu là đăng nhập Google và không có phone
-          if (this.googleId && !v) return true;
+          // Bỏ qua validation nếu là đăng nhập Google/Facebook và không có phone
+          if ((this.googleId || this.facebookId) && !v) return true;
           // Kiểm tra định dạng số điện thoại
           return /^[0-9]{10}$/.test(v);
         },
@@ -51,6 +51,10 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
     googleId: {
+      type: String,
+      sparse: true,
+    },
+    facebookId: {
       type: String,
       sparse: true,
     },

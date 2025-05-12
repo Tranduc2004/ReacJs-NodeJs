@@ -1,7 +1,11 @@
 import { useEffect, useContext, useState } from "react";
 import { MyContext } from "../../App";
 import { Link, useNavigate } from "react-router-dom";
-import { login, handleGoogleLogin } from "../../services/api";
+import {
+  login,
+  handleGoogleLogin,
+  handleFacebookLogin,
+} from "../../services/api";
 import {
   TextField,
   Button,
@@ -49,6 +53,21 @@ const GoogleIcon = () => (
       fill="#1565c0"
       d="M43.611,20.083L43.595,20L42,20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571	c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"
     ></path>
+  </svg>
+);
+const FacebookIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 36 36"
+    style={{ width: "20px", height: "20px", marginRight: "8px" }}
+  >
+    <circle cx="18" cy="18" r="18" fill="#fff" />
+    <path
+      fill="#1877F2"
+      d="M13.651 35.471v-11.97H9.936V18h3.715v-2.37c0-6.127 2.772-8.964 8.784-8.964 
+         1.138 0 3.103.223 3.91.446v4.983c-.425-.043-1.167-.065-2.081-.065-2.952 0-4.09 1.116-4.09 4.025V18h5.883l-1.008 
+         5.5h-4.867v12.37a18.183 18.183 0 0 1-6.53-.399Z"
+    />
   </svg>
 );
 
@@ -306,10 +325,35 @@ const SignIn = () => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                "&:hover": {
+                  backgroundColor: "rgba(0, 170, 255, 0.1)", // Mã màu #00aaff với độ trong suốt 10%
+                },
               }}
               onClick={handleGoogleLogin}
             >
               <GoogleIcon /> Đăng nhập với Google
+            </Button>
+            <Button
+              fullWidth
+              variant="outlined"
+              sx={{
+                py: 1.5,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginTop: 1,
+                backgroundColor: "#1877F2",
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "#1565C0",
+                },
+                "& svg": {
+                  fill: "white",
+                },
+              }}
+              onClick={handleFacebookLogin}
+            >
+              <FacebookIcon /> Đăng nhập với Facebook
             </Button>
           </Paper>
         </Container>

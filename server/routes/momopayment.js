@@ -56,11 +56,14 @@ router.post("/create", authenticateJWT, async (req, res) => {
         image: item.image,
       })),
       totalAmount: orderData.totalAmount,
+      finalAmount: orderData.finalAmount,
       shippingAddress: orderData.shippingAddress,
       note: orderData.note || "",
       status: "PENDING",
       paymentMethod: "MOMO",
       paymentStatus: "PENDING",
+      voucher: orderData.voucher,
+      discountAmount: orderData.discountAmount || 0,
     });
 
     await newOrder.save();

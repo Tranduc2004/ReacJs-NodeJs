@@ -12,32 +12,33 @@ const Footer = () => {
   return (
     <footer>
       <div className="container">
-        <div className="topInfo row d-flex justify-content-between align-items-center">
+        <div className="topInfo">
           <div className="d-flex align-items-center">
-            <span className="mr-2">
+            <span>
               <LuShirt />
             </span>
             <span>Sản phẩm tươi mới mỗi ngày</span>
           </div>
           <div className="d-flex align-items-center">
-            <span className="mr-2">
+            <span>
               <TbTruckDelivery />
             </span>
             <span>Miễn phí vận chuyển cho đơn hàng trên 1.600.000đ</span>
           </div>
           <div className="d-flex align-items-center">
-            <span className="mr-2">
+            <span>
               <CiDiscount1 />
             </span>
             <span>Khuyến mãi hàng ngày</span>
           </div>
           <div className="d-flex align-items-center">
-            <span className="mr-2">
+            <span>
               <CiDollar />
             </span>
             <span>Giá tốt nhất thị trường</span>
           </div>
         </div>
+
         <div className="row1">
           <div className="col-12">
             <div className="product-categories d-flex justify-content-between">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Container,
@@ -18,17 +18,17 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
   IconButton,
-  ListItemButton,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { IoLocationSharp, IoCardSharp } from "react-icons/io5";
 import { FaMoneyBillWave, FaWallet, FaTicketAlt } from "react-icons/fa";
-import { getCart, getSavedVouchers } from "../../services/api";
+import { MdCreditCard } from "react-icons/md";
+import {
+  getCart,
+  getSavedVouchers,
+  createVnpayPayment,
+} from "../../services/api";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 import voucherImg from "../../assets/images/voucher.jpg";
@@ -55,7 +55,7 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState("COD");
+  const [paymentMethod, setPaymentMethod] = useState(null);
   const [note, setNote] = useState("");
   const [error, setError] = useState(null);
 
@@ -68,6 +68,8 @@ const Checkout = () => {
   const [selectedVoucher, setSelectedVoucher] = useState(null);
   const [openVoucherDialog, setOpenVoucherDialog] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
+
+  const [orderId, setOrderId] = useState(null);
 
   useEffect(() => {
     // Check if user is logged in
@@ -231,15 +233,26 @@ const Checkout = () => {
     fetchVouchers();
   }, []);
 
-  // Hàm tính số tiền giảm giá dựa trên voucher và tổng tiền
-  const calculateDiscountAmount = (voucher, subtotal) => {
-    if (!voucher) return 0;
-    const type = voucher.type || voucher.discountType;
-    const value = Number(voucher.value || voucher.discountValue);
+  const calculateSubtotal = useCallback(() => {
+    return cartItems.reduce((total, item) => {
+      if (!item || !item.product) return total;
+      const discount = item.product.discount || 0;
+      const price = item.product.price || item.price;
+      const discountedPrice = price * (1 - discount / 100);
+      return total + discountedPrice * item.quantity;
+    }, 0);
+  }, [cartItems]);
+
+  const calculateDiscountAmount = useCallback(() => {
+    if (!selectedVoucher) return 0;
+    const type = selectedVoucher.type || selectedVoucher.discountType;
+    const value = Number(
+      selectedVoucher.value || selectedVoucher.discountValue
+    );
 
     // Lấy danh sách sản phẩm và danh mục áp dụng
-    const applicableProducts = voucher.applicableProducts || [];
-    const applicableCategories = voucher.applicableCategories || [];
+    const applicableProducts = selectedVoucher.applicableProducts || [];
+    const applicableCategories = selectedVoucher.applicableCategories || [];
 
     // Tính tổng tiền các sản phẩm được áp dụng giảm giá
     let eligibleTotal = 0;
@@ -263,32 +276,32 @@ const Checkout = () => {
         return total;
       }, 0);
     } else {
-      eligibleTotal = subtotal;
+      eligibleTotal = calculateSubtotal();
     }
 
     // Ép cứng maxDiscount = 80000 nếu là mã GIAMGIA50% để test
     let maxDiscount = 0;
-    if (voucher.code === "GIAMGIA50%") {
+    if (selectedVoucher.code === "GIAMGIA50%") {
       maxDiscount = 80000;
     } else if (
-      voucher.maxDiscountAmount !== undefined &&
-      voucher.maxDiscountAmount !== null &&
-      !isNaN(Number(voucher.maxDiscountAmount)) &&
-      Number(voucher.maxDiscountAmount) > 0
+      selectedVoucher.maxDiscountAmount !== undefined &&
+      selectedVoucher.maxDiscountAmount !== null &&
+      !isNaN(Number(selectedVoucher.maxDiscountAmount)) &&
+      Number(selectedVoucher.maxDiscountAmount) > 0
     ) {
-      maxDiscount = Number(voucher.maxDiscountAmount);
+      maxDiscount = Number(selectedVoucher.maxDiscountAmount);
     } else if (
-      voucher.maxDiscount !== undefined &&
-      voucher.maxDiscount !== null &&
-      !isNaN(Number(voucher.maxDiscount)) &&
-      Number(voucher.maxDiscount) > 0
+      selectedVoucher.maxDiscount !== undefined &&
+      selectedVoucher.maxDiscount !== null &&
+      !isNaN(Number(selectedVoucher.maxDiscount)) &&
+      Number(selectedVoucher.maxDiscount) > 0
     ) {
-      maxDiscount = Number(voucher.maxDiscount);
+      maxDiscount = Number(selectedVoucher.maxDiscount);
     }
 
     if (
-      voucher.minOrderValue &&
-      eligibleTotal < Number(voucher.minOrderValue)
+      selectedVoucher.minOrderValue &&
+      eligibleTotal < Number(selectedVoucher.minOrderValue)
     ) {
       return 0;
     }
@@ -300,13 +313,12 @@ const Checkout = () => {
       return percentDiscount;
     }
     return value > 0 ? Math.min(value, eligibleTotal) : 0;
-  };
+  }, [cartItems, selectedVoucher, calculateSubtotal]);
 
-  // Tự động cập nhật discountAmount khi selectedVoucher hoặc cartItems thay đổi
   useEffect(() => {
-    const subtotal = calculateSubtotal();
-    setDiscountAmount(calculateDiscountAmount(selectedVoucher, subtotal));
-  }, [selectedVoucher, cartItems]);
+    calculateDiscountAmount();
+    calculateSubtotal();
+  }, [calculateDiscountAmount, calculateSubtotal]);
 
   // Sửa lại hàm handleSelectVoucher: kiểm tra sản phẩm/danh mục trước khi set
   const handleSelectVoucher = (voucher) => {
@@ -343,17 +355,6 @@ const Checkout = () => {
   const handleRemoveVoucher = () => {
     setSelectedVoucher(null);
     setDiscountAmount(0);
-  };
-
-  // Sửa lại hàm tính tổng tiền chỉ trả về tổng tiền hàng (chưa trừ giảm giá)
-  const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => {
-      if (!item || !item.product) return total;
-      const discount = item.product.discount || 0;
-      const price = item.product.price || item.price;
-      const discountedPrice = price * (1 - discount / 100);
-      return total + discountedPrice * item.quantity;
-    }, 0);
   };
 
   // Thêm Dialog chọn voucher
@@ -591,6 +592,49 @@ const Checkout = () => {
         setIsSubmitting(false);
         return;
       }
+
+      if (paymentMethod === "VNPAY") {
+        try {
+          const vnpayPayload = {
+            amount: calculateSubtotal() - (discountAmount || 0),
+            items: cartItems.map((item) => ({
+              product: item.product._id,
+              quantity: item.quantity,
+              price: item.price,
+              name: item.product.name,
+              image:
+                item.product.image ||
+                (item.product.images && item.product.images[0]) ||
+                "",
+            })),
+            shippingAddress: {
+              fullName: formData.fullName,
+              phone: formData.phone,
+              address: formData.address,
+              city: formData.cityName,
+              district: formData.districtName,
+              ward: formData.wardName,
+            },
+            note: note || "",
+          };
+          const vnpayRes = await createVnpayPayment(vnpayPayload);
+          if (vnpayRes.success && vnpayRes.paymentUrl) {
+            localStorage.setItem("orderId", vnpayRes.orderId);
+            localStorage.setItem("isReturningFromPayment", "true");
+            window.location.href = vnpayRes.paymentUrl;
+            return;
+          } else {
+            toast.error("Không thể tạo thanh toán VNPAY");
+            setIsSubmitting(false);
+            return;
+          }
+        } catch (error) {
+          toast.error("Lỗi khi tạo thanh toán VNPAY");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const orderPayload = {
         userId: user._id,
         items: cartItems.map((item) => ({
@@ -657,118 +701,6 @@ const Checkout = () => {
     }
   };
 
-  // Thêm useEffect để kiểm tra trạng thái đơn hàng sau khi thanh toán
-  useEffect(() => {
-    const checkPaymentStatus = async () => {
-      const orderId = localStorage.getItem("orderId");
-      const isReturningFromPayment = localStorage.getItem(
-        "isReturningFromPayment"
-      );
-
-      if (!orderId || !isReturningFromPayment) return;
-
-      console.log("Checking payment status for order:", orderId);
-
-      try {
-        const response = await axios.get(`/api/momo/status/${orderId}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-
-        console.log("Payment status response:", response.data);
-
-        if (response.data.success) {
-          const { paymentStatus, orderStatus } = response.data.data;
-
-          if (paymentStatus === "PAID" && orderStatus === "PROCESSING") {
-            // Thanh toán thành công
-            console.log("Payment successful, redirecting to thank you page");
-            toast.success("Thanh toán thành công!");
-            localStorage.removeItem("orderId");
-            localStorage.removeItem("pendingOrder");
-            localStorage.removeItem("isReturningFromPayment");
-            navigate("/thank-you", {
-              state: {
-                order: response.data.data,
-                message: "Đơn hàng của bạn đã được thanh toán thành công!",
-              },
-            });
-          } else if (paymentStatus === "FAILED") {
-            // Thanh toán thất bại
-            console.log("Payment failed");
-            toast.error("Thanh toán thất bại. Vui lòng thử lại.");
-            localStorage.removeItem("orderId");
-            localStorage.removeItem("pendingOrder");
-            localStorage.removeItem("isReturningFromPayment");
-          }
-        }
-      } catch (error) {
-        console.error("Lỗi khi kiểm tra trạng thái thanh toán:", {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status,
-        });
-      }
-    };
-
-    // Kiểm tra trạng thái mỗi 3 giây
-    const interval = setInterval(checkPaymentStatus, 3000);
-
-    return () => clearInterval(interval);
-  }, [navigate]);
-
-  // Thêm useEffect để kiểm tra khi quay lại từ trang thanh toán MoMo
-  useEffect(() => {
-    const checkReturnFromPayment = async () => {
-      const momoOrderId = localStorage.getItem("momoOrderId");
-      const isReturning = localStorage.getItem("isReturningFromPayment");
-
-      if (momoOrderId && isReturning === "true") {
-        try {
-          console.log("Checking order status for:", momoOrderId);
-          const response = await axios.get(
-            `http://localhost:4000/api/momo/status/${momoOrderId}`
-          );
-
-          if (response.data.success) {
-            const { paymentStatus, orderStatus } = response.data.data;
-
-            if (paymentStatus === "PAID" && orderStatus === "PROCESSING") {
-              toast.success(
-                "Thanh toán thành công!Hãy kiểm tra Gmail để xác nhận đơn hàng"
-              );
-              localStorage.removeItem("momoOrderId");
-              localStorage.removeItem("isReturningFromPayment");
-              navigate("/thank-you");
-            } else if (
-              paymentStatus === "FAILED" ||
-              orderStatus === "CANCELLED"
-            ) {
-              toast.error("Thanh toán thất bại. Vui lòng thử lại.");
-              localStorage.removeItem("momoOrderId");
-              localStorage.removeItem("isReturningFromPayment");
-            }
-          }
-        } catch (error) {
-          console.error(
-            "Lỗi khi kiểm tra trạng thái thanh toán sau khi quay lại:",
-            error
-          );
-          if (error.response?.status === 404) {
-            toast.error("Không tìm thấy đơn hàng. Vui lòng thử lại.");
-            localStorage.removeItem("momoOrderId");
-            localStorage.removeItem("isReturningFromPayment");
-          }
-        }
-      }
-    };
-
-    // Kiểm tra ngay khi component mount
-    checkReturnFromPayment();
-  }, [navigate]);
-
-  // Xử lý thanh toán MoMo
   const handleMomoPayment = async () => {
     try {
       const orderData = {
@@ -781,6 +713,7 @@ const Checkout = () => {
           description: item.product.description,
         })),
         totalAmount: calculateSubtotal(),
+        finalAmount: calculateSubtotal() - (discountAmount || 0),
         userId: user._id,
         shippingAddress: {
           fullName: formData.fullName,
@@ -792,30 +725,24 @@ const Checkout = () => {
         },
         note: note,
         paymentMethod: "MOMO",
+        voucher: selectedVoucher?._id,
+        discountAmount: discountAmount || 0,
       };
-
-      console.log("Sending order data:", orderData);
 
       const response = await axios.post(
         "/api/momo/create",
         { orderData },
         {
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           baseURL: "http://localhost:4000",
         }
       );
 
-      console.log("MoMo API response:", response.data);
-
       if (response.data.success) {
-        // Lưu momoOrderId vào localStorage
-        localStorage.setItem("momoOrderId", response.data.data.momoOrderId);
-        localStorage.setItem("isReturningFromPayment", "true");
-
-        // Chuyển hướng đến trang thanh toán MoMo
+        setOrderId(response.data.data.momoOrderId);
+        setPaymentMethod("MOMO");
         window.location.href = response.data.data.payUrl;
       } else {
         toast.error(response.data.message || "Lỗi khi tạo thanh toán");
@@ -827,6 +754,53 @@ const Checkout = () => {
       );
     }
   };
+
+  const checkPaymentStatus = useCallback(async () => {
+    try {
+      // Kiểm tra nếu không có orderId hoặc paymentMethod thì không thực hiện
+      if (!orderId || !paymentMethod) {
+        return false;
+      }
+
+      console.log("Checking payment status for order:", orderId);
+      let response;
+
+      if (paymentMethod === "MOMO") {
+        response = await axios.get(`/api/momo/status/${orderId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          baseURL: "http://localhost:4000",
+        });
+      } else if (paymentMethod === "VNPAY") {
+        response = await axios.get(`/api/orders/${orderId}/status`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          baseURL: "http://localhost:4000",
+        });
+      }
+
+      if (response && response.data && response.data.success) {
+        if (response.data.data.status === "SUCCESS") {
+          toast.success("Thanh toán thành công!");
+          navigate(`/orders/${orderId}`);
+          return true;
+        } else if (response.data.data.status === "FAILED") {
+          toast.error("Thanh toán thất bại!");
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error("Lỗi khi kiểm tra trạng thái thanh toán:", error);
+      return false;
+    }
+  }, [orderId, paymentMethod, navigate]);
+
+  useEffect(() => {
+    checkPaymentStatus();
+  }, [checkPaymentStatus]);
 
   if (loading) {
     return (
@@ -965,106 +939,308 @@ const Checkout = () => {
                   </FormControl>
                 </Grid>
                 <Box sx={{ mt: 4, width: "100%" }}>
-                  <Typography variant="h6" gutterBottom>
-                    <IoCardSharp /> Phương thức thanh toán
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      color: "#1a237e",
+                      fontWeight: 600,
+                      mb: 3,
+                    }}
+                  >
+                    <IoCardSharp style={{ marginRight: 8 }} />
+                    Phương thức thanh toán
                   </Typography>
                   <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={4}>
                       <Card
                         sx={{
                           cursor: "pointer",
                           border:
                             paymentMethod === "COD"
-                              ? "2px solid #00aaff"
-                              : "1px solid #ddd",
+                              ? "2px solid #1a237e"
+                              : "1px solid #e0e0e0",
+                          borderRadius: 2,
                           transition: "all 0.3s ease",
                           "&:hover": {
-                            borderColor: "#00aaff",
+                            borderColor: "#1a237e",
                             transform: "translateY(-2px)",
-                            boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                            boxShadow: "0 4px 12px rgba(26,35,126,0.15)",
                           },
+                          height: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          position: "relative",
+                          overflow: "visible",
                         }}
                         onClick={() => setPaymentMethod("COD")}
                       >
-                        <CardContent>
+                        {paymentMethod === "COD" && (
+                          <Box
+                            sx={{
+                              position: "absolute",
+                              top: -10,
+                              right: -10,
+                              width: 24,
+                              height: 24,
+                              borderRadius: "50%",
+                              bgcolor: "#1a237e",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "white",
+                              boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                            }}
+                          >
+                            ✓
+                          </Box>
+                        )}
+                        <CardContent sx={{ flexGrow: 1, p: 2 }}>
                           <Box
                             sx={{
                               display: "flex",
                               alignItems: "center",
-                              mb: 1,
+                              mb: 2,
                             }}
                           >
-                            <FaMoneyBillWave
-                              size={24}
-                              color={
-                                paymentMethod === "COD" ? "#00aaff" : "#666"
-                              }
-                            />
+                            <Box
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: "50%",
+                                bgcolor:
+                                  paymentMethod === "COD"
+                                    ? "#1a237e"
+                                    : "#f5f5f5",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                mr: 2,
+                                transition: "all 0.3s ease",
+                              }}
+                            >
+                              <FaMoneyBillWave
+                                size={20}
+                                color={
+                                  paymentMethod === "COD" ? "#fff" : "#666"
+                                }
+                              />
+                            </Box>
                             <Typography
                               variant="h6"
                               sx={{
-                                ml: 1,
                                 color:
                                   paymentMethod === "COD"
-                                    ? "#00aaff"
+                                    ? "#1a237e"
                                     : "inherit",
+                                fontWeight: 600,
                               }}
                             >
                               COD
                             </Typography>
                           </Box>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ pl: 7 }}
+                          >
                             Thanh toán khi nhận hàng
                           </Typography>
                         </CardContent>
                       </Card>
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={4}>
                       <Card
                         sx={{
                           cursor: "pointer",
                           border:
                             paymentMethod === "MOMO"
-                              ? "2px solid #00aaff"
-                              : "1px solid #ddd",
+                              ? "2px solid #d81b60"
+                              : "1px solid #e0e0e0",
+                          borderRadius: 2,
                           transition: "all 0.3s ease",
                           "&:hover": {
-                            borderColor: "#00aaff",
+                            borderColor: "#d81b60",
                             transform: "translateY(-2px)",
-                            boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                            boxShadow: "0 4px 12px rgba(216,27,96,0.15)",
                           },
+                          height: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          position: "relative",
+                          overflow: "visible",
                         }}
                         onClick={() => setPaymentMethod("MOMO")}
                       >
-                        <CardContent>
+                        {paymentMethod === "MOMO" && (
+                          <Box
+                            sx={{
+                              position: "absolute",
+                              top: -10,
+                              right: -10,
+                              width: 24,
+                              height: 24,
+                              borderRadius: "50%",
+                              bgcolor: "#d81b60",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "white",
+                              boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                            }}
+                          >
+                            ✓
+                          </Box>
+                        )}
+                        <CardContent sx={{ flexGrow: 1, p: 2 }}>
                           <Box
                             sx={{
                               display: "flex",
                               alignItems: "center",
-                              mb: 1,
+                              mb: 2,
                             }}
                           >
-                            <FaWallet
-                              size={24}
-                              color={
-                                paymentMethod === "MOMO" ? "#00aaff" : "#666"
-                              }
-                            />
+                            <Box
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: "50%",
+                                bgcolor:
+                                  paymentMethod === "MOMO"
+                                    ? "#d81b60"
+                                    : "#f5f5f5",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                mr: 2,
+                                transition: "all 0.3s ease",
+                              }}
+                            >
+                              <FaWallet
+                                size={20}
+                                color={
+                                  paymentMethod === "MOMO" ? "#fff" : "#666"
+                                }
+                              />
+                            </Box>
                             <Typography
                               variant="h6"
                               sx={{
-                                ml: 1,
                                 color:
                                   paymentMethod === "MOMO"
-                                    ? "#00aaff"
+                                    ? "#d81b60"
                                     : "inherit",
+                                fontWeight: 600,
                               }}
                             >
                               MoMo
                             </Typography>
                           </Box>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ pl: 7 }}
+                          >
                             Thanh toán qua ví MoMo
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <Card
+                        sx={{
+                          cursor: "pointer",
+                          border:
+                            paymentMethod === "VNPAY"
+                              ? "2px solid #0055a4"
+                              : "1px solid #e0e0e0",
+                          borderRadius: 2,
+                          transition: "all 0.3s ease",
+                          "&:hover": {
+                            borderColor: "#0055a4",
+                            transform: "translateY(-2px)",
+                            boxShadow: "0 4px 12px rgba(0,85,164,0.15)",
+                          },
+                          height: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          position: "relative",
+                          overflow: "visible",
+                        }}
+                        onClick={() => setPaymentMethod("VNPAY")}
+                      >
+                        {paymentMethod === "VNPAY" && (
+                          <Box
+                            sx={{
+                              position: "absolute",
+                              top: -10,
+                              right: -10,
+                              width: 24,
+                              height: 24,
+                              borderRadius: "50%",
+                              bgcolor: "#0055a4",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "white",
+                              boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                            }}
+                          >
+                            ✓
+                          </Box>
+                        )}
+                        <CardContent sx={{ flexGrow: 1, p: 2 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              mb: 2,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: "50%",
+                                bgcolor:
+                                  paymentMethod === "VNPAY"
+                                    ? "#0055a4"
+                                    : "#f5f5f5",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                mr: 2,
+                                transition: "all 0.3s ease",
+                              }}
+                            >
+                              <MdCreditCard
+                                size={22}
+                                color={
+                                  paymentMethod === "VNPAY" ? "#fff" : "#666"
+                                }
+                              />
+                            </Box>
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                color:
+                                  paymentMethod === "VNPAY"
+                                    ? "#0055a4"
+                                    : "inherit",
+                                fontWeight: 600,
+                              }}
+                            >
+                              VNPAY
+                            </Typography>
+                          </Box>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ pl: 7 }}
+                          >
+                            Thanh toán qua cổng VNPAY
                           </Typography>
                         </CardContent>
                       </Card>

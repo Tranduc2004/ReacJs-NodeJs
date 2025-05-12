@@ -764,6 +764,83 @@ export const handleGoogleCallback = async (token) => {
   }
 };
 
+// API cho Facebook OAuth
+export const handleFacebookLogin = () => {
+  window.location.href = `${api.defaults.baseURL}/auth/facebook`;
+};
+
+export const handleFacebookCallback = async (token) => {
+  try {
+    if (!token) {
+      throw new Error("Không tìm thấy token");
+    }
+
+    // Hàm lấy thông tin user với retry
+    const getUserInfo = async (retryCount = 0) => {
+      try {
+        const userResponse = await api.get("/auth/me");
+
+        if (!userResponse.data) {
+          throw new Error("Không thể lấy thông tin người dùng");
+        }
+
+        // Đảm bảo email được lưu từ tài khoản Facebook
+        const userData = {
+          ...userResponse.data,
+          email:
+            userResponse.data.email ||
+            userResponse.data.facebookEmail ||
+            userResponse.data.emails?.[0]?.value,
+          authProvider: "facebook",
+        };
+
+        return userData;
+      } catch (error) {
+        if (error.response?.status === 401 && retryCount < 3) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          return getUserInfo(retryCount + 1);
+        }
+        throw error;
+      }
+    };
+
+    // Lấy thông tin user với retry mechanism
+    const userData = await getUserInfo();
+
+    // Lưu user data vào localStorage
+    localStorage.setItem("user", JSON.stringify(userData));
+
+    // Kiểm tra xem user data đã được lưu thành công chưa
+    const savedUser = localStorage.getItem("user");
+
+    if (!savedUser) {
+      throw new Error("Không thể lưu thông tin đăng nhập");
+    }
+
+    // Cập nhật context
+    const event = new CustomEvent("authStateChanged", {
+      detail: {
+        isLoggedIn: true,
+        user: userData,
+      },
+    });
+    window.dispatchEvent(event);
+
+    return {
+      success: true,
+      message: "Đăng nhập thành công",
+      data: userData,
+    };
+  } catch (error) {
+    console.error("Lỗi xử lý Facebook callback:", error);
+    // Rollback nếu có lỗi
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    delete api.defaults.headers.common["Authorization"];
+    throw error;
+  }
+};
+
 // API cho voucher (mã giảm giá)
 export const getVouchers = async () => {
   try {
@@ -856,6 +933,17 @@ export const removeSavedVoucher = async (voucherId) => {
       error.response?.data?.message ||
       "Không thể xóa mã giảm giá. Vui lòng thử lại sau!"
     );
+  }
+};
+
+// API tạo thanh toán VNPAY
+export const createVnpayPayment = async (orderData) => {
+  try {
+    const response = await api.post("/orders/create_payment_url", orderData);
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi tạo thanh toán VNPAY:", error);
+    throw error;
   }
 };
 

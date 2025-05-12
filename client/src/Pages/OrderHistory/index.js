@@ -11,9 +11,7 @@ import {
   TableHead,
   TableRow,
   Chip,
-  CircularProgress,
   Button,
-  useTheme,
   Avatar,
   Stack,
   Skeleton,
@@ -36,7 +34,6 @@ const OrderHistory = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
-  const theme = useTheme();
 
   useEffect(() => {
     fetchOrders();
@@ -231,7 +228,7 @@ const OrderHistory = () => {
           gap: 2,
         }}
       >
-        <Typography variant="h4" fontWeight={700} sx={{ color: "#2d3748" }}>
+        <Typography variant="h4" fontWeight={700} sx={{ color: "#00aaff" }}>
           Lịch sử đơn hàng
         </Typography>
         <Button
@@ -359,6 +356,8 @@ const OrderHistory = () => {
                           label={
                             order.paymentMethod === "COD"
                               ? "Thanh toán khi nhận hàng"
+                              : order.paymentMethod === "VNPAY"
+                              ? "Thanh toán VNPAY"
                               : "Thanh toán MOMO"
                           }
                           size="small"
@@ -366,10 +365,14 @@ const OrderHistory = () => {
                             backgroundColor:
                               order.paymentMethod === "COD"
                                 ? "#e6fffa"
+                                : order.paymentMethod === "VNPAY"
+                                ? "#f0f5ff"
                                 : "#f0f5ff",
                             color:
                               order.paymentMethod === "COD"
                                 ? "#38b2ac"
+                                : order.paymentMethod === "VNPAY"
+                                ? "#5a67d8"
                                 : "#5a67d8",
                             fontWeight: 500,
                             borderRadius: 1,

@@ -1,7 +1,11 @@
-import { useEffect, useContext, useState } from "react";
+import React, { useEffect, useContext, useState } from "react";
 import { MyContext } from "../../App";
 import { Link, useNavigate } from "react-router-dom";
-import { register, handleGoogleLogin } from "../../services/api";
+import {
+  register,
+  handleGoogleLogin,
+  handleFacebookLogin,
+} from "../../services/api";
 import {
   TextField,
   Button,
@@ -13,9 +17,8 @@ import {
   Divider,
   ThemeProvider,
   createTheme,
-  Snackbar,
-  Alert,
 } from "@mui/material";
+import { toast } from "react-hot-toast";
 
 // Tạo một theme tùy chỉnh với #00aaff làm màu chính
 const theme = createTheme({
@@ -51,6 +54,21 @@ const GoogleIcon = () => (
     ></path>
   </svg>
 );
+const FacebookIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 36 36"
+    style={{ width: "20px", height: "20px", marginRight: "8px" }}
+  >
+    <circle cx="18" cy="18" r="18" fill="#fff" />
+    <path
+      fill="#1877F2"
+      d="M13.651 35.471v-11.97H9.936V18h3.715v-2.37c0-6.127 2.772-8.964 8.784-8.964 
+         1.138 0 3.103.223 3.91.446v4.983c-.425-.043-1.167-.065-2.081-.065-2.952 0-4.09 1.116-4.09 4.025V18h5.883l-1.008 
+         5.5h-4.867v12.37a18.183 18.183 0 0 1-6.53-.399Z"
+    />
+  </svg>
+);
 
 const SignUp = () => {
   const context = useContext(MyContext);
@@ -64,12 +82,13 @@ const SignUp = () => {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
 
   useEffect(() => {
-    context.setIsHeaderFooterShow(false);
-  }, []);
+    if (context.user) {
+      navigate("/");
+    }
+  }, [context, navigate]);
 
   const validateForm = () => {
     const errors = {};
@@ -128,7 +147,6 @@ const SignUp = () => {
     e.preventDefault();
     setError("");
 
-    // Kiểm tra validation trước khi gửi form
     if (!validateForm()) {
       return;
     }
@@ -136,16 +154,10 @@ const SignUp = () => {
     setLoading(true);
 
     try {
-      const response = await register(formData);
-      setShowSuccess(true);
-
-      // Chuyển về trang login sau 1.5 giây
-      setTimeout(() => {
-        context.setIsHeaderFooterShow(true);
-        navigate("/signin");
-      }, 1500);
+      await register(formData);
+      toast.success("Đăng ký thành công!");
+      navigate("/signin");
     } catch (err) {
-      // Xử lý lỗi cụ thể từ server
       if (err.response?.data?.message?.includes("email")) {
         setError("Email đã tồn tại. Vui lòng sử dụng email khác.");
       } else {
@@ -391,6 +403,28 @@ const SignUp = () => {
             >
               <GoogleIcon /> Đăng ký bằng Google
             </Button>
+            <Button
+              fullWidth
+              variant="outlined"
+              sx={{
+                py: 1.5,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginTop: 1,
+                backgroundColor: "#1877F2",
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "#1565C0",
+                },
+                "& svg": {
+                  fill: "white",
+                },
+              }}
+              onClick={handleFacebookLogin}
+            >
+              <FacebookIcon /> Đăng nhập với Facebook
+            </Button>
           </Paper>
         </Container>
 
@@ -407,16 +441,6 @@ const SignUp = () => {
             zIndex: 0,
           }}
         />
-
-        <Snackbar
-          open={showSuccess}
-          autoHideDuration={1500}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        >
-          <Alert severity="success" sx={{ width: "100%" }}>
-            Đăng ký thành công!
-          </Alert>
-        </Snackbar>
       </Box>
     </ThemeProvider>
   );

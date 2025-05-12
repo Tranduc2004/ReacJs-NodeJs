@@ -30,6 +30,7 @@ import GoogleCallback from "./Pages/GoogleCallback";
 import Compare from "./Pages/Compare";
 import VoucherList from "./Pages/Voucher";
 import MyVoucher from "./Pages/MyVoucher";
+import FacebookCallback from "./Pages/FacebookCallback";
 
 const MyContext = createContext();
 
@@ -146,6 +147,10 @@ function App() {
             <Route path="/posts" element={<Posts />} />
             <Route path="/posts/:id" element={<PostDetail />} />
             <Route path="/auth/google/callback" element={<GoogleCallback />} />
+            <Route
+              path="/auth/facebook/callback"
+              element={<FacebookCallback />}
+            />
             <Route path="/compare" element={<Compare />} />
             <Route path="/voucher" element={<VoucherList />} />
             <Route path="/myvoucher" element={<MyVoucher />} />

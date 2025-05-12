@@ -50,13 +50,36 @@ app.use(
 app.use(
   cors({
     origin: [
-      process.env.CLIENT_URL,
       "http://localhost:3000",
       "http://localhost:3001",
+      "https://adminbacola.netlify.app",
+      "https://bacolaclient.netlify.app",
     ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+    ],
+    exposedHeaders: ["Content-Range", "X-Content-Range"],
+    maxAge: 86400,
   })
 );
+
+// Thêm middleware xử lý lỗi CORS
+app.use((err, req, res, next) => {
+  if (err.name === "CORSError") {
+    console.error("CORS Error:", err);
+    return res.status(403).json({
+      success: false,
+      message: "CORS Error: " + err.message,
+    });
+  }
+  next(err);
+});
 
 //middleware
 app.use(bodyParser.json({ limit: "50mb" }));

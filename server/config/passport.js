@@ -1,5 +1,6 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const FacebookStrategy = require("passport-facebook").Strategy;
 const JwtStrategy = require("passport-jwt").Strategy;
 const ExtractJwt = require("passport-jwt").ExtractJwt;
 const User = require("../models/user");
@@ -82,6 +83,57 @@ passport.use(
         return done(null, newUser);
       } catch (error) {
         console.error("Google auth error:", error);
+        return done(error, null);
+      }
+    }
+  )
+);
+
+// Facebook Strategy
+passport.use(
+  new FacebookStrategy(
+    {
+      clientID: process.env.FACEBOOK_APP_ID,
+      clientSecret: process.env.FACEBOOK_APP_SECRET,
+      callbackURL: "http://localhost:4000/api/auth/facebook/callback",
+      profileFields: ["id", "emails", "name", "displayName"],
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        console.log("Facebook profile:", profile);
+
+        // Kiểm tra xem người dùng đã tồn tại chưa
+        let user = await User.findOne({ email: profile.emails[0].value });
+
+        if (user) {
+          // Nếu người dùng tồn tại, cập nhật thông tin Facebook
+          user.facebookId = profile.id;
+          user.name = profile.displayName;
+          await user.save();
+          return done(null, user);
+        }
+
+        // Tạo mật khẩu ngẫu nhiên an toàn
+        const randomPassword = crypto.randomBytes(16).toString("hex");
+
+        // Nếu chưa tồn tại, tạo người dùng mới
+        const newUser = new User({
+          email: profile.emails[0].value,
+          name: profile.displayName,
+          facebookId: profile.id,
+          password: randomPassword,
+          isVerified: true,
+          role: "user",
+          phone: "", // Để trống, có thể cập nhật sau
+          isActive: true,
+        });
+
+        await newUser.save();
+        console.log("Created new user:", newUser);
+
+        return done(null, newUser);
+      } catch (error) {
+        console.error("Facebook auth error:", error);
         return done(error, null);
       }
     }

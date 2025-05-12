@@ -11,13 +11,15 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import * as React from "react";
 import { CiMail } from "react-icons/ci";
-import { useState, useEffect, useMemo, useCallback, memo } from "react";
+import { useState, useEffect, useMemo, memo } from "react";
 import { getProducts, getReviewsByProduct } from "../../services/api";
 import { Link } from "react-router-dom";
 import ProductItem from "../../Components/ProductItem";
 import Chatbot from "../../Components/Chatbot";
 import CustomerComment from "../../Components/CustomerComment/CustomerComment";
 import avtuser from "../../assets/images/avtuser.png";
+import HotDealOfWeek from "../../Components/HotDealOfWeek";
+import DiscountBanner from "../../Components/DiscountBanner";
 
 // Import Swiper styles
 import "swiper/css";
@@ -205,6 +207,9 @@ const BestSellers = memo(() => {
               </div>
             </div>
             <div className="col-md-9 productRow">
+              <HotDealOfWeek />
+              <DiscountBanner />
+              <br />
               <ProductSwiper
                 products={productLists.bestSellers}
                 title="SẢN PHẨM NỔI BẬT"

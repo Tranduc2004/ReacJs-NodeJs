@@ -412,6 +412,37 @@ router.get(
   }
 );
 
+// Facebook OAuth routes
+router.get(
+  "/facebook",
+  passport.authenticate("facebook", { scope: ["email", "public_profile"] })
+);
+
+router.get(
+  "/facebook/callback",
+  passport.authenticate("facebook", {
+    failureRedirect: "http://localhost:3001/signin",
+  }),
+  async (req, res) => {
+    try {
+      // Tạo token JWT
+      const token = generateToken(req.user);
+      console.log("Generated token:", token);
+      console.log("User data:", req.user);
+
+      // Chuyển hướng về client với token
+      const redirectUrl = `${process.env.CLIENT_URL}/auth/facebook/callback?token=${token}`;
+      console.log("Redirecting to:", redirectUrl);
+      res.redirect(redirectUrl);
+    } catch (error) {
+      console.error("Lỗi xử lý callback Facebook:", error);
+      res.redirect(
+        `${process.env.CLIENT_URL}/signin?error=facebook_auth_failed`
+      );
+    }
+  }
+);
+
 // Routes cho voucher
 
 // Lấy danh sách voucher đã lưu

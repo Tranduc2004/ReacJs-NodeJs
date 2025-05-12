@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Container,
   Typography,
@@ -6,7 +6,6 @@ import {
   Grid,
   Box,
   Chip,
-  CircularProgress,
   Divider,
   Button,
   Avatar,
@@ -37,11 +36,7 @@ const OrderDetail = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchOrderDetail();
-  }, [orderId]);
-
-  const fetchOrderDetail = async () => {
+  const fetchOrderDetail = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getOrderDetail(orderId);
@@ -56,7 +51,11 @@ const OrderDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orderId]);
+
+  useEffect(() => {
+    fetchOrderDetail();
+  }, [fetchOrderDetail]);
 
   const handleCancelOrder = async () => {
     if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) return;
@@ -617,19 +616,63 @@ const OrderDetail = () => {
                     label={
                       order.paymentMethod === "COD"
                         ? "Thanh toán khi nhận hàng"
+                        : order.paymentMethod === "VNPAY"
+                        ? "Thanh toán VNPAY"
                         : "Thanh toán MOMO"
                     }
                     size="small"
                     sx={{
                       backgroundColor:
-                        order.paymentMethod === "COD" ? "#e6fffa" : "#f0f5ff",
+                        order.paymentMethod === "COD"
+                          ? "#e6fffa"
+                          : order.paymentMethod === "VNPAY"
+                          ? "#f0f5ff"
+                          : "#f0f5ff",
                       color:
-                        order.paymentMethod === "COD" ? "#38b2ac" : "#5a67d8",
+                        order.paymentMethod === "COD"
+                          ? "#38b2ac"
+                          : order.paymentMethod === "VNPAY"
+                          ? "#5a67d8"
+                          : "#5a67d8",
                       fontWeight: 500,
                       borderRadius: 1,
                     }}
                   />
                 </Box>
+
+                {order.paymentMethod === "VNPAY" && (
+                  <>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mt: 2,
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        Mã giao dịch VNPAY
+                      </Typography>
+                      <Typography variant="body1" fontWeight={500}>
+                        {order.vnpayTransactionId || "Chưa có"}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        Mã đơn hàng VNPAY
+                      </Typography>
+                      <Typography variant="body1" fontWeight={500}>
+                        {order.vnpayOrderId || "Chưa có"}
+                      </Typography>
+                    </Box>
+                  </>
+                )}
 
                 <Box
                   sx={{
