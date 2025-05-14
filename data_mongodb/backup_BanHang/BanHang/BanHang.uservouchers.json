@@ -1,0 +1,228 @@
+[{
+  "_id": {
+    "$oid": "681bcc67df2aa2d706234018"
+  },
+  "user": {
+    "$oid": "6800c89788f879d82f41a009"
+  },
+  "voucher": {
+    "$oid": "681bbb017869582e1a64cd52"
+  },
+  "createdAt": {
+    "$date": "2025-05-07T21:11:03.558Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T12:03:22.215Z"
+  },
+  "__v": 0,
+  "used": true
+},
+{
+  "_id": {
+    "$oid": "681bfd0277112be22f8db1aa"
+  },
+  "user": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "voucher": {
+    "$oid": "681bbb017869582e1a64cd52"
+  },
+  "used": true,
+  "createdAt": {
+    "$date": "2025-05-08T00:38:26.034Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T00:42:11.919Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681c9982df56d139c9a34206"
+  },
+  "user": {
+    "$oid": "680ce82c937d4451cfc0b7e0"
+  },
+  "voucher": {
+    "$oid": "681bb610ed4482facdeaad8a"
+  },
+  "used": true,
+  "createdAt": {
+    "$date": "2025-05-08T11:46:10.968Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T11:47:21.165Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681c9a33c8a764f7521d90a8"
+  },
+  "user": {
+    "$oid": "680ce82c937d4451cfc0b7e0"
+  },
+  "voucher": {
+    "$oid": "681bbb017869582e1a64cd52"
+  },
+  "used": true,
+  "createdAt": {
+    "$date": "2025-05-08T11:49:07.525Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T11:56:38.905Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681c9de8213aa02023b8adf9"
+  },
+  "user": {
+    "$oid": "681c9dd8213aa02023b8ad99"
+  },
+  "voucher": {
+    "$oid": "681bbb017869582e1a64cd52"
+  },
+  "used": true,
+  "createdAt": {
+    "$date": "2025-05-08T12:04:56.102Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T12:05:17.373Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681c9e91993285fb794032c1"
+  },
+  "user": {
+    "$oid": "681c9dd8213aa02023b8ad99"
+  },
+  "voucher": {
+    "$oid": "681bb610ed4482facdeaad8a"
+  },
+  "used": true,
+  "createdAt": {
+    "$date": "2025-05-08T12:07:45.912Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T12:08:10.685Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681c9fab993285fb7940360c"
+  },
+  "user": {
+    "$oid": "681c9ec8993285fb79403385"
+  },
+  "voucher": {
+    "$oid": "681bbb017869582e1a64cd52"
+  },
+  "used": false,
+  "createdAt": {
+    "$date": "2025-05-08T12:12:27.532Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T12:12:27.532Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681cc001b9414aadd44997d8"
+  },
+  "user": {
+    "$oid": "681cbfdeb9414aadd44996aa"
+  },
+  "voucher": {
+    "$oid": "681bbb017869582e1a64cd52"
+  },
+  "used": true,
+  "createdAt": {
+    "$date": "2025-05-08T14:30:25.610Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T14:30:56.033Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681cc298b9414aadd4499fd1"
+  },
+  "user": {
+    "$oid": "681cc1f4b9414aadd4499d9b"
+  },
+  "voucher": {
+    "$oid": "681bbb017869582e1a64cd52"
+  },
+  "used": true,
+  "createdAt": {
+    "$date": "2025-05-08T14:41:28.257Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T14:41:46.126Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681cc44bb9414aadd449a3b5"
+  },
+  "user": {
+    "$oid": "681cc1f4b9414aadd4499d9b"
+  },
+  "voucher": {
+    "$oid": "681cc438b9414aadd449a371"
+  },
+  "used": false,
+  "createdAt": {
+    "$date": "2025-05-08T14:48:43.266Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T14:48:43.266Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681dee51ad57a21291a0442f"
+  },
+  "user": {
+    "$oid": "680ca739a45726c03290ba2e"
+  },
+  "voucher": {
+    "$oid": "681cdc80fe8fc3f17e0e75d1"
+  },
+  "used": false,
+  "createdAt": {
+    "$date": "2025-05-09T12:00:17.788Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-09T12:00:17.788Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681dee53ad57a21291a04434"
+  },
+  "user": {
+    "$oid": "680ca739a45726c03290ba2e"
+  },
+  "voucher": {
+    "$oid": "681cfee569936ea651d4e338"
+  },
+  "used": false,
+  "createdAt": {
+    "$date": "2025-05-09T12:00:19.685Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-09T12:00:19.685Z"
+  },
+  "__v": 0
+}]

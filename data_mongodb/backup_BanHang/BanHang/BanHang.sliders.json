@@ -1,0 +1,54 @@
+[{
+  "_id": {
+    "$oid": "67fdd894230cd6491df9c6fe"
+  },
+  "name": "Angie’s Boomchickapop Sweet & Salty Kettle Corn",
+  "description": "",
+  "image": "https://klbtheme.com/bacola/wp-content/uploads/2021/04/slider-image-1.jpg",
+  "link": "",
+  "order": 0,
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-04-15T03:55:00.093Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:55:00.093Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd8a7230cd6491df9c702"
+  },
+  "name": "Angie’s Boomchickapop Sweet & Salty Kettle Corn",
+  "description": "",
+  "image": "https://klbtheme.com/bacola/wp-content/uploads/2021/04/slider-image-2.jpg",
+  "link": "",
+  "order": 0,
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-04-15T03:55:19.821Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:55:19.821Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd8bb230cd6491df9c706"
+  },
+  "name": "Blue Diamond Almonds Lightly Salted",
+  "description": "",
+  "image": "https://klbtheme.com/bacola/wp-content/uploads/2021/05/slider-3.jpg",
+  "link": "",
+  "order": 0,
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-04-15T03:55:39.695Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:55:39.695Z"
+  },
+  "__v": 0
+}]

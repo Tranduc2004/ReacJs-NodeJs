@@ -1,0 +1,51 @@
+[{
+  "_id": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "username": "admin",
+  "email": "admin2@example.com",
+  "password": "$2b$10$JAFCb7dYN1lKQgiW5hU2TepYr9spEVfUH4BYOredFR.TBAjZBOM/y",
+  "fullName": "Admin Two",
+  "role": "superadmin",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-04-15T03:38:43.657Z"
+  },
+  "__v": 0,
+  "lastLogin": {
+    "$date": "2025-05-08T14:36:20.741Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "67fddf11230cd6491df9cc84"
+  },
+  "username": "admin1",
+  "email": "tranducbrvt2004@gmail.com",
+  "password": "$2b$10$xrtZX/yZTRmyFozeLxXXWOeXdjDzYdkgjcU4ZIENVV1XiiMwp59f2",
+  "fullName": "tran duc",
+  "role": "admin",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-04-15T04:22:41.711Z"
+  },
+  "__v": 0,
+  "lastLogin": {
+    "$date": "2025-04-24T10:08:52.282Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "681cc4c7b9414aadd449a75a"
+  },
+  "username": "admin3",
+  "email": "tranduc20000400@gmail.com",
+  "password": "$2b$10$fb/oLyHu7M7yW5Fvb6kiie0uhpHIb6bMnb5qxyamRFKmdPqlCqU2a",
+  "fullName": "Tran",
+  "role": "admin",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-08T14:50:47.665Z"
+  },
+  "__v": 0
+}]

@@ -1,0 +1,204 @@
+[{
+  "_id": {
+    "$oid": "6800c89788f879d82f41a009"
+  },
+  "name": "Đức Trần",
+  "email": "tranducbrvt2004@gmail.com",
+  "password": "$2b$10$5dLulpZHyZXLq6p8iJnmXe23G.Hf5XFyMQzXZM8tknRUcx8LrL.Me",
+  "phone": "0973968360",
+  "role": "user",
+  "isActive": true,
+  "orders": [],
+  "createdAt": {
+    "$date": "2025-04-17T09:23:35.522Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T15:04:03.331Z"
+  },
+  "__v": 0,
+  "googleId": "115900774703451463890"
+},
+{
+  "_id": {
+    "$oid": "6801406d93c3c8f8e0558b0b"
+  },
+  "name": "tran duc",
+  "email": "oruybakaoamns@gmail.com",
+  "password": "$2b$10$HGJcvU23CFJ6b2K7GWm0Cez.wgh9JQl9rGk0zJXXUnPcxFcSUL.me",
+  "phone": "0973968360",
+  "role": "user",
+  "isActive": true,
+  "orders": [],
+  "createdAt": {
+    "$date": "2025-04-17T17:54:53.912Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-17T17:55:01.773Z"
+  },
+  "__v": 0,
+  "resetPasswordExpires": {
+    "$date": "2025-04-17T18:55:01.773Z"
+  },
+  "resetPasswordToken": "f24273c5672632c3b9dc29a3c13c32a19e7c3f96"
+},
+{
+  "_id": {
+    "$oid": "680175e01ebf1d65efbe3ac0"
+  },
+  "name": "tran duc",
+  "email": "tranducbrvt204@gmail.com",
+  "password": "$2b$10$loBpz5nueu8D2v8UEmFt8esWpzsEa8md2bfPUOKAQt0FMw.8gjyge",
+  "phone": "0973968360",
+  "role": "user",
+  "isActive": true,
+  "orders": [],
+  "createdAt": {
+    "$date": "2025-04-17T21:42:56.041Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-24T09:58:06.134Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "name": "Đức Trần",
+  "email": "1150080131@sv.hcmunre.edu.vn",
+  "password": "$2b$10$7sbpI0LAqcJcnDKrx6EdSuCjYvIluwNVyrj1p6Zq1HbW.JGlcKu9u",
+  "phone": "0973968360",
+  "role": "user",
+  "isActive": true,
+  "orders": [],
+  "googleId": "105171978755032270444",
+  "createdAt": {
+    "$date": "2025-04-24T19:19:10.837Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T20:18:37.038Z"
+  },
+  "__v": 3,
+  "savedVouchers": [
+    {
+      "$oid": "681bb610ed4482facdeaad8a"
+    },
+    {
+      "$oid": "681bbb017869582e1a64cd52"
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "680b5a40e7ee5ab732f2e6d4"
+  },
+  "name": "Tran Duc",
+  "email": "tduc11219@gmail.com",
+  "password": "$2b$10$N4WAaB/dUadLdh/39rNO1eW9qtL.U4M2jFTg7Ee81LPuLK7OZfIH.",
+  "phone": "",
+  "role": "user",
+  "isActive": true,
+  "orders": [],
+  "googleId": "111827155182667459655",
+  "createdAt": {
+    "$date": "2025-04-25T09:47:44.414Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-25T09:47:44.414Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "680ca739a45726c03290ba2e"
+  },
+  "name": "tinh tran",
+  "email": "trantinhbrvt2003@gmail.com",
+  "password": "$2b$10$UR4UClrTE1NCR585BP4yFuTDL2fCpk52hesjWyXGmUX9dc5hywLR6",
+  "phone": "",
+  "role": "user",
+  "isActive": true,
+  "orders": [],
+  "googleId": "104395861165130863357",
+  "createdAt": {
+    "$date": "2025-04-26T09:28:25.914Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-26T09:28:25.914Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681c9dd8213aa02023b8ad99"
+  },
+  "name": "Đức",
+  "email": "tranduc20400@gmail.com",
+  "password": "$2b$10$Aat9puuYUicNbvt17iFehOSHjBU.XoqVZI21dfsZADpxjFpSWFBxC",
+  "phone": "0973968360",
+  "role": "user",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-08T12:04:40.632Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T12:04:40.632Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681c9ec8993285fb79403385"
+  },
+  "name": "Đức",
+  "email": "tranduc20000400@gmail.com",
+  "password": "$2b$10$MrZ0sDYUp2.lBzcGSCutbuwkZDjpAsunssoHjN37H2rr3ziPJ7Y9.",
+  "phone": "0973968360",
+  "role": "user",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-08T12:08:40.817Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T12:59:11.065Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681cbfdeb9414aadd44996aa"
+  },
+  "name": "Liên Trần",
+  "email": "vnpro10102004@gmail.com",
+  "password": "$2b$10$XY8Vb1rKluhRT0zxLymHZOlY5gcR.4wzCZkLuDNm01GNINhH5Dxe.",
+  "phone": "0973968360",
+  "role": "user",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-08T14:29:50.700Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T14:51:14.554Z"
+  },
+  "__v": 0,
+  "googleId": "101494349128760869211"
+},
+{
+  "_id": {
+    "$oid": "681cc1f4b9414aadd4499d9b"
+  },
+  "name": "Đức",
+  "email": "tranducday.hihi@gmail.com",
+  "password": "$2b$10$2faNoiOoMgSXs7DlfQ48UeuGuaM0mqcd8YoC6LNzF/DMJyL3LmU0q",
+  "phone": "0973968360",
+  "role": "user",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-08T14:38:44.642Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-09T07:54:38.934Z"
+  },
+  "__v": 0,
+  "facebookId": "1400550871070962"
+}]

@@ -6,6 +6,19 @@ const Order = require("../models/Order");
 const ExcelJS = require("exceljs");
 const jwt = require("jsonwebtoken");
 
+// Lấy danh sách superadmin cho user (không cần quyền admin)
+router.get("/superadmins", async (req, res) => {
+  try {
+    const superadmins = await Admin.find({
+      role: "superadmin",
+      isActive: true,
+    }).select("name email");
+    res.json({ success: true, data: superadmins });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Lỗi server" });
+  }
+});
+
 // Middleware xác thực admin
 const authenticateAdmin = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];

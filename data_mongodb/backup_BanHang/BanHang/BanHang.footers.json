@@ -1,0 +1,137 @@
+[{
+  "_id": {
+    "$oid": "682364f69e2d529ac2d8ef98"
+  },
+  "topInfo": [
+    {
+      "icon": "LuShirt",
+      "text": "Sản phẩm tươi mới mỗi ngày",
+      "_id": {
+        "$oid": "6823657d397966f4e9fc7db2"
+      }
+    },
+    {
+      "icon": "TbTruckDelivery",
+      "text": "Miễn phí giao hàng cho đơn trên 1.700.000₫",
+      "_id": {
+        "$oid": "6823657d397966f4e9fc7db3"
+      }
+    },
+    {
+      "icon": "CiDiscount1",
+      "text": "Giảm giá sốc mỗi ngày",
+      "_id": {
+        "$oid": "6823657d397966f4e9fc7db4"
+      }
+    },
+    {
+      "icon": "CiDollar",
+      "text": "Giá tốt nhất trên thị trường",
+      "_id": {
+        "$oid": "6823657d397966f4e9fc7db5"
+      }
+    }
+  ],
+  "categories": [
+    {
+      "title": "TRÁI CÂY & RAU CỦ",
+      "items": [
+        "Rau củ tươi",
+        "Rau thơm & gia vị",
+        "Trái cây tươi",
+        "Rau cắt sẵn & mầm",
+        "Trái cây & rau củ nhập khẩu",
+        "Sản phẩm đóng gói",
+        "Khay tiệc"
+      ],
+      "_id": {
+        "$oid": "6823657d397966f4e9fc7db6"
+      }
+    },
+    {
+      "title": "BỮA SÁNG & SỮA",
+      "items": [
+        "Sữa & sữa có hương vị",
+        "Bơ và margarine",
+        "Phô mai",
+        "Trứng và thay thế trứng",
+        "Mật ong",
+        "Mứt trái cây",
+        "Kem chua & nước chấm",
+        "Sữa chua"
+      ],
+      "_id": {
+        "$oid": "6823657d397966f4e9fc7db7"
+      }
+    },
+    {
+      "title": "THỊT & HẢI SẢN",
+      "items": [
+        "Xúc xích ăn sáng",
+        "Xúc xích ăn tối",
+        "Thịt bò",
+        "Thịt gà",
+        "Thịt nguội cắt lát",
+        "Tôm",
+        "Cá đánh bắt tự nhiên",
+        "Cua và hải sản có vỏ",
+        "Cá nuôi"
+      ],
+      "_id": {
+        "$oid": "6823657d397966f4e9fc7db8"
+      }
+    },
+    {
+      "title": "THỨC UỐNG",
+      "items": [
+        "Nước lọc",
+        "Nước có ga",
+        "Nước ngọt & soda",
+        "Cà phê",
+        "Sữa & sữa thực vật",
+        "Trà & Kombucha",
+        "Nước trái cây & hộp",
+        "Bia thủ công",
+        "Rượu vang"
+      ],
+      "_id": {
+        "$oid": "6823657d397966f4e9fc7db9"
+      }
+    },
+    {
+      "title": "BÁNH MÌ & BÁNH NGỌT",
+      "items": [
+        "Sữa & sữa có hương vị",
+        "Bơ và margarine",
+        "Phô mai",
+        "Trứng và thay thế trứng",
+        "Mật ong",
+        "Mứt trái cây",
+        "Kem chua & nước chấm",
+        "Sữa chua"
+      ],
+      "_id": {
+        "$oid": "6823657d397966f4e9fc7dba"
+      }
+    }
+  ],
+  "contactInfo": {
+    "phone": "8 800 555-55",
+    "workingHours": "Làm việc từ 8:00 - 23:00"
+  },
+  "appDownload": {
+    "title": "Tải ứng dụng trên điện thoại:",
+    "subtitle": "Giảm 15% cho đơn hàng đầu tiên",
+    "googlePlayLink": "https://play.google.com/store",
+    "appStoreLink": "https://www.apple.com/app-store/"
+  },
+  "socialMedia": {
+    "facebook": "https://facebook.com/",
+    "twitter": "https://twitter.com/",
+    "instagram": "https://instagram.com/"
+  },
+  "isActive": true,
+  "updatedAt": {
+    "$date": "2025-05-13T15:34:48.568Z"
+  }
+}]

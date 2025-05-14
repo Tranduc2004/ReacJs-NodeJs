@@ -1,0 +1,234 @@
+[{
+  "_id": {
+    "$oid": "67fdd53e230cd6491df9c62a"
+  },
+  "name": "Trái cây & Rau",
+  "description": "",
+  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744688445/srtidlcjngx1nwtxmifr.png",
+  "color": "#E91E63",
+  "isActive": true,
+  "parent": null,
+  "createdAt": {
+    "$date": "2025-04-15T03:40:46.133Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:40:46.133Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd578230cd6491df9c64b"
+  },
+  "name": "Trái cây tươi",
+  "description": "",
+  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744688503/gxigtfhpupn2jm9fddh6.png",
+  "color": "#4CAF50",
+  "isActive": true,
+  "parent": null,
+  "createdAt": {
+    "$date": "2025-04-15T03:41:44.320Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:41:44.320Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd5ac230cd6491df9c659"
+  },
+  "name": "Thảo mộc & Gia vị",
+  "description": "",
+  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744688555/becbje7osc2lm38rfn83.png",
+  "color": "#607D8B",
+  "isActive": true,
+  "parent": null,
+  "createdAt": {
+    "$date": "2025-04-15T03:42:36.378Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:42:36.378Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd5fb230cd6491df9c672"
+  },
+  "name": "Sản phẩm đóng gói",
+  "description": "",
+  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744688634/rvrllibftpxypaarwtof.png",
+  "color": "#FF5722",
+  "isActive": true,
+  "parent": null,
+  "createdAt": {
+    "$date": "2025-04-15T03:43:55.263Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:43:55.263Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd62a230cd6491df9c67a"
+  },
+  "name": "Thịt",
+  "description": "",
+  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744688681/ktuorfqo96stqlumrvoa.png",
+  "color": "#FF5722",
+  "isActive": true,
+  "parent": null,
+  "createdAt": {
+    "$date": "2025-04-15T03:44:42.205Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:44:42.205Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd647230cd6491df9c67e"
+  },
+  "name": "Hải sản",
+  "description": "",
+  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744688711/rwulourg5zrozwx8tgak.png",
+  "color": "#FF5722",
+  "isActive": true,
+  "parent": null,
+  "createdAt": {
+    "$date": "2025-04-15T03:45:11.797Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:45:11.797Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd67b230cd6491df9c682"
+  },
+  "name": "Bữa sáng & Sữa",
+  "description": "",
+  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744688762/oa7smir6krgaauv6vsxp.png",
+  "color": "#FF5722",
+  "isActive": true,
+  "parent": null,
+  "createdAt": {
+    "$date": "2025-04-15T03:46:03.144Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:46:03.144Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd69d230cd6491df9c684"
+  },
+  "name": "Đồ uống",
+  "description": "",
+  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744688797/q4qz9jrl9degqmjera3o.png",
+  "color": "#E91E63",
+  "isActive": true,
+  "parent": null,
+  "createdAt": {
+    "$date": "2025-04-15T03:46:37.850Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:46:37.850Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd6c1230cd6491df9c690"
+  },
+  "name": "Thực phẩm đông lạnh",
+  "description": "",
+  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744688833/aybjy78ceelklbcwu5em.png",
+  "color": "#FF5722",
+  "isActive": true,
+  "parent": null,
+  "createdAt": {
+    "$date": "2025-04-15T03:47:13.868Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:47:13.868Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd6ef230cd6491df9c6a4"
+  },
+  "name": "Bánh quy & Đồ ăn nhẹ",
+  "description": "",
+  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744688878/f7vx1ybdkzp9upq8dt6j.png",
+  "color": "#FF5722",
+  "isActive": true,
+  "parent": null,
+  "createdAt": {
+    "$date": "2025-04-15T03:47:59.219Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:47:59.219Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd719230cd6491df9c6a6"
+  },
+  "name": "Thực phẩm tạp hóa",
+  "description": "",
+  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744688921/oirb34gikhkpav2yw6qx.png",
+  "color": "#FF5722",
+  "isActive": true,
+  "parent": null,
+  "createdAt": {
+    "$date": "2025-04-15T03:48:41.782Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:48:41.782Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681bde2b65b656f488b36ca3"
+  },
+  "name": "hihi",
+  "description": "",
+  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1746656819/erdhygddeh9pamzsfitg.jpg",
+  "color": "#607D8B",
+  "isActive": true,
+  "parent": null,
+  "createdAt": {
+    "$date": "2025-05-07T22:26:51.889Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-07T22:26:51.889Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681cc3f9b9414aadd449a342"
+  },
+  "name": "Đồ ăn",
+  "description": "",
+  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1746715655/irxdy6sid2tfpestzeyr.png",
+  "color": "#00a",
+  "isActive": true,
+  "parent": null,
+  "createdAt": {
+    "$date": "2025-05-08T14:47:21.464Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T14:47:21.464Z"
+  },
+  "__v": 0
+}]

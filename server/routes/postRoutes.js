@@ -2,6 +2,15 @@ const express = require("express");
 const router = express.Router();
 const Post = require("../models/Post");
 const { authenticateJWT } = require("../middleware/auth");
+const cloudinary = require("cloudinary").v2;
+const axios = require("axios");
+const stream = require("stream");
+
+cloudinary.config({
+  cloud_name: process.env.cloudinary_Config_Cloud_Name,
+  api_key: process.env.cloudinary_Config_Api_Key,
+  api_secret: process.env.cloudinary_Config_Api_Secret,
+});
 
 // Lấy tất cả bài viết
 router.get("/", async (req, res) => {
@@ -35,15 +44,76 @@ router.get("/:id", async (req, res) => {
 router.post("/", authenticateJWT, async (req, res) => {
   try {
     const { title, content, image, tags } = req.body;
-    const newPost = new Post({
-      title,
-      content,
-      image,
-      tags,
-      author: req.user._id,
-    });
-    const savedPost = await newPost.save();
-    res.status(201).json(savedPost);
+    let imageUrl = image;
+    // Nếu image là base64 thì upload lên Cloudinary
+    if (image && typeof image === "string" && image.startsWith("data:image")) {
+      try {
+        const uploaded = await cloudinary.uploader.upload(image, {
+          resource_type: "image",
+          folder: "posts",
+        });
+        imageUrl = uploaded.secure_url;
+      } catch (uploadError) {
+        console.error("Lỗi upload ảnh bài viết:", uploadError);
+        return res.status(500).json({
+          message: "Lỗi khi upload ảnh bài viết",
+          error: uploadError.message,
+        });
+      }
+    } else if (
+      image &&
+      typeof image === "string" &&
+      (image.startsWith("http://") || image.startsWith("https://"))
+    ) {
+      // Nếu image là URL thì tải về và upload lên Cloudinary
+      try {
+        const response = await axios({
+          method: "get",
+          url: image,
+          responseType: "stream",
+        });
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { resource_type: "image", folder: "posts" },
+          (error, result) => {
+            if (error) {
+              console.error("Lỗi upload ảnh từ URL:", error);
+              return res.status(500).json({
+                message: "Lỗi khi upload ảnh từ URL",
+                error: error.message,
+              });
+            }
+            imageUrl = result.secure_url;
+            createAndSavePost();
+          }
+        );
+        response.data.pipe(uploadStream);
+        return; // Dừng lại, sẽ gọi createAndSavePost sau khi upload xong
+      } catch (err) {
+        console.error("Lỗi tải ảnh từ URL:", err);
+        return res.status(500).json({
+          message: "Lỗi khi tải ảnh từ URL",
+          error: err.message,
+        });
+      }
+    }
+    // Nếu không phải base64 hoặc URL, hoặc upload xong thì tạo post
+    await createAndSavePost();
+
+    async function createAndSavePost() {
+      try {
+        const newPost = new Post({
+          title,
+          content,
+          image: imageUrl,
+          tags,
+          author: req.user._id,
+        });
+        const savedPost = await newPost.save();
+        res.status(201).json(savedPost);
+      } catch (error) {
+        res.status(400).json({ message: error.message });
+      }
+    }
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

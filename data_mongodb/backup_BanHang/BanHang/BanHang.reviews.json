@@ -1,0 +1,140 @@
+[{
+  "_id": {
+    "$oid": "67fddf5b230cd6491df9ccf2"
+  },
+  "user": {
+    "$oid": "67fdd43c230cd6491df9c5d1"
+  },
+  "product": {
+    "$oid": "67fdd926230cd6491df9c735"
+  },
+  "rating": 5,
+  "comment": "rất ngon",
+  "date": {
+    "$date": "2025-04-15T04:23:55.239Z"
+  },
+  "__v": 1,
+  "adminReplies": [
+    {
+      "content": "cảm ơn",
+      "createdAt": {
+        "$date": "2025-05-04T15:25:42.749Z"
+      },
+      "admin": {
+        "$oid": "67fdd4c3230cd6491df9c612"
+      },
+      "_id": {
+        "$oid": "681786f6e6f2607670da35e4"
+      }
+    }
+  ],
+  "isAdminComment": false
+},
+{
+  "_id": {
+    "$oid": "6800c4009b96bc2054e02d82"
+  },
+  "user": {
+    "$oid": "67fdd43c230cd6491df9c5d1"
+  },
+  "product": {
+    "$oid": "67fdd9cd230cd6491df9c782"
+  },
+  "rating": 1,
+  "comment": "hi\n",
+  "date": {
+    "$date": "2025-04-17T09:04:00.097Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6815cae225a99be67981fbe9"
+  },
+  "user": {
+    "$oid": "680ca739a45726c03290ba2e"
+  },
+  "product": {
+    "$oid": "67fdd926230cd6491df9c735"
+  },
+  "rating": 4,
+  "comment": "tốt",
+  "date": {
+    "$date": "2025-05-03T07:50:58.289Z"
+  },
+  "__v": 1,
+  "adminReplies": [
+    {
+      "content": "hi",
+      "createdAt": {
+        "$date": "2025-05-04T15:08:39.727Z"
+      },
+      "admin": {
+        "$oid": "67fdd4c3230cd6491df9c612"
+      },
+      "_id": {
+        "$oid": "681782f70bc4ba4346bcdcbc"
+      }
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "681a960fce24c4de9f993c84"
+  },
+  "user": {
+    "$oid": "680ca739a45726c03290ba2e"
+  },
+  "product": {
+    "$oid": "680caf4087fc7cc8ffcd88e0"
+  },
+  "rating": 5,
+  "comment": "sản phẩm ngon, bổ dưỡng cho sức khỏe",
+  "isAdminComment": false,
+  "adminRole": null,
+  "date": {
+    "$date": "2025-05-06T23:06:55.016Z"
+  },
+  "adminReplies": [],
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681cc094b9414aadd449994b"
+  },
+  "user": {
+    "$oid": "681cbfdeb9414aadd44996aa"
+  },
+  "product": {
+    "$oid": "67fdd98e230cd6491df9c75d"
+  },
+  "rating": 5,
+  "comment": "sản phẩm tốt",
+  "isAdminComment": false,
+  "adminRole": null,
+  "date": {
+    "$date": "2025-05-08T14:32:52.865Z"
+  },
+  "adminReplies": [],
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681cc23db9414aadd4499e20"
+  },
+  "user": {
+    "$oid": "681cc1f4b9414aadd4499d9b"
+  },
+  "product": {
+    "$oid": "67fdd926230cd6491df9c735"
+  },
+  "rating": 5,
+  "comment": "sản phẩm tốt",
+  "isAdminComment": false,
+  "adminRole": null,
+  "date": {
+    "$date": "2025-05-08T14:39:57.052Z"
+  },
+  "adminReplies": [],
+  "__v": 0
+}]

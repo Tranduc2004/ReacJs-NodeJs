@@ -1,0 +1,18 @@
+[{
+  "_id": {
+    "$oid": "6824134c96ab6edc64a8a0b3"
+  },
+  "address": "4/15 hau giang tan binh hcm",
+  "location": "Mũi Né",
+  "phone": "0973968360",
+  "phoneNote": "0973968360",
+  "email": "tranducbrvt2004@gmail.com",
+  "emailNote": "tranducbrvt2004@gmail.com",
+  "createdAt": {
+    "$date": "2025-05-14T03:51:40.253Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-14T03:51:40.253Z"
+  },
+  "__v": 0
+}]

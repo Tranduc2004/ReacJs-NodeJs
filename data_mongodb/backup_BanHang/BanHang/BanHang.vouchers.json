@@ -1,0 +1,177 @@
+[{
+  "_id": {
+    "$oid": "681bb610ed4482facdeaad8a"
+  },
+  "code": "SA34",
+  "name": "Miễn phí vận chuyển",
+  "description": "Miển phí vận chuyển",
+  "discountType": "FIXED_AMOUNT",
+  "discountValue": 20000,
+  "minOrderValue": 10000,
+  "maxDiscountAmount": null,
+  "startDate": {
+    "$date": "2025-05-07T19:28:00.000Z"
+  },
+  "endDate": {
+    "$date": "2025-05-19T19:28:00.000Z"
+  },
+  "usageLimit": 1,
+  "usedCount": 1,
+  "isActive": true,
+  "applicableProducts": [
+    {
+      "$oid": "67fdd926230cd6491df9c735"
+    }
+  ],
+  "applicableCategories": [
+    {
+      "$oid": "67fdd578230cd6491df9c64b"
+    }
+  ],
+  "createdBy": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "createdAt": {
+    "$date": "2025-05-07T19:35:44.293Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T12:12:14.608Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681bbb017869582e1a64cd52"
+  },
+  "code": "GIAMGIA50%",
+  "name": "Giảm giá",
+  "description": "ok",
+  "discountType": "PERCENTAGE",
+  "discountValue": 49,
+  "minOrderValue": 40000,
+  "maxDiscountAmount": 80000,
+  "startDate": {
+    "$date": "2025-05-07T19:56:00.000Z"
+  },
+  "endDate": {
+    "$date": "2025-05-23T19:56:00.000Z"
+  },
+  "usageLimit": 4,
+  "usedCount": 4,
+  "isActive": true,
+  "applicableProducts": [],
+  "applicableCategories": [],
+  "createdBy": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "createdAt": {
+    "$date": "2025-05-07T19:56:49.975Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T14:41:46.131Z"
+  },
+  "__v": 2
+},
+{
+  "_id": {
+    "$oid": "681cc438b9414aadd449a371"
+  },
+  "code": "MIENPHIVANCHUYEN",
+  "name": "Miễn phí vận chuyển",
+  "description": "ok",
+  "discountType": "FIXED_AMOUNT",
+  "discountValue": 50000,
+  "minOrderValue": 50000,
+  "maxDiscountAmount": null,
+  "startDate": {
+    "$date": "2025-05-08T14:48:00.000Z"
+  },
+  "endDate": {
+    "$date": "2025-05-10T14:48:00.000Z"
+  },
+  "usageLimit": 100,
+  "usedCount": 0,
+  "isActive": true,
+  "applicableProducts": [],
+  "applicableCategories": [
+    {
+      "$oid": "67fdd5ac230cd6491df9c659"
+    }
+  ],
+  "createdBy": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "createdAt": {
+    "$date": "2025-05-08T14:48:24.931Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T17:26:09.029Z"
+  },
+  "__v": 1
+},
+{
+  "_id": {
+    "$oid": "681cdc80fe8fc3f17e0e75d1"
+  },
+  "code": "50K",
+  "name": "Giảm giá 50K",
+  "description": "ok",
+  "discountType": "FIXED_AMOUNT",
+  "discountValue": 50000,
+  "minOrderValue": 100000,
+  "maxDiscountAmount": null,
+  "startDate": {
+    "$date": "2025-05-08T16:31:00.000Z"
+  },
+  "endDate": {
+    "$date": "2025-05-24T16:31:00.000Z"
+  },
+  "usageLimit": 100,
+  "usedCount": 0,
+  "isActive": true,
+  "applicableProducts": [],
+  "applicableCategories": [],
+  "createdBy": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "createdAt": {
+    "$date": "2025-05-08T16:32:00.576Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T16:32:00.576Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681cfee569936ea651d4e338"
+  },
+  "code": "FIRSTORDER",
+  "name": "Giảm giá lần đầu ",
+  "description": "Giảm giá lần đầu tiên khi đặt hàng",
+  "discountType": "FIXED_AMOUNT",
+  "discountValue": 100000,
+  "minOrderValue": 200000,
+  "maxDiscountAmount": null,
+  "startDate": {
+    "$date": "2025-05-08T18:58:00.000Z"
+  },
+  "endDate": {
+    "$date": "2027-10-12T18:58:00.000Z"
+  },
+  "usageLimit": 1000,
+  "usedCount": 0,
+  "isActive": true,
+  "applicableProducts": [],
+  "applicableCategories": [],
+  "createdBy": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "createdAt": {
+    "$date": "2025-05-08T18:58:45.851Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-08T18:58:45.851Z"
+  },
+  "__v": 0
+}]

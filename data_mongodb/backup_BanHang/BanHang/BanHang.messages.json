@@ -1,0 +1,726 @@
+[{
+  "_id": {
+    "$oid": "682278e29fb976ad27de76b5"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "681cc1f4b9414aadd4499d9b"
+  },
+  "receiverType": "User",
+  "content": "hi",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-05-12T22:40:34.939Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-12T22:40:34.939Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68227b2071426a8196c6ce1f"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hi",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-12T22:50:08.891Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68227b2b71426a8196c6ce47"
+  },
+  "sender": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "senderType": "User",
+  "receiver": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "receiverType": "Admin",
+  "content": "hi",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-05-12T22:50:19.737Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-12T22:50:19.737Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6822807f71426a8196c6cfd8"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hi",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-12T23:13:03.926Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6822823f71426a8196c6d0b8"
+  },
+  "sender": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "senderType": "User",
+  "receiver": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "receiverType": "Admin",
+  "content": "bạn có thể hỗ trơ tôi không",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-05-12T23:20:31.983Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-12T23:20:31.983Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6822851b9cbba4bf0f88332c"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "tôi sẽ hỗ trợ",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-12T23:32:43.992Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "682285359cbba4bf0f88340f"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hiii",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-12T23:33:09.232Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6822859b9cbba4bf0f88351c"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hii",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-12T23:34:51.238Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "682286579cbba4bf0f88363c"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hiii",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-12T23:37:59.880Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "682286c69cbba4bf0f8837e2"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hiiiii",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-12T23:39:50.358Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6822870f9cbba4bf0f8838e9"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hiii",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-12T23:41:03.373Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "682287449cbba4bf0f8839f5"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hii",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-12T23:41:56.169Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "682288f49cbba4bf0f883cae"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hii",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-12T23:49:08.651Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6822892d9cbba4bf0f883dff"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hiiiii",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-12T23:50:05.431Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "682289fb9cbba4bf0f883f18"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hello",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-12T23:53:31.568Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68228a089cbba4bf0f883fa3"
+  },
+  "sender": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "senderType": "User",
+  "receiver": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "receiverType": "Admin",
+  "content": "xin chào",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-05-12T23:53:44.600Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-12T23:53:44.600Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68234a70a9ed6e0936e5aeb6"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hi",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-13T13:34:40.911Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68234a86a9ed6e0936e5afa3"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hi",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-13T13:35:02.232Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68234c027d59bd5bca8cd0f2"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "helllooooo",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-13T13:41:22.467Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68234c307d59bd5bca8cd1a6"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hiii",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-13T13:42:08.658Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:42:43.162Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68234efafc8aad9391daa307"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "jo",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-13T13:54:02.660Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:54:57.505Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68234f07fc8aad9391daa37f"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hoo",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-13T13:54:15.630Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T13:54:57.505Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68235074fc8aad9391daa798"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "bạn có đang online không",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-13T14:00:20.599Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T14:00:28.687Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68235081fc8aad9391daa826"
+  },
+  "sender": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "senderType": "User",
+  "receiver": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "receiverType": "Admin",
+  "content": "có",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-05-13T14:00:33.385Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T14:00:33.385Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6824145796ab6edc64a8a28e"
+  },
+  "sender": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "senderType": "User",
+  "receiver": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "receiverType": "Admin",
+  "content": "hi",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-05-14T03:56:07.591Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-14T03:56:07.591Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6824150596ab6edc64a8a3c6"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hii",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-14T03:59:01.990Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-14T03:59:11.087Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6824151d96ab6edc64a8a472"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hiii",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-05-14T03:59:25.732Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-14T03:59:41.311Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6824153496ab6edc64a8a4f4"
+  },
+  "sender": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "senderType": "User",
+  "receiver": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "receiverType": "Admin",
+  "content": "hii",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-05-14T03:59:48.745Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-14T03:59:48.745Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "682421d2fc600b565eed985b"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hi",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-05-14T04:53:38.051Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-14T04:53:38.051Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6824220bfc600b565eed9899"
+  },
+  "sender": {
+    "$oid": "680ca739a45726c03290ba2e"
+  },
+  "senderType": "User",
+  "receiver": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "receiverType": "Admin",
+  "content": "hii",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-05-14T04:54:35.910Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-14T04:54:35.910Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68242377fc600b565eed9a4b"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hiii",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-05-14T05:00:39.732Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-14T05:00:39.732Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6824237cfc600b565eed9a58"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-05-14T05:00:44.275Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-14T05:00:44.275Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6824237ffc600b565eed9a65"
+  },
+  "sender": {
+    "$oid": "67fdd4c3230cd6491df9c612"
+  },
+  "senderType": "Admin",
+  "receiver": {
+    "$oid": "680a8eae6efea2fef38341ab"
+  },
+  "receiverType": "User",
+  "content": "hiiii",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-05-14T05:00:47.214Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-14T05:00:47.214Z"
+  },
+  "__v": 0
+}]

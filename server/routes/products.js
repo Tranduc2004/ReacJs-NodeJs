@@ -18,6 +18,31 @@ cloudinary.config({
   api_secret: process.env.cloudinary_Config_Api_Secret,
 });
 
+// Gợi ý sản phẩm theo tên (autocomplete)
+router.get("/suggestions", async (req, res) => {
+  try {
+    const q = req.query.q;
+    if (!q || q.length < 2) {
+      return res.json([]); // Trả về mảng rỗng nếu không có query hoặc query quá ngắn
+    }
+    const suggestions = await Product.find({
+      name: { $regex: q, $options: "i" },
+      $and: [
+        { name: { $exists: true } },
+        { name: { $ne: null } },
+        { name: { $type: "string" } },
+      ],
+    })
+      .limit(10)
+      .select("name"); // Chỉ lấy trường name
+
+    res.json(suggestions);
+  } catch (error) {
+    console.error("Lỗi khi lấy gợi ý sản phẩm:", error);
+    res.status(500).json({ message: "Lỗi server khi lấy gợi ý sản phẩm" });
+  }
+});
+
 // GET tất cả sản phẩm
 router.get(`/`, async (req, res) => {
   try {

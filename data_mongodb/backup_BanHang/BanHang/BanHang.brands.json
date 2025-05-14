@@ -1,0 +1,85 @@
+[{
+  "_id": {
+    "$oid": "67fdd788230cd6491df9c6b1"
+  },
+  "name": "Frito Lay",
+  "logo": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744689032/brands/u3hoyurt2pe0wr7lbwgz.jpg",
+  "description": "Frito-Lay là một công ty hàng đầu trong ngành công nghiệp thực phẩm, nổi tiếng với các sản phẩm snack như Lay’s, Doritos, Cheetos và Ruffles. Là một công ty con của PepsiCo, Frito-Lay đã trở thành biểu tượng toàn cầu của sự sáng tạo trong hương vị, chất lượng và trải nghiệm ăn vặt. Với cam kết về sự đổi mới và bền vững, Frito-Lay không chỉ mang đến những món ăn hấp dẫn mà còn hướng đến trách nhiệm xã hội và môi trường.",
+  "website": "https://www.fritolay.com/",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-04-15T03:50:32.816Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:50:32.817Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd7bd230cd6491df9c6b7"
+  },
+  "name": "Nespresso",
+  "logo": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744689084/brands/py4rdnxmmzikhm28wkxn.png",
+  "description": "Nespresso là thương hiệu cà phê cao cấp trực thuộc Tập đoàn Nestlé, nổi tiếng toàn cầu với hệ thống máy pha cà phê và viên nén cà phê độc đáo. Nespresso kết hợp giữa nghệ thuật pha chế và công nghệ hiện đại để mang đến những ly cà phê chuẩn vị quán ngay tại nhà. Với cam kết về chất lượng, sự bền vững và thiết kế sang trọng, Nespresso không chỉ là cà phê – đó là trải nghiệm đẳng cấp dành cho người yêu cà phê thực thụ.",
+  "website": "https://nespresso.vn/",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-04-15T03:51:25.247Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:51:25.248Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd802230cd6491df9c6bf"
+  },
+  "name": "Oreo",
+  "logo": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744689154/brands/pjllr7y5yl7i36uffarj.png",
+  "description": "Oreo là chiếc bánh quy kẹp kem biểu tượng, được yêu thích trên toàn thế giới nhờ hương vị ngọt ngào và thiết kế đặc trưng. Với lớp vỏ giòn tan kết hợp cùng nhân kem mềm mịn, Oreo không chỉ là món ăn vặt quen thuộc mà còn là nguồn cảm hứng trong hàng loạt công thức sáng tạo như bánh ngọt, sữa lắc và kem. “Vặn, liếm, nhúng” – Oreo luôn mang đến niềm vui trọn vẹn trong từng khoảnh khắc.",
+  "website": "https://www.oreo.com/",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-04-15T03:52:34.854Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:52:34.854Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd834230cd6491df9c6d7"
+  },
+  "name": "Quaker",
+  "logo": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744689203/brands/mbmcfvnnypyivzmeop5g.jpg",
+  "description": "Quaker là thương hiệu dinh dưỡng uy tín với hơn 140 năm lịch sử, nổi bật với các sản phẩm yến mạch nguyên chất và lành mạnh. Được làm từ những hạt yến mạch tinh túy nhất, Quaker không chỉ mang đến nguồn năng lượng bền bỉ cho mỗi ngày mà còn góp phần chăm sóc sức khỏe tim mạch và hệ tiêu hóa. Từ bữa sáng nhanh gọn đến bữa ăn đầy dưỡng chất, Quaker luôn đồng hành cùng bạn trong hành trình sống khỏe và tích cực.",
+  "website": "https://www.laysvietnam.com/san-pham/quaker/",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-04-15T03:53:24.130Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:53:24.131Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fdd864230cd6491df9c6f0"
+  },
+  "name": "Welch’s",
+  "logo": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1744689251/brands/abgnagvhismwepwfbo71.png",
+  "description": "Welch’s là thương hiệu trái cây và nước ép hàng đầu tại Mỹ, nổi tiếng với hương vị nho đặc trưng và chất lượng tự nhiên. Với nguồn nguyên liệu được tuyển chọn kỹ lưỡng từ những vườn nho tươi ngon, Welch’s mang đến các sản phẩm nước ép, mứt và snack trái cây giàu dinh dưỡng, phù hợp cho cả gia đình. Hơn 150 năm đồng hành cùng người tiêu dùng, Welch’s luôn đặt sức khỏe và sự tươi ngon lên hàng đầu trong từng sản phẩm.",
+  "website": "https://www.welchs.com/",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-04-15T03:54:12.053Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T03:54:12.054Z"
+  },
+  "__v": 0
+}]
