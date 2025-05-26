@@ -317,11 +317,11 @@ const Wishlist = () => {
               fontWeight: 600,
               width: { xs: "100%", sm: "auto" },
               fontFamily: "Dosis, sans-serif",
-              backgroundColor: theme.palette.primary.main,
+              backgroundColor: "#00aaff",
               textTransform: "none",
               boxShadow: theme.shadows[2],
               "&:hover": {
-                backgroundColor: theme.palette.primary.dark,
+                backgroundColor: "#00aaff",
                 boxShadow: theme.shadows[4],
                 transform: "translateY(-2px)",
               },
@@ -396,8 +396,13 @@ const Wishlist = () => {
                           fontWeight: 600,
                           boxShadow: theme.shadows[1],
                           width: "100%",
+                          border: "1px solid #00aaff",
+                          backgroundColor: "transparent",
+                          color: "#00aaff",
                           "&:hover": {
                             boxShadow: theme.shadows[3],
+                            backgroundColor: "#00aaff",
+                            color: "white",
                           },
                         }}
                       >

@@ -195,40 +195,4 @@
     "$date": "2025-04-15T03:48:41.782Z"
   },
   "__v": 0
-},
-{
-  "_id": {
-    "$oid": "681bde2b65b656f488b36ca3"
-  },
-  "name": "hihi",
-  "description": "",
-  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1746656819/erdhygddeh9pamzsfitg.jpg",
-  "color": "#607D8B",
-  "isActive": true,
-  "parent": null,
-  "createdAt": {
-    "$date": "2025-05-07T22:26:51.889Z"
-  },
-  "updatedAt": {
-    "$date": "2025-05-07T22:26:51.889Z"
-  },
-  "__v": 0
-},
-{
-  "_id": {
-    "$oid": "681cc3f9b9414aadd449a342"
-  },
-  "name": "Đồ ăn",
-  "description": "",
-  "image": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1746715655/irxdy6sid2tfpestzeyr.png",
-  "color": "#00a",
-  "isActive": true,
-  "parent": null,
-  "createdAt": {
-    "$date": "2025-05-08T14:47:21.464Z"
-  },
-  "updatedAt": {
-    "$date": "2025-05-08T14:47:21.464Z"
-  },
-  "__v": 0
 }]

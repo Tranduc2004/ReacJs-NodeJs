@@ -380,6 +380,15 @@ exports.saveVoucherForUser = async (req, res) => {
       success: true,
       message: "Đã lưu voucher vào kho của bạn",
     });
+
+    // Kiểm tra voucher đã hết ngày sử dụng chưa
+    const now = new Date();
+    if (now > voucher.endDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Voucher đã hết hạn sử dụng",
+      });
+    }
   } catch (error) {
     console.error("Lỗi khi lưu voucher:", error);
     if (error.code === 11000) {

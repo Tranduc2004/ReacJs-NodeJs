@@ -82,4 +82,38 @@
     "$date": "2025-04-15T03:54:12.054Z"
   },
   "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6823588afc8aad9391daae41"
+  },
+  "name": "Pepsi",
+  "logo": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1747146916/brands/sezu82ubiobhorjmkk7z.png",
+  "description": "Pepsi là một thương hiệu nước giải khát có ga nổi tiếng toàn cầu, thuộc sở hữu của tập đoàn PepsiCo có trụ sở tại Hoa Kỳ. Thương hiệu này ra đời từ năm 1893 với tên gọi ban đầu là “Brad’s Drink” và được đổi tên thành Pepsi-Cola vào năm 1898. Trải qua hơn một thế kỷ phát triển, Pepsi không chỉ là đối thủ lớn của Coca-Cola mà còn trở thành biểu tượng văn hóa đại chúng với các chiến dịch quảng cáo sáng tạo, năng động và trẻ trung. Với hương vị sảng khoái, đậm đà và thiết kế bao bì hiện đại, Pepsi được yêu thích bởi giới trẻ trên khắp thế giới. Ngoài nước ngọt có ga truyền thống, thương hiệu còn phát triển nhiều dòng sản phẩm khác như Pepsi Light, Pepsi Max nhằm đáp ứng nhu cầu đa dạng của người tiêu dùng.",
+  "website": "https://www.pepsi.com/",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-13T14:34:50.279Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T14:34:50.279Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "682358e0fc8aad9391daae52"
+  },
+  "name": "Coca Cola",
+  "logo": "https://res.cloudinary.com/dy81ccuzq/image/upload/v1747147002/brands/yiml1782yaftbmkbckth.png",
+  "description": "Coca-Cola là một trong những thương hiệu nước giải khát nổi tiếng và lâu đời nhất thế giới, được sản xuất bởi The Coca-Cola Company có trụ sở tại Atlanta, Georgia, Hoa Kỳ. Được phát minh vào năm 1886 bởi dược sĩ John S. Pemberton, Coca-Cola ban đầu được bán như một loại thuốc bổ, nhưng nhanh chóng trở thành thức uống giải khát phổ biến nhờ hương vị đặc trưng và chiến lược tiếp thị thông minh. Trải qua hơn một thế kỷ, Coca-Cola không chỉ đơn thuần là một sản phẩm mà còn là biểu tượng văn hóa toàn cầu, gắn liền với hình ảnh tươi vui, đoàn kết và chia sẻ. Với khẩu hiệu nổi tiếng như \"Open Happiness\" hay \"Taste the Feeling\", Coca-Cola luôn hướng đến việc kết nối cảm xúc và mang lại trải nghiệm tích cực cho người tiêu dùng. Thương hiệu này hiện có mặt tại hơn 200 quốc gia và sở hữu nhiều dòng sản phẩm khác như Coca-Cola Light, Coca-Cola Zero Sugar, nhằm đáp ứng nhu cầu đa dạng của thị trường.",
+  "website": "https://www.coca-cola.com/",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-05-13T14:36:16.286Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-13T14:36:16.287Z"
+  },
+  "__v": 0
 }]

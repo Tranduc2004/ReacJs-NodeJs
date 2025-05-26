@@ -86,7 +86,20 @@ const VoucherList = () => {
     fetchData();
   }, [navigate]);
 
+  const isVoucherExpired = (endDate) => {
+    const now = new Date();
+    const expiry = new Date(endDate);
+    return expiry < now;
+  };
+
   const handleSaveVoucher = async (voucherId) => {
+    const voucher = vouchers.find((v) => v._id === voucherId);
+
+    if (isVoucherExpired(voucher.endDate)) {
+      notify("Không thể lưu voucher đã hết hạn", "error");
+      return;
+    }
+
     if (!isAuthenticated()) {
       notify("Vui lòng đăng nhập để lưu mã giảm giá", "error");
       localStorage.setItem("redirectUrl", window.location.pathname);
@@ -162,10 +175,10 @@ const VoucherList = () => {
   });
 
   const activeVouchers = filteredVouchers.filter(
-    (v) => !v.used && v.usedCount < v.usageLimit
+    (v) => !v.used && v.usedCount < v.usageLimit && !isVoucherExpired(v.endDate)
   );
   const usedOrExpiredVouchers = filteredVouchers.filter(
-    (v) => v.used || v.usedCount >= v.usageLimit
+    (v) => v.used || v.usedCount >= v.usageLimit || isVoucherExpired(v.endDate)
   );
 
   const formatDate = (dateString) => {
@@ -452,7 +465,8 @@ const VoucherList = () => {
                       <button
                         disabled={
                           saving === voucher._id ||
-                          savedVoucherIds.includes(voucher._id)
+                          savedVoucherIds.includes(voucher._id) ||
+                          isVoucherExpired(voucher.endDate)
                         }
                         onClick={() => handleSaveVoucher(voucher._id)}
                         className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
@@ -460,6 +474,8 @@ const VoucherList = () => {
                             ? "bg-green-100 text-green-700 flex items-center gap-1"
                             : saving === voucher._id
                             ? "bg-gray-100 text-gray-500"
+                            : isVoucherExpired(voucher.endDate)
+                            ? "bg-gray-100 text-black-500"
                             : "text-white shadow-sm hover:shadow group-hover:scale-105"
                         }`}
                         style={
@@ -479,6 +495,8 @@ const VoucherList = () => {
                           </>
                         ) : saving === voucher._id ? (
                           "Đang lưu..."
+                        ) : isVoucherExpired(voucher.endDate) ? (
+                          "Đã hết hạn"
                         ) : (
                           "Lưu vào kho"
                         )}
@@ -560,7 +578,11 @@ const VoucherList = () => {
 
                     <div className="mt-3">
                       <div className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded-full inline-block">
-                        {voucher.used ? "Đã sử dụng" : "Hết lượt sử dụng"}
+                        {voucher.used
+                          ? "Đã sử dụng"
+                          : isVoucherExpired(voucher.endDate)
+                          ? "Đã hết hạn"
+                          : "Hết lượt sử dụng"}
                       </div>
                     </div>
                   </div>
@@ -568,7 +590,11 @@ const VoucherList = () => {
                   {/* Diagonal "expired" watermark */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
                     <div className="bg-gray-800 text-white text-xs font-bold py-1 px-12 opacity-20 transform rotate-45 translate-x-8">
-                      ĐÃ HẾT HẠN
+                      {voucher.used
+                        ? "ĐÃ SỬ DỤNG"
+                        : isVoucherExpired(voucher.endDate)
+                        ? "ĐÃ HẾT HẠN"
+                        : "HẾT LƯỢT SỬ DỤNG"}
                     </div>
                   </div>
                 </div>
